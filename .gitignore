@@ -1,0 +1,10 @@
+CLAUDE.md
+.DS_Store
+build/
+build-release/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.swiftpm/
+GLBViewer.xcodeproj/project.xcworkspace/xcuserdata/
+GLBViewer.xcodeproj/xcuserdata/
