@@ -6,16 +6,19 @@ struct ContentView: View {
     @StateObject private var controller = ViewerController()
     @State private var scene: SCNScene?
     @State private var stats: ModelStats?
+    @State private var animations: [ModelAnimation] = []
     @State private var showInfo = true
     @State private var errorMessage: String?
+    @State private var gizmoHoverLabel: String?
 
     var body: some View {
         ZStack {
             Color(white: 0.04).ignoresSafeArea()
 
             if let scene {
-                SceneContainerView(scene: scene, controller: controller)
+                SceneContainerView(scene: scene, animations: animations, controller: controller)
                     .ignoresSafeArea()
+                    .grabCursor()
 
                 overlays
             } else {
@@ -52,34 +55,90 @@ struct ContentView: View {
         }
         .padding(20)
 
-        // Info panel — bottom-left
-        if showInfo, let stats {
-            VStack {
-                Spacer()
-                HStack {
-                    InfoPanelView(stats: stats)
-                    Spacer()
-                }
-            }
-            .padding(20)
-            .transition(.opacity)
-        }
-
-        // Toolbar — right, vertically centered
-        HStack {
+        // Bottom row — info panel (left), timeline (center) and a reserved
+        // gizmo-width column (right) share ONE HStack so they never overlap.
+        // Each floated independently before with a hardcoded side padding
+        // guessed for typical window widths; below that width the info panel
+        // and the timeline could collide. Sharing the row lets SwiftUI's own
+        // layout (the two Spacers compress first) keep them apart instead.
+        //
+        // Pinned to the bottom edge with the same `VStack { Spacer(); row }`
+        // idiom the file badge / gizmo overlays use elsewhere in this ZStack —
+        // a bare `.frame(maxHeight: .infinity, alignment: .bottom)` on the row
+        // itself did NOT reliably reach the bottom edge here (it floated at
+        // mid-height, overlapping the model instead of clearing it).
+        //
+        // `alignment: .bottom` on the HStack itself matters too: an HStack's
+        // default is `.center`, so the short timeline pill was vertically
+        // centered against the much-taller info panel — i.e. floating at the
+        // info panel's MIDDLE, not flush with its bottom edge (the actual bug
+        // in this screenshot). Bottom-aligning both makes their bottom edges
+        // match, regardless of the info panel's height.
+        VStack {
             Spacer()
-            ViewerToolbar(controller: controller, showInfo: $showInfo)
+            HStack(alignment: .bottom, spacing: 16) {
+                if showInfo, let stats {
+                    InfoPanelView(stats: stats)
+                        .arrowCursor()
+                        .transition(.opacity)
+                        .fixedSize()
+                }
+                Spacer(minLength: 12)
+                if controller.hasAnimations {
+                    TimelineControlsView(controller: controller)
+                        .frame(maxWidth: 460)
+                        .transition(.opacity)
+                }
+                Spacer(minLength: 12)
+                Color.clear.frame(width: 96) // reserves the axis gizmo's footprint
+            }
         }
         .padding(20)
 
-        // Axis gizmo — bottom-right
+        // Toolbar — right edge, vertically centered in the space ABOVE the
+        // axis gizmo's corner. A plain center (no bottom reservation) let the
+        // toolbar's last icons (camera / fullscreen) sink into the gizmo's
+        // 96pt corner on short windows — the reported "broken gizmo" was
+        // actually the fullscreen icon's rounded corner bleeding over it.
+        // Same class of bug as the info panel / timeline row above; fixed the
+        // same way, by reserving the corner instead of centering blindly.
+        HStack {
+            Spacer()
+            VStack {
+                Spacer()
+                ViewerToolbar(controller: controller, showInfo: $showInfo)
+                Spacer()
+            }
+            .padding(.bottom, 132) // clears the gizmo's reserved corner (96 + margins)
+        }
+        .padding(20)
+
+        // Axis gizmo — bottom-right. Dots are clickable (snap camera to that
+        // axis), so it needs real hit-testing, a pointer cursor, and its own
+        // tooltip for the three bright positive ends.
         VStack {
             Spacer()
             HStack {
                 Spacer()
-                AxisGizmoView(controller: controller)
-                    .frame(width: 96, height: 96)
-                    .allowsHitTesting(false)
+                AxisGizmoView(controller: controller) { label in
+                    withAnimation(.easeOut(duration: 0.15)) { gizmoHoverLabel = label }
+                }
+                .frame(width: 96, height: 96)
+                .pointerCursor()
+                .overlay(alignment: .top) {
+                    if let gizmoHoverLabel {
+                        Text(gizmoHoverLabel)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.white)
+                            .fixedSize()
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(.black.opacity(0.8), in: RoundedRectangle(cornerRadius: 7))
+                            .overlay(RoundedRectangle(cornerRadius: 7).stroke(.white.opacity(0.12)))
+                            .offset(y: -36)
+                            .transition(.opacity)
+                    }
+                }
             }
         }
         .padding(16)
@@ -98,6 +157,7 @@ struct ContentView: View {
         .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 10))
         .background(.ultraThinMaterial.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(.white.opacity(0.12)))
+        .arrowCursor()
     }
 
     private func errorBanner(_ message: String) -> some View {
@@ -119,9 +179,13 @@ struct ContentView: View {
         errorMessage = nil
         ModelLoader.load(url: url) { result in
             switch result {
-            case .success(let (loadedScene, loadedStats)):
-                self.scene = loadedScene
-                self.stats = loadedStats
+            case .success(let model):
+                // Set animations before the scene so the new list is in place
+                // by the time `SceneContainerView` re-attaches on the scene swap.
+                self.animations = model.animations
+                self.scene = model.scene
+                self.stats = model.stats
+                controller.currentModelName = (model.stats.fileName as NSString).deletingPathExtension
             case .failure(let error):
                 self.errorMessage = "Errore nel caricamento: \(error.localizedDescription)"
             }

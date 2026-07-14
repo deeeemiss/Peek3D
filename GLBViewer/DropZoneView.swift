@@ -37,9 +37,11 @@ struct DropZoneView: View {
                         .padding(.vertical, 8)
                 }
                 .buttonStyle(.plain)
+                .focusable(false)
                 .background(.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
                 .foregroundStyle(.white)
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.15)))
+                .pointerCursor()
             }
         }
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in

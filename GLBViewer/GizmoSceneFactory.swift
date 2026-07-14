@@ -8,6 +8,22 @@ import simd
 enum GizmoSceneFactory {
     static let axesRootName = "axesRoot"
 
+    /// World-space unit direction for each clickable axis node, keyed by
+    /// node name (see `addAxis`). Used to snap the main camera on click.
+    static let axisDirections: [String: simd_float3] = [
+        "axis+X": simd_float3(1, 0, 0), "axis-X": simd_float3(-1, 0, 0),
+        "axis+Y": simd_float3(0, 1, 0), "axis-Y": simd_float3(0, -1, 0),
+        "axis+Z": simd_float3(0, 0, 1), "axis-Z": simd_float3(0, 0, -1),
+    ]
+
+    /// Tooltip text for the bright, positive-end nodes only. The dim
+    /// negative ends are just as clickable but stay unlabeled by design.
+    static let axisTooltips: [String: String] = [
+        "axis+X": "Vista laterale",
+        "axis+Y": "Vista dall'alto",
+        "axis+Z": "Vista frontale",
+    ]
+
     static func makeScene() -> SCNScene {
         let scene = SCNScene()
         scene.background.contents = NSColor.clear
@@ -52,6 +68,7 @@ enum GizmoSceneFactory {
         tip.firstMaterial?.diffuse.contents = color
         tip.firstMaterial?.lightingModel = .constant
         let tipNode = SCNNode(geometry: tip)
+        tipNode.name = "axis+\(label)"
         tipNode.simdPosition = direction * 0.7
         root.addChildNode(tipNode)
 
@@ -67,6 +84,7 @@ enum GizmoSceneFactory {
         neg.firstMaterial?.diffuse.contents = dim
         neg.firstMaterial?.lightingModel = .constant
         let negNode = SCNNode(geometry: neg)
+        negNode.name = "axis-\(label)"
         negNode.simdPosition = -direction * 0.7
         root.addChildNode(negNode)
     }

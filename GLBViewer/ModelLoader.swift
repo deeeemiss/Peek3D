@@ -17,6 +17,24 @@ enum ModelLoadError: LocalizedError {
     }
 }
 
+/// One playable animation extracted from a model, decoupled from the loader
+/// backend so nothing downstream needs to import GLTFKit2. Only glTF assets
+/// currently carry these; Model I/O models return an empty list. `name` is the
+/// raw glTF clip name and may be empty (e.g. BoxAnimated ships one unnamed
+/// clip) — the UI supplies a fallback label.
+struct ModelAnimation {
+    let name: String
+    let player: SCNAnimationPlayer
+}
+
+/// Everything a successful load produces. Replaces the earlier
+/// `(SCNScene, ModelStats)` tuple so animations can ride along to `attach`.
+struct LoadedModel {
+    let scene: SCNScene
+    let stats: ModelStats
+    let animations: [ModelAnimation]
+}
+
 /// Dual-path loader. `.glb`/`.gltf` go through GLTFKit2; everything else goes
 /// through Apple's Model I/O. Both converge to a single `SCNScene`, so the rest
 /// of the app never needs to know where the model came from.
@@ -37,9 +55,10 @@ enum ModelLoader {
 
     /// Synchronous load. Safe to call off the main thread (scene graph
     /// construction is data work); attach the result to an `SCNView` on main.
-    static func loadSync(url: URL) throws -> (SCNScene, ModelStats) {
+    static func loadSync(url: URL) throws -> LoadedModel {
         let ext = url.pathExtension.lowercased()
         let scene: SCNScene
+        var animations: [ModelAnimation] = []
 
         switch ext {
         case "glb", "gltf":
@@ -47,7 +66,14 @@ enum ModelLoader {
             // compressed assets need extra plugins (not wired in v1) and will
             // surface as a thrown error here rather than a silent failure.
             let asset = try GLTFAsset(url: url, options: [:])
-            scene = SCNScene(gltfAsset: asset)
+            // The `SCNScene(gltfAsset:)` convenience routes through this same
+            // source but keeps only `defaultScene` and drops the animations;
+            // go through the source directly so we can pull the players too.
+            let source = GLTFSCNSceneSource(asset: asset)
+            scene = source.defaultScene ?? SCNScene()
+            animations = source.animations.map {
+                ModelAnimation(name: $0.name, player: $0.animationPlayer)
+            }
         default:
             let mdlAsset = MDLAsset(url: url)
             mdlAsset.loadTextures()
@@ -55,11 +81,11 @@ enum ModelLoader {
         }
 
         let stats = computeStats(scene: scene, url: url)
-        return (scene, stats)
+        return LoadedModel(scene: scene, stats: stats, animations: animations)
     }
 
     /// Async wrapper used by the UI: loads off-main, delivers on main.
-    static func load(url: URL, completion: @escaping (Result<(SCNScene, ModelStats), Error>) -> Void) {
+    static func load(url: URL, completion: @escaping (Result<LoadedModel, Error>) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             do {
                 let result = try loadSync(url: url)

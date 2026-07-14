@@ -6,15 +6,17 @@ import simd
 enum CameraFit {
     /// Camera position + near/far that fit `bounds` inside a camera with the
     /// given vertical field of view (degrees).
-    static func solve(bounds: SceneBounds, fieldOfViewDegrees: Float)
+    static func solve(
+        bounds: SceneBounds, fieldOfViewDegrees: Float,
+        direction: simd_float3 = simd_normalize(simd_float3(0.55, 0.45, 1.0))
+    )
         -> (position: simd_float3, target: simd_float3, zNear: Double, zFar: Double)
     {
         let radius = max(bounds.radius, 0.0001)
         let fov = fieldOfViewDegrees * .pi / 180
         let distance = radius / sin(fov / 2) * 1.05
 
-        let direction = simd_normalize(simd_float3(0.55, 0.45, 1.0))
-        let position = bounds.center + direction * distance
+        let position = bounds.center + simd_normalize(direction) * distance
         let zNear = Double(radius) * 0.001
         let zFar = Double(distance + radius) * 4
         return (position, bounds.center, zNear, zFar)
