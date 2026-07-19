@@ -42,7 +42,7 @@ enum ModelLoader {
 
     /// Extensions we advertise to the open panel / drag & drop.
     static let supportedExtensions: Set<String> = [
-        "glb", "gltf", "obj", "stl", "usd", "usdz", "usda", "usdc", "dae", "ply", "abc"
+        "glb", "gltf", "obj", "stl", "usd", "usdz", "usda", "usdc", "dae", "ply", "abc", "fbx"
     ]
 
     static var supportedContentTypes: [UTType] {
@@ -74,6 +74,13 @@ enum ModelLoader {
             animations = source.animations.map {
                 ModelAnimation(name: $0.name, player: $0.animationPlayer)
             }
+        case "fbx":
+            // Third backend: the vendored ufbx C library via an Objective-C++
+            // bridge. Produces the same `SCNScene` shape as the other loaders.
+            // v1 scope is geometry + materials/textures + unit conversion;
+            // skeletal animation is intentionally not parsed, so no players
+            // ride along here.
+            scene = try FBXSceneBuilder.scene(fromFileURL: url)
         default:
             let mdlAsset = MDLAsset(url: url)
             mdlAsset.loadTextures()

@@ -1,43 +1,62 @@
-# TODO — Supporto formato FBX
+# Supporto formato FBX
 
-Stato: pianificato, non ancora iniziato. Branch dedicato: `feature/fbx-support`.
+Stato: **v1 implementata** (geometria + materiali/texture + unità). Branch: `feature/fbx-support`.
 
 ## Perché
 
 FBX è il formato più richiesto tra quelli non ancora supportati: standard
-de-facto per modelli esportati da Maya, 3ds Max, Blender, e per asset
-scaricati da marketplace (Sketchfab, TurboSquid). Attualmente GLBViewer apre
-solo: `glb`, `gltf`, `obj`, `stl`, `usd`, `usdz`, `usda`, `usdc`, `dae`, `ply`,
-`abc` (vedi `ModelLoader.supportedExtensions`).
+de-facto per modelli esportati da Maya, 3ds Max, Blender, e per asset scaricati
+da marketplace (Sketchfab, TurboSquid). Model I/O di Apple non lo legge
+nativamente e GLTFKit2 legge solo glTF, quindi serviva una libreria terza.
 
-## Perché manca
+## Fase 0 — libreria scelta: ufbx (non Assimp)
 
-FBX è un formato proprietario Autodesk. Model I/O di Apple non lo legge
-nativamente, GLTFKit2 legge solo glTF. Serve una libreria terza.
+Confronto ufbx vs Assimp per lo scope v1 (sola visualizzazione):
 
-## Approccio proposto
+- **ufbx** (SCELTA): singolo `ufbx.c` + `ufbx.h`, licenza MIT / public-domain.
+  Si integra come sorgente diretto (nessun CMake, submodule o binario
+  precompilato), quindi niente attriti di sandbox/firma. Gestisce nativamente
+  proprio i punti critici dello scope: normalizzazione unità
+  (`target_unit_meters`), conversione assi/coordinate (`target_axes` +
+  `space_conversion`), texture embedded ed esterne (`load_external_files`,
+  `texture.content`) e skip pulito delle animazioni (`ignore_animation`).
+- **Assimp**: molto più pesante (C++, decine di file, CMake, tanti parser di
+  formati che non ci servono), storia di sandbox/firma più complicata, nessun
+  vantaggio reale per uno scope ristretto a geometria + materiali. Scartata.
 
-- Integrare **Assimp** (open source, C++) come terzo backend di parsing,
-  accanto a GLTFKit2 e Model I/O.
-- Serve un layer-ponte Objective-C++/C tra Assimp e Swift (non un semplice
-  `import` SPM).
-- Convertire l'output di Assimp (mesh, materiali, scheletro/animazioni) nella
-  stessa struttura `SCNScene` già usata dagli altri due loader, così il resto
-  dell'app (viewer, wireframe, shading, animazioni) non deve sapere da dove
-  viene il modello.
+Versione vendorizzata: **ufbx v0.23.0**, in `GLBViewer/ThirdParty/ufbx/`.
 
-## Insidie note
+## Cosa fa la v1 (implementata)
 
-- Scheletri/animazioni FBX modellati diversamente da glTF — serve mappatura
-  attenta per non rompere il player esistente.
-- Texture: possono essere embedded nel file o referenziate come file esterni
-  — entrambi i casi vanno gestiti.
-- Unità di misura: FBX non ha un'unità fissa (cm vs m più comuni) — senza
-  compensazione i modelli importati possono apparire enormi o minuscoli.
+- Terzo backend nel `ModelLoader`, accanto a GLTFKit2 e Model I/O; converge
+  nello stesso `SCNScene` usato dal resto dell'app (viewer, wireframe, shading,
+  preset di illuminazione).
+- Bridge Objective-C++ `GLBViewer/FBX/FBXSceneBuilder.mm` che chiama ufbx e
+  costruisce nodi/geometrie/materiali SceneKit.
+- Geometria triangolata (poligoni n-gon inclusi), normali (generate se assenti).
+- Materiali: base color / diffuse, con texture **embedded** (funziona in sandbox
+  senza accessi extra) ed **esterne** (leggibili solo dove la sandbox concede
+  accesso).
+- Unità: cubo di 1 m rientra a 1.0 (non 100 cm né 0.01) — verificato.
 
-## Scope stimato
+## FUORI SCOPE (fase futura): animazioni scheletriche FBX
 
-Nuova dipendenza esterna (C++) + nuovo dominio (parsing binario) + modifiche
-a loader, conversione scena, probabilmente UI di caricamento (estensioni
-supportate, messaggi di errore). Da pianificare con `@tech-lead-orchestrator`
-quando si parte, non un fix isolato.
+Non implementate volutamente in questo giro. ufbx è caricato con
+`ignore_animation = true`, quindi la scena FBX non porta player di animazione.
+
+Per riprenderle in futuro serve:
+- Rimuovere `ignore_animation` e leggere `scene->anim_stacks` / curve.
+- Mappare skin/cluster/bone ufbx sullo scheletro SceneKit
+  (`SCNSkinner`) e costruire `SCNAnimationPlayer` compatibili col player
+  esistente (attenzione: modello scheletrico FBX diverso da glTF).
+- Popolare l'array `animations` in `ModelLoader` anche per il ramo FBX.
+- Asset di test già pronto: `testmodels/cube_animated.fbx` (cubo con rotazione,
+  esportato con `bake_anim`).
+
+## Insidie note (registrate durante la v1)
+
+- Orientamento UV: FBX ha origine UV in basso-sinistra, SceneKit campiona in
+  alto-sinistra → nel bridge si applica `v' = 1 - v`. Verificato visivamente
+  (griglia con lettere leggibili e dritte).
+- Texture esterne vs sandbox: le embedded sono sempre sicure; le esterne
+  dipendono dai permessi di file concessi alla sandbox.
