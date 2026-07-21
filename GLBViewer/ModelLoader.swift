@@ -82,12 +82,17 @@ enum ModelLoader {
             }
         case "fbx":
             // Third backend: the vendored ufbx C library via an Objective-C++
-            // bridge. Produces the same `SCNScene` shape as the other loaders.
-            // v1 scope is geometry + materials/textures + unit conversion;
-            // skeletal animation is intentionally not parsed, so no players
-            // ride along here.
+            // bridge. Produces the same `SCNScene` shape as the other loaders,
+            // and — like the glTF path — carries any playable clips as
+            // `SCNAnimationPlayer`s so the timeline/wireframe UI treats FBX
+            // identically. Scope is node-transform (rigid/hierarchical)
+            // animation; skinned/skeletal deformation is not applied (the bridge
+            // documents the boundary).
             let result = try FBXSceneBuilder.load(fileURL: url)
             scene = result.scene
+            animations = result.animations.map {
+                ModelAnimation(name: $0.name, player: $0.player)
+            }
             missingExternalTextureURLs = result.unreadableExternalTextureURLs
         default:
             let mdlAsset = MDLAsset(url: url)
