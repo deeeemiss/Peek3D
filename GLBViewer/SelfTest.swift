@@ -34,6 +34,7 @@ enum SelfTest {
                 if let out = ProcessInfo.processInfo.environment["GLBVIEWER_SELFTEST_RENDER"] {
                     verifyWireframeDuringPlayback(url: url, baseOutput: URL(fileURLWithPath: out))
                     verifyWireframeLiveSCNView(url: url, baseOutput: URL(fileURLWithPath: out))
+                    verifyWireframeWithShadingReal(url: url, baseOutput: URL(fileURLWithPath: out))
                 }
             }
 
@@ -179,6 +180,37 @@ enum SelfTest {
         let after = view.snapshot()
         writePNG(after, to: dir.appendingPathComponent("\(stem)-live-after-wireframe.png"))
         print("LIVE_WIREFRAME: after (playing under wireframe) blank=\(isBlank(after))")
+    }
+
+    /// Exercises the QA-reported bug through the REAL production path (unlike
+    /// `verifyShadingModes`, which re-implements the material swap for testing
+    /// convenience — that duplication is exactly what let this regress
+    /// unnoticed). Uses the actual `ViewerController` attached to a live,
+    /// continuously-rendering `SCNView`, exactly as `ContentView` does, then
+    /// drives it through `setShadingMode`/`toggleWireframe` like a real button
+    /// press and snapshots the result.
+    private static func verifyWireframeWithShadingReal(url: URL, baseOutput: URL) {
+        guard let model = try? ModelLoader.loadSync(url: url) else {
+            print("REAL_WIREFRAME: load failed"); return
+        }
+        let dir = baseOutput.deletingLastPathComponent()
+        let stem = baseOutput.deletingPathExtension().lastPathComponent
+
+        for mode: ShadingMode in [.standard, .normals, .matcap, .unlit, .uvChecker] {
+            let controller = ViewerController()
+            let view = SCNView(frame: NSRect(x: 0, y: 0, width: 320, height: 320))
+            controller.attach(scnView: view, scene: model.scene, animations: model.animations)
+            if let anim = model.animations.first {
+                anim.player.play()
+            }
+            controller.setShadingMode(mode)
+            controller.toggleWireframe()
+            Thread.sleep(forTimeInterval: 0.3) // let continuous rendering + playback actually run
+
+            let image = view.snapshot()
+            writePNG(image, to: dir.appendingPathComponent("\(stem)-real-\(mode.rawValue)-wireframe.png"))
+            print("REAL_WIREFRAME[\(mode.rawValue)]: blank=\(isBlank(image)) -> \(stem)-real-\(mode.rawValue)-wireframe.png")
+        }
     }
 
     private static func report(_ label: String, _ hashes: [UInt64]?) {

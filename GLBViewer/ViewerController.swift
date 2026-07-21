@@ -164,17 +164,26 @@ final class ViewerController: ObservableObject {
         // cached transform state and — since we render continuously — can
         // silently overwrite a manual reposition on the very next frame,
         // making the button look like it does nothing. Disabling it around
-        // the change forces a resync from the node's new transform.
+        // the change forces a resync from the node's new transform. For the
+        // animated path, `commit()` only *schedules* the animation — it does
+        // not block until it finishes — so re-enabling right after commit()
+        // re-syncs the orbit controller to the still-old presentation-layer
+        // transform and freezes the camera there for the rest of the
+        // animation. Re-enable inside the transaction's completion block
+        // instead, once the new transform has actually landed.
         scnView.allowsCameraControl = false
         if animated {
             SCNTransaction.begin()
             SCNTransaction.animationDuration = 0.35
+            SCNTransaction.completionBlock = { [weak scnView] in
+                DispatchQueue.main.async { scnView?.allowsCameraControl = true }
+            }
             apply()
             SCNTransaction.commit()
         } else {
             apply()
+            scnView.allowsCameraControl = true
         }
-        scnView.allowsCameraControl = true
     }
 
     func zoom(by factor: Float) {
@@ -240,6 +249,25 @@ final class ViewerController: ObservableObject {
                 geometry.materials = geometry.materials.map { material in
                     let copy = material.copy() as! SCNMaterial
                     copy.fillMode = fillMode
+                    if fillMode == .lines {
+                        // `.lines` still runs the material's own fragment shader
+                        // modifier (normals/matcap fully replace the output colour
+                        // from the interpolated surface normal), so the line
+                        // pixels end up shaded almost like the surrounding
+                        // fill instead of standing out — reads as near-invisible
+                        // on a dark background. Force a flat, lighting-independent
+                        // line colour so wireframe looks the same regardless of
+                        // the active shading mode. `emission` is set alongside
+                        // `diffuse`+`.constant`: it's ADDITIVE and ignores every
+                        // lighting model / lighting-environment preset by
+                        // definition, so the line stays bright even if some
+                        // preset or PBR interaction dims the diffuse term.
+                        copy.shaderModifiers = nil
+                        copy.lightingModel = .constant
+                        let lineColor = NSColor(calibratedWhite: 0.92, alpha: 1)
+                        copy.diffuse.contents = lineColor
+                        copy.emission.contents = lineColor
+                    }
                     return copy
                 }
             }

@@ -153,6 +153,44 @@ private extension View {
     }
 }
 
+/// Transparent hover-only catcher, click-through. `Menu` (`.menuStyle(.borderlessButton)`)
+/// doesn't forward enter/exit events to SwiftUI's `.onHover`/`.help()` — confirmed by
+/// QA: no tooltip and no pointing-hand cursor ever appeared on either Menu-based
+/// toolbar icon. `NSTrackingArea` fires independently of hit-testing, so overriding
+/// `hitTest` to return nil (letting clicks fall through to the Menu underneath)
+/// still lets this view see mouse enter/exit.
+private struct HoverCatcher: NSViewRepresentable {
+    var onHover: (Bool) -> Void
+
+    func makeNSView(context: Context) -> HoverCatcherView {
+        let view = HoverCatcherView()
+        view.onHover = onHover
+        return view
+    }
+
+    func updateNSView(_ nsView: HoverCatcherView, context: Context) {
+        nsView.onHover = onHover
+    }
+}
+
+private final class HoverCatcherView: NSView {
+    var onHover: (Bool) -> Void = { _ in }
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(
+            rect: bounds,
+            options: [.activeInKeyWindow, .mouseEnteredAndExited],
+            owner: self, userInfo: nil))
+    }
+
+    override func mouseEntered(with event: NSEvent) { onHover(true) }
+    override func mouseExited(with event: NSEvent) { onHover(false) }
+}
+
 /// Shading-mode selector: an icon tile styled like the other toolbar buttons that
 /// opens a `Menu` of the five modes with a checkmark on the active one (same
 /// pattern as `LightingMenuButton`). Glows green while any non-Default mode is
@@ -195,12 +233,11 @@ private struct ShadingMenuButton: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
-        .pointerCursor()
-        .onHover { inside in
+        .overlay(HoverCatcher { inside in
             withAnimation(.easeOut(duration: 0.15)) { isHovering = inside }
-        }
+            if inside { NSCursor.pointingHand.set() }
+        })
         .sidebarTooltip("Materiale")
-        .help("Materiale")
     }
 
     private var backgroundColor: Color {
@@ -244,12 +281,11 @@ private struct LightingMenuButton: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
-        .pointerCursor()
-        .onHover { inside in
+        .overlay(HoverCatcher { inside in
             withAnimation(.easeOut(duration: 0.15)) { isHovering = inside }
-        }
+            if inside { NSCursor.pointingHand.set() }
+        })
         .sidebarTooltip("Illuminazione")
-        .help("Illuminazione")
     }
 
     private var backgroundColor: Color {

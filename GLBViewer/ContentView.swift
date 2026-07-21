@@ -10,6 +10,11 @@ struct ContentView: View {
     @State private var showInfo = true
     @State private var errorMessage: String?
     @State private var gizmoHoverLabel: String?
+    /// Set when an FBX load found external texture references the sandbox
+    /// wouldn't let it read — the model itself still loaded fine. Offers a
+    /// folder-access prompt + reload instead of silently showing a textureless
+    /// model.
+    @State private var missingTexturePrompt: (modelURL: URL, count: Int)?
 
     var body: some View {
         ZStack {
@@ -27,6 +32,10 @@ struct ContentView: View {
 
             if let errorMessage {
                 errorBanner(errorMessage)
+            }
+
+            if let missingTexturePrompt {
+                missingTextureBanner(missingTexturePrompt)
             }
         }
         .frame(minWidth: 900, minHeight: 620)
@@ -173,10 +182,37 @@ struct ContentView: View {
         }
     }
 
+    private func missingTextureBanner(_ prompt: (modelURL: URL, count: Int)) -> some View {
+        VStack {
+            Spacer()
+            HStack(spacing: 12) {
+                Text(prompt.count == 1
+                     ? "1 texture esterna non caricata (permessi cartella)."
+                     : "\(prompt.count) texture esterne non caricate (permessi cartella).")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.white)
+                Button("Concedi accesso alla cartella") { grantFolderAccessAndRetry(modelURL: prompt.modelURL) }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(.white.opacity(0.2), in: RoundedRectangle(cornerRadius: 6))
+                Button("Ignora") { missingTexturePrompt = nil }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(.orange.opacity(0.85), in: RoundedRectangle(cornerRadius: 10))
+            .padding(.bottom, 40)
+        }
+    }
+
     // MARK: - Loading
 
     private func load(url: URL) {
         errorMessage = nil
+        missingTexturePrompt = nil
         ModelLoader.load(url: url) { result in
             switch result {
             case .success(let model):
@@ -186,9 +222,28 @@ struct ContentView: View {
                 self.scene = model.scene
                 self.stats = model.stats
                 controller.currentModelName = (model.stats.fileName as NSString).deletingPathExtension
+                if !model.missingExternalTextureURLs.isEmpty {
+                    self.missingTexturePrompt = (url, model.missingExternalTextureURLs.count)
+                }
             case .failure(let error):
                 self.errorMessage = "Errore nel caricamento: \(error.localizedDescription)"
             }
         }
+    }
+
+    /// Lets the user grant read access to the model's containing folder (the
+    /// App Sandbox only auto-grants the model file itself), then reloads it so
+    /// external textures resolve. The granted access lasts for this app session.
+    private func grantFolderAccessAndRetry(modelURL: URL) {
+        let panel = NSOpenPanel()
+        panel.message = "Seleziona la cartella che contiene \"\(modelURL.lastPathComponent)\" per abilitarne le texture esterne."
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = modelURL.deletingLastPathComponent()
+        guard panel.runModal() == .OK, let folderURL = panel.url else { return }
+        guard folderURL.startAccessingSecurityScopedResource() else { return }
+        missingTexturePrompt = nil
+        load(url: modelURL)
     }
 }
