@@ -130,6 +130,16 @@ struct GroupBuffers {
         return nil;
     }
 
+    // Converting a left-handed source file to our right-handed target axes
+    // makes ufbx mirror every vertex position across `handedness_conversion_axis`
+    // (Z by default) and re-reverse triangle winding to compensate — so the
+    // geometry's silhouette looks correct, but the UVs (authored before the
+    // mirror) now read backwards on the corresponding screen axis (observed as
+    // horizontally-mirrored texture text on a QA test asset). Flip U in that
+    // case to compensate; files that were already right-handed (no mirroring
+    // applied) are untouched.
+    const bool uvNeedsMirrorCompensation = scene->metadata.mirror_axis != UFBX_MIRROR_AXIS_NONE;
+
     SCNScene *scnScene = [SCNScene scene];
 
     for (size_t ni = 0; ni < scene->nodes.count; ni++) {
@@ -179,7 +189,7 @@ struct GroupBuffers {
                 if (hasUV) {
                     ufbx_vec2 uv = ufbx_get_vertex_vec2(&mesh->vertex_uv, ix);
                     // FBX UV origin is bottom-left; SceneKit samples top-left.
-                    g.uvs.push_back((float)uv.x);
+                    g.uvs.push_back(uvNeedsMirrorCompensation ? (float)(1.0 - uv.x) : (float)uv.x);
                     g.uvs.push_back((float)(1.0 - uv.y));
                 }
             }
