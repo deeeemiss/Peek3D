@@ -33,6 +33,11 @@ struct LoadedModel {
     let scene: SCNScene
     let stats: ModelStats
     let animations: [ModelAnimation]
+    /// Non-empty only for FBX models that reference external texture files
+    /// the App Sandbox didn't grant access to (the model file itself was
+    /// picked/dropped, but sibling files weren't). The UI can offer to grant
+    /// access to the model's folder and reload.
+    var missingExternalTextureURLs: [URL] = []
 }
 
 /// Dual-path loader. `.glb`/`.gltf` go through GLTFKit2; everything else goes
@@ -59,6 +64,7 @@ enum ModelLoader {
         let ext = url.pathExtension.lowercased()
         let scene: SCNScene
         var animations: [ModelAnimation] = []
+        var missingExternalTextureURLs: [URL] = []
 
         switch ext {
         case "glb", "gltf":
@@ -80,7 +86,9 @@ enum ModelLoader {
             // v1 scope is geometry + materials/textures + unit conversion;
             // skeletal animation is intentionally not parsed, so no players
             // ride along here.
-            scene = try FBXSceneBuilder.scene(fromFileURL: url)
+            let result = try FBXSceneBuilder.load(fileURL: url)
+            scene = result.scene
+            missingExternalTextureURLs = result.unreadableExternalTextureURLs
         default:
             let mdlAsset = MDLAsset(url: url)
             mdlAsset.loadTextures()
@@ -88,7 +96,8 @@ enum ModelLoader {
         }
 
         let stats = computeStats(scene: scene, url: url)
-        return LoadedModel(scene: scene, stats: stats, animations: animations)
+        return LoadedModel(scene: scene, stats: stats, animations: animations,
+                            missingExternalTextureURLs: missingExternalTextureURLs)
     }
 
     /// Async wrapper used by the UI: loads off-main, delivers on main.

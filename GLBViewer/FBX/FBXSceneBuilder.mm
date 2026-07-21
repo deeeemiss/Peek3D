@@ -21,6 +21,27 @@ static SCNMatrix4 SCNMatrixFromUfbx(const ufbx_matrix *m) {
     return r;
 }
 
+/// True if `m`'s 3x3 basis has a negative determinant, i.e. it mirrors
+/// chirality (flips a right-handed basis to left-handed or vice versa).
+///
+/// We load with `UFBX_SPACE_CONVERSION_ADJUST_TRANSFORMS`, which — for a
+/// source file whose declared axes have different handedness than our
+/// `right_handed_y_up` target — folds the required mirror straight into this
+/// node transform rather than into vertex positions. `scene->metadata.mirror_axis`
+/// only gets set under `UFBX_SPACE_CONVERSION_MODIFY_GEOMETRY`, so it stays
+/// `UFBX_MIRROR_AXIS_NONE` here even when a mirror really was applied — this
+/// determinant check is what actually detects it for our loader. Confirmed
+/// empirically: a hand-built ASCII FBX with Maya-style left-handed
+/// `GlobalSettings` axes loads with `geometry_to_world` determinant -1, while
+/// a normal right-handed export loads with +1.
+static bool MirrorsChirality(const ufbx_matrix *m) {
+    double det =
+          m->cols[0].x * (m->cols[1].y * m->cols[2].z - m->cols[1].z * m->cols[2].y)
+        - m->cols[1].x * (m->cols[0].y * m->cols[2].z - m->cols[0].z * m->cols[2].y)
+        + m->cols[2].x * (m->cols[0].y * m->cols[1].z - m->cols[0].z * m->cols[1].y);
+    return det < 0.0;
+}
+
 static NSString *NSStringFromUfbx(ufbx_string s) {
     if (s.length == 0 || s.data == NULL) return @"";
     return [[NSString alloc] initWithBytes:s.data length:s.length encoding:NSUTF8StringEncoding] ?: @"";
@@ -29,7 +50,9 @@ static NSString *NSStringFromUfbx(ufbx_string s) {
 /// Resolves a ufbx texture to an `NSImage`: embedded content first (works inside
 /// the App Sandbox with no extra file access), then the resolved external file
 /// path (only readable if the sandbox has granted access to that location).
-static NSImage *ImageForTexture(const ufbx_texture *tex) {
+/// When the external path exists but can't be read, its URL is appended to
+/// `unreadableExternalURLs` so the caller can offer a folder-access retry.
+static NSImage *ImageForTexture(const ufbx_texture *tex, NSMutableArray<NSURL *> *unreadableExternalURLs) {
     if (tex == NULL) return nil;
     if (tex->content.size > 0 && tex->content.data != NULL) {
         NSData *data = [NSData dataWithBytes:tex->content.data length:tex->content.size];
@@ -38,8 +61,20 @@ static NSImage *ImageForTexture(const ufbx_texture *tex) {
     }
     NSString *path = NSStringFromUfbx(tex->filename);
     if (path.length > 0) {
-        NSImage *img = [[NSImage alloc] initWithContentsOfFile:path];
-        if (img) return img;
+        // `[NSImage initWithContentsOfFile:]` can return a non-nil image even
+        // when the sandbox denies the actual read: some `NSImageRep` backends
+        // defer decoding the file until first draw, so construction alone
+        // doesn't prove the bytes were readable — it silently renders blank
+        // later instead of failing here. Read the bytes explicitly first (the
+        // same way the embedded-content branch above already does) so an
+        // unreadable file is caught right here, not as a mysteriously blank
+        // material with no reported error.
+        NSData *data = [NSData dataWithContentsOfFile:path];
+        if (data) {
+            NSImage *img = [[NSImage alloc] initWithData:data];
+            if (img) return img;
+        }
+        [unreadableExternalURLs addObject:[NSURL fileURLWithPath:path]];
     }
     return nil;
 }
@@ -51,7 +86,7 @@ static NSImage *ImageForTexture(const ufbx_texture *tex) {
 /// Uses the Blinn lighting model so a plain diffuse texture renders predictably
 /// under the app's default lighting and presets (FBX materials are commonly
 /// non-PBR). Double-sided so a viewer never drops back faces to winding quirks.
-static SCNMaterial *MaterialFromUfbx(const ufbx_material *umat) {
+static SCNMaterial *MaterialFromUfbx(const ufbx_material *umat, NSMutableArray<NSURL *> *unreadableExternalURLs) {
     SCNMaterial *mat = [SCNMaterial material];
     mat.lightingModelName = SCNLightingModelBlinn;
     mat.doubleSided = YES;
@@ -67,7 +102,7 @@ static SCNMaterial *MaterialFromUfbx(const ufbx_material *umat) {
         colorMap = &umat->fbx.diffuse_color;
     }
 
-    NSImage *texImage = ImageForTexture(colorMap->texture);
+    NSImage *texImage = ImageForTexture(colorMap->texture, unreadableExternalURLs);
     if (texImage) {
         mat.diffuse.contents = texImage;
         mat.diffuse.wrapS = SCNWrapModeRepeat;
@@ -91,10 +126,21 @@ struct GroupBuffers {
     std::vector<float> uvs;       // uv per corner
 };
 
+@implementation FBXLoadResult
+- (instancetype)initWithScene:(SCNScene *)scene
+   unreadableExternalTextureURLs:(NSArray<NSURL *> *)urls {
+    if ((self = [super init])) {
+        _scene = scene;
+        _unreadableExternalTextureURLs = urls;
+    }
+    return self;
+}
+@end
+
 @implementation FBXSceneBuilder
 
-+ (nullable SCNScene *)sceneFromFileURL:(NSURL *)url
-                                  error:(NSError * _Nullable * _Nullable)error {
++ (nullable FBXLoadResult *)loadFileURL:(NSURL *)url
+                                   error:(NSError * _Nullable * _Nullable)error {
     ufbx_load_opts opts;
     memset(&opts, 0, sizeof(opts));
 
@@ -130,17 +176,8 @@ struct GroupBuffers {
         return nil;
     }
 
-    // Converting a left-handed source file to our right-handed target axes
-    // makes ufbx mirror every vertex position across `handedness_conversion_axis`
-    // (Z by default) and re-reverse triangle winding to compensate — so the
-    // geometry's silhouette looks correct, but the UVs (authored before the
-    // mirror) now read backwards on the corresponding screen axis (observed as
-    // horizontally-mirrored texture text on a QA test asset). Flip U in that
-    // case to compensate; files that were already right-handed (no mirroring
-    // applied) are untouched.
-    const bool uvNeedsMirrorCompensation = scene->metadata.mirror_axis != UFBX_MIRROR_AXIS_NONE;
-
     SCNScene *scnScene = [SCNScene scene];
+    NSMutableArray<NSURL *> *unreadableExternalURLs = [NSMutableArray array];
 
     for (size_t ni = 0; ni < scene->nodes.count; ni++) {
         ufbx_node *node = scene->nodes.data[ni];
@@ -151,6 +188,12 @@ struct GroupBuffers {
         SCNNode *meshNode = [SCNNode node];
         meshNode.name = NSStringFromUfbx(node->name);
         meshNode.transform = SCNMatrixFromUfbx(&node->geometry_to_world);
+
+        // See `MirrorsChirality`: a handedness-mismatched source file bakes a
+        // mirror into this node's transform rather than into vertex positions,
+        // so the UVs (authored before that mirror) read backwards on one axis.
+        // Flip U to compensate; a normal right-handed file is untouched.
+        const bool uvNeedsMirrorCompensation = MirrorsChirality(&node->geometry_to_world);
 
         const size_t groupCount = mesh->materials.count > 0 ? mesh->materials.count : 1;
         std::vector<GroupBuffers> groups(groupCount);
@@ -256,7 +299,7 @@ struct GroupBuffers {
             ufbx_material *umat = NULL;
             if (gi < node->materials.count) umat = node->materials.data[gi];
             else if (gi < mesh->materials.count) umat = mesh->materials.data[gi];
-            geometry.firstMaterial = MaterialFromUfbx(umat);
+            geometry.firstMaterial = MaterialFromUfbx(umat, unreadableExternalURLs);
 
             SCNNode *groupNode = [SCNNode nodeWithGeometry:geometry];
             [meshNode addChildNode:groupNode];
@@ -266,7 +309,8 @@ struct GroupBuffers {
     }
 
     ufbx_free_scene(scene);
-    return scnScene;
+    return [[FBXLoadResult alloc] initWithScene:scnScene
+                  unreadableExternalTextureURLs:unreadableExternalURLs];
 }
 
 @end

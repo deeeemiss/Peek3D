@@ -257,10 +257,16 @@ final class ViewerController: ObservableObject {
                         // fill instead of standing out — reads as near-invisible
                         // on a dark background. Force a flat, lighting-independent
                         // line colour so wireframe looks the same regardless of
-                        // the active shading mode.
+                        // the active shading mode. `emission` is set alongside
+                        // `diffuse`+`.constant`: it's ADDITIVE and ignores every
+                        // lighting model / lighting-environment preset by
+                        // definition, so the line stays bright even if some
+                        // preset or PBR interaction dims the diffuse term.
                         copy.shaderModifiers = nil
                         copy.lightingModel = .constant
-                        copy.diffuse.contents = NSColor(calibratedWhite: 0.92, alpha: 1)
+                        let lineColor = NSColor(calibratedWhite: 0.92, alpha: 1)
+                        copy.diffuse.contents = lineColor
+                        copy.emission.contents = lineColor
                     }
                     return copy
                 }
