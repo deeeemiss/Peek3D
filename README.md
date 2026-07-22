@@ -1,34 +1,63 @@
+<div align="center">
+
 # GLBViewer
 
-A tiny, native macOS 3D **viewer** — one job: open a 3D file and look at it.
-No editing, no export, no format conversion.
+**Drop a 3D file. Look at it.**
 
-Built with Swift + SwiftUI + SceneKit.
+A tiny, native macOS viewer — no editing, no export, no format conversion.
+
+[![macOS](https://img.shields.io/badge/macOS-13%2B-blue?style=flat-square)]()
+[![Swift](https://img.shields.io/badge/Swift-SwiftUI%20%2B%20SceneKit-orange?style=flat-square)]()
+[![glTF](https://img.shields.io/badge/glTF-GLTFKit2-brightgreen?style=flat-square)](https://github.com/warrenm/GLTFKit2)
+[![FBX](https://img.shields.io/badge/FBX-ufbx-9cf?style=flat-square)](https://github.com/ufbx/ufbx)
+[![License](https://img.shields.io/badge/license-MIT-grey?style=flat-square)]()
+
+[Formats](#formats) · [Features](#features) · [Build](#build) · [Sandbox](#sandbox) · [Known limits](#known-limits)
+
+</div>
 
 ![reference UI](reference-ui.png)
 
+---
+
 ## Formats
 
-| Path | Formats | Loader |
-|------|---------|--------|
-| Primary | `.glb` `.gltf` | [GLTFKit2](https://github.com/warrenm/GLTFKit2) (SPM) |
-| Secondary | `.obj` `.stl` `.usd` `.usdz` `.usda` `.usdc` `.dae` `.ply` `.abc` | Apple Model I/O |
+| Loader | Formats | Animation |
+|--------|---------|-----------|
+| [GLTFKit2](https://github.com/warrenm/GLTFKit2) (SPM) | `.glb` `.gltf` | Skeletal (skinned) + node-transform |
+| [ufbx](https://github.com/ufbx/ufbx) (vendored) | `.fbx` | Node-transform (rigid/hierarchical) |
+| Apple Model I/O | `.obj` `.stl` `.usd` `.usdz` `.usda` `.usdc` `.dae` `.ply` `.abc` | — |
 
-Both paths converge into a single `SCNScene`, so camera / UI / stats never
-need to know where the model came from.
+All three converge into one `SCNScene`, so the viewer, wireframe, shading
+modes, and stats never need to know where a model came from.
 
-## Features (v1)
+## Features
 
-- Drag & drop into the window (empty state **and** to replace a loaded model)
-- File picker
-- Camera orbit / pan / zoom
-- Fit-to-view
-- Wireframe toggle
-- Ground reference grid toggle
-- Viewport screenshot → PNG (`NSSavePanel`)
+### Viewing
+- Drag & drop (empty state **and** to replace a loaded model), or file picker
+- Camera orbit / pan / zoom, fit-to-view
+- Colored XYZ axis gizmo (bottom-right), click an axis to snap the camera
 - Fullscreen toggle
-- Info panel: triangles, vertices, meshes, materials, bounding-box size, file size, file name
-- Colored XYZ axis gizmo (bottom-right) that tracks the camera orientation
+- Viewport screenshot → PNG
+
+### Shading
+- **Predefinito** — the file's own materials/textures
+- **Normali** — color-coded view-space normals
+- **Matcap** — procedural matcap by view-space normal
+- **Unlit** — base colour only, no lighting
+- **UV checker** — procedural checkerboard on the real UVs
+- Wireframe overlay, readable in every shading mode above
+
+### Lighting
+- **Predefinita** / **Studio** / **Esterni** / **Soffusa** presets
+
+### Animation
+- Timeline with play / pause and clip selection for animated `.glb`/`.gltf`
+  (skinned) and `.fbx` (node-transform) models
+- Wireframe stays correct while an animation plays
+
+### Info
+- Triangles, vertices, meshes, materials, bounding-box size, file size, file name
 
 ## Build
 
@@ -45,13 +74,21 @@ Or just open `GLBViewer.xcodeproj` in Xcode and hit Run.
 
 The app runs sandboxed with the **User Selected File (Read Only)** entitlement.
 Files opened via drag & drop or the file picker get security-scoped access
-automatically; arbitrary paths are (by design) denied.
+automatically; arbitrary paths are (by design) denied. External textures
+referenced by an `.fbx`/`.gltf` file (not embedded) need that access too — the
+app prompts for folder access and retries automatically if it's missing.
 
-## Notes
+## Known limits
 
-- Draco-compressed geometry and KTX2/BasisU textures are **not** wired up in v1.
-  A `.glb` using them will surface a load error rather than a silent failure —
-  see the GLTFKit2 README for the extra decoder/xcframework plugins.
+- Draco-compressed geometry and KTX2/BasisU textures are **not** wired up.
+  A `.glb` using them surfaces a load error rather than a silent failure.
+- FBX skinned/skeletal **deformation** (`SCNSkinner`) and blend shapes are
+  not supported yet — a skinned FBX loads and shows its bind pose; bones still
+  receive their transform animation, but the mesh doesn't deform.
+- Timeline drag-to-seek isn't offered (for either format): both loaders bake
+  clips as looping `CAAnimationGroup`s on a wall-clock player, which has no
+  API for jumping to an arbitrary time. Play / pause / clip selection work
+  fully; the bar is a synchronized progress readout, not a scrubber.
 
 ## License
 
