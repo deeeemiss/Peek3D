@@ -32,6 +32,7 @@ enum SelfTest {
             if !model.animations.isEmpty {
                 verifyScrubbing(url: url)
                 if let out = ProcessInfo.processInfo.environment["GLBVIEWER_SELFTEST_RENDER"] {
+                    verifyAnimationVsBindPose(url: url, baseOutput: URL(fileURLWithPath: out))
                     verifyWireframeDuringPlayback(url: url, baseOutput: URL(fileURLWithPath: out))
                     verifyWireframeLiveSCNView(url: url, baseOutput: URL(fileURLWithPath: out))
                     verifyWireframeWithShadingReal(url: url, baseOutput: URL(fileURLWithPath: out))
@@ -80,6 +81,55 @@ enum SelfTest {
             print("DIAG: after-set usesSceneTimeBase=\(a.player.animation.usesSceneTimeBase) "
                   + "timeOffset=\(a.player.animation.timeOffset) (false/0 => .animation is a copy)")
         }
+    }
+
+    /// Ground-truth for the FBX node-transform animation path: attaches the
+    /// wall-clock player and takes two sequential frames off ONE renderer — at
+    /// t=0 (the clip's start pose == the node's rest/bind transform for these
+    /// files) and at 50%% of the clip — writing both as PNGs, then asserts they
+    /// differ and neither is blank. A difference proves the baked keyframes
+    /// actually move the node; the non-blank guard rules out a mesh that
+    /// vanished. This is the "cube rotated vs bind pose" check.
+    ///
+    /// The two snapshots MUST come sequentially from the same renderer (t=0
+    /// first): a lone `snapshot(atTime: 0.5*d)` on a just-played wall-clock
+    /// player renders the start pose instead — the same ordering `renderHashes`
+    /// relies on. Loader-agnostic (goes through `ModelLoader`), but it's the FBX
+    /// clips this was added to cover.
+    private static func verifyAnimationVsBindPose(url: URL, baseOutput: URL) {
+        guard let device = MTLCreateSystemDefaultDevice() else {
+            print("BINDPOSE: no Metal device"); return
+        }
+        guard let model = try? ModelLoader.loadSync(url: url),
+              let anim = model.animations.first else {
+            print("BINDPOSE: no animation to play"); return
+        }
+        let dir = baseOutput.deletingLastPathComponent()
+        let stem = baseOutput.deletingPathExtension().lastPathComponent
+        let duration = anim.player.animation.duration
+        guard duration > 0 else { print("BINDPOSE: no duration"); return }
+
+        model.scene.rootNode.addAnimationPlayer(anim.player, forKey: "verify")
+        anim.player.play()
+        let renderer = SCNRenderer(device: device, options: nil)
+        renderer.scene = model.scene
+        renderer.autoenablesDefaultLighting = true
+        let camera = CameraFit.makeFittedCamera(for: model.scene)
+        model.scene.rootNode.addChildNode(camera)
+        renderer.pointOfView = camera
+
+        let size = CGSize(width: 320, height: 320)
+        let bindImage = renderer.snapshot(atTime: 0, with: size, antialiasingMode: .multisampling4X)
+        writePNG(bindImage, to: dir.appendingPathComponent("\(stem)-anim-bind.png"))
+        let midImage = renderer.snapshot(atTime: duration * 0.5, with: size, antialiasingMode: .multisampling4X)
+        writePNG(midImage, to: dir.appendingPathComponent("\(stem)-anim-midplay.png"))
+
+        let bindHash = pixelHash(bindImage)
+        let midHash = pixelHash(midImage)
+        let ok = (bindHash != midHash) && !isBlank(bindImage) && !isBlank(midImage)
+        print("BINDPOSE: bind=\(String(bindHash, radix: 16)) mid=\(String(midHash, radix: 16)) "
+              + "bindBlank=\(isBlank(bindImage)) midBlank=\(isBlank(midImage)) -> "
+              + (ok ? "ANIMATES (mid-play differs from bind pose)" : "NO MOTION / BLANK"))
     }
 
     /// Reproduces the exact reported bug: wireframe toggled WHILE a clip is

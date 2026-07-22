@@ -47,6 +47,26 @@ static NSString *NSStringFromUfbx(ufbx_string s) {
     return [[NSString alloc] initWithBytes:s.data length:s.length encoding:NSUTF8StringEncoding] ?: @"";
 }
 
+/// A key-path-safe, collision-free name for a node. Animation channels address
+/// nodes by name via absolute key paths (`/<name>.orientation`), and `.`/`/`/
+/// whitespace in a raw FBX name would break that grammar (FBX names routinely
+/// contain spaces and `|`, e.g. `"AnimatedCube|Action"`). We keep only
+/// `[A-Za-z0-9_]`, replace the rest with `_`, and prefix the node's typed_id so
+/// two nodes can never share a name even if their source names collide or are
+/// empty. The same string is used for `SCNNode.name` and in the key path, so
+/// the two always agree.
+static NSString *SanitizedUniqueNodeName(const ufbx_node *node) {
+    NSString *raw = NSStringFromUfbx(node->name);
+    NSMutableString *clean = [NSMutableString stringWithCapacity:raw.length];
+    for (NSUInteger i = 0; i < raw.length; i++) {
+        unichar c = [raw characterAtIndex:i];
+        BOOL ok = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+                  (c >= '0' && c <= '9') || c == '_';
+        [clean appendString:ok ? [NSString stringWithCharacters:&c length:1] : @"_"];
+    }
+    return [NSString stringWithFormat:@"fbxNode_%u_%@", node->typed_id, clean];
+}
+
 /// Resolves a ufbx texture to an `NSImage`: embedded content first (works inside
 /// the App Sandbox with no extra file access), then the resolved external file
 /// path (only readable if the sandbox has granted access to that location).
@@ -126,16 +146,131 @@ struct GroupBuffers {
     std::vector<float> uvs;       // uv per corner
 };
 
+@implementation FBXAnimationClip
+- (instancetype)initWithName:(NSString *)name player:(SCNAnimationPlayer *)player {
+    if ((self = [super init])) {
+        _name = [name copy];
+        _player = player;
+    }
+    return self;
+}
+@end
+
 @implementation FBXLoadResult
 - (instancetype)initWithScene:(SCNScene *)scene
-   unreadableExternalTextureURLs:(NSArray<NSURL *> *)urls {
+                    animations:(NSArray<FBXAnimationClip *> *)animations
+ unreadableExternalTextureURLs:(NSArray<NSURL *> *)urls {
     if ((self = [super init])) {
         _scene = scene;
+        _animations = animations;
         _unreadableExternalTextureURLs = urls;
     }
     return self;
 }
 @end
+
+// MARK: - Animation conversion
+//
+// Playback model matches GLTFKit2's exactly (see `GLTFSceneKit.m`), so the
+// resulting `SCNAnimationPlayer` behaves identically to a glTF clip in
+// `ViewerController`: one `CAAnimationGroup` per clip, whose child
+// `CAKeyframeAnimation`s address target nodes by absolute key path
+// (`/<nodeName>.position|orientation|scale`); the group loops via
+// `repeatDuration = FLT_MAX`, and its `duration` is the finite clip length the
+// timeline reads. The player is added to `scene.rootNode`, and SceneKit resolves
+// each `/name` path against the root's subtree — so every animated node is
+// driven from a single attached player, no matter how deep it sits.
+
+/// Builds a linearly-interpolated position/scale channel from ufbx's baked vec3
+/// keys. `keyTimes` are normalized into [0,1] over the clip's playback window so
+/// every channel shares one timeline regardless of its own key spacing.
+static CAKeyframeAnimation *Vec3Channel(NSString *keyPath, ufbx_baked_vec3_list keys,
+                                        double begin, double duration) {
+    CAKeyframeAnimation *anim = [CAKeyframeAnimation animationWithKeyPath:keyPath];
+    NSMutableArray *values = [NSMutableArray arrayWithCapacity:keys.count];
+    NSMutableArray *times = [NSMutableArray arrayWithCapacity:keys.count];
+    for (size_t i = 0; i < keys.count; i++) {
+        ufbx_baked_vec3 k = keys.data[i];
+        [values addObject:[NSValue valueWithSCNVector3:SCNVector3Make(k.value.x, k.value.y, k.value.z)]];
+        double t = duration > 0.0 ? (k.time - begin) / duration : 0.0;
+        [times addObject:@(t < 0.0 ? 0.0 : (t > 1.0 ? 1.0 : t))];
+    }
+    anim.values = values;
+    anim.keyTimes = times;
+    anim.calculationMode = kCAAnimationLinear;
+    anim.duration = duration;
+    return anim;
+}
+
+/// Builds a (spherically) interpolated rotation channel from ufbx's baked quats.
+/// SceneKit's `orientation` key path takes an `SCNVector4` (x, y, z, w) — the
+/// same component order ufbx uses — and interpolates it as a quaternion.
+static CAKeyframeAnimation *QuatChannel(NSString *keyPath, ufbx_baked_quat_list keys,
+                                        double begin, double duration) {
+    CAKeyframeAnimation *anim = [CAKeyframeAnimation animationWithKeyPath:keyPath];
+    NSMutableArray *values = [NSMutableArray arrayWithCapacity:keys.count];
+    NSMutableArray *times = [NSMutableArray arrayWithCapacity:keys.count];
+    for (size_t i = 0; i < keys.count; i++) {
+        ufbx_baked_quat k = keys.data[i];
+        [values addObject:[NSValue valueWithSCNVector4:SCNVector4Make(k.value.x, k.value.y, k.value.z, k.value.w)]];
+        double t = duration > 0.0 ? (k.time - begin) / duration : 0.0;
+        [times addObject:@(t < 0.0 ? 0.0 : (t > 1.0 ? 1.0 : t))];
+    }
+    anim.values = values;
+    anim.keyTimes = times;
+    anim.calculationMode = kCAAnimationLinear;
+    anim.duration = duration;
+    return anim;
+}
+
+/// Bakes one FBX anim stack into an `SCNAnimationPlayer`, or `nil` if the stack
+/// drives no node transforms (e.g. a stack that only animates material or
+/// visibility properties, which are out of scope). `nodeNames[typed_id]` maps a
+/// baked node back to the `SCNNode.name` we assigned it, closing the loop
+/// between the key path and the live scene graph.
+///
+/// Every baked channel with keys is emitted, including channels ufbx flags as
+/// constant: doing so keeps the animated pose fully self-defined and avoids any
+/// dependence on whether the node's rest/bind transform happens to equal the
+/// clip's value at t=0.
+static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack,
+                                       NSArray<NSString *> *nodeNames) {
+    ufbx_error berr;
+    memset(&berr, 0, sizeof(berr));
+    ufbx_baked_anim *bake = ufbx_bake_anim(scene, stack->anim, NULL, &berr);
+    if (bake == NULL) return nil;
+
+    const double begin = bake->playback_time_begin;
+    const double duration = bake->playback_duration;
+    if (duration <= 0.0) { ufbx_free_baked_anim(bake); return nil; }
+
+    NSMutableArray<CAAnimation *> *channels = [NSMutableArray array];
+    for (size_t i = 0; i < bake->nodes.count; i++) {
+        ufbx_baked_node *bn = &bake->nodes.data[i];
+        if (bn->typed_id >= nodeNames.count) continue;
+        NSString *root = [@"/" stringByAppendingString:nodeNames[bn->typed_id]];
+        if (bn->translation_keys.count > 0)
+            [channels addObject:Vec3Channel([root stringByAppendingString:@".position"],
+                                            bn->translation_keys, begin, duration)];
+        if (bn->rotation_keys.count > 0)
+            [channels addObject:QuatChannel([root stringByAppendingString:@".orientation"],
+                                            bn->rotation_keys, begin, duration)];
+        if (bn->scale_keys.count > 0)
+            [channels addObject:Vec3Channel([root stringByAppendingString:@".scale"],
+                                            bn->scale_keys, begin, duration)];
+    }
+    ufbx_free_baked_anim(bake);
+
+    if (channels.count == 0) return nil;
+
+    CAAnimationGroup *group = [CAAnimationGroup animation];
+    group.animations = channels;
+    group.duration = duration;
+    group.repeatDuration = FLT_MAX; // loop like the glTF path
+    SCNAnimation *scnAnim = [SCNAnimation animationWithCAAnimation:group];
+    SCNAnimationPlayer *player = [SCNAnimationPlayer animationPlayerWithAnimation:scnAnim];
+    return [[FBXAnimationClip alloc] initWithName:NSStringFromUfbx(stack->name) player:player];
+}
 
 @implementation FBXSceneBuilder
 
@@ -153,9 +288,10 @@ struct GroupBuffers {
     opts.target_axes = ufbx_axes_right_handed_y_up;
     opts.space_conversion = UFBX_SPACE_CONVERSION_ADJUST_TRANSFORMS;
 
-    // v1 scope: geometry + materials/textures only. Skeletal animation is out of
-    // scope, so we tell ufbx not to load animation curves at all.
-    opts.ignore_animation = true;
+    // Animation curves are now parsed (see `ClipFromStack`). `ADJUST_TRANSFORMS`
+    // folds the unit/axis conversion into the node transforms, so the baked
+    // per-node keyframes come out already in SceneKit's target space — no
+    // separate conversion of the animation data is needed.
 
     // Fill in normals if the file omits them, and pull in external assets
     // (e.g. sibling texture files) when the sandbox allows reading them.
@@ -179,15 +315,56 @@ struct GroupBuffers {
     SCNScene *scnScene = [SCNScene scene];
     NSMutableArray<NSURL *> *unreadableExternalURLs = [NSMutableArray array];
 
+    // The scene graph MIRRORS the FBX node hierarchy (rather than flattening
+    // every mesh onto the root with its `geometry_to_world` baked in, as the
+    // static-only version did). This is what makes node-transform animation
+    // possible: a baked clip keys each node's LOCAL transform, so each animated
+    // node must sit under its real parent chain for the composition to land in
+    // the right world position. Bind pose is identical to the old flat build —
+    // verified: `geometry_to_world == node_to_world * geometry_to_node`, and a
+    // node's world transform is the product of the `node_to_parent` transforms
+    // up the chain (see the SceneKit/ufbx column-major agreement in
+    // `SCNMatrixFromUfbx`).
+
+    // Pass 1: one SCNNode per ufbx node, with its LOCAL transform and a
+    // key-path-safe unique name. `nodeForId`/`nodeNames` are indexed by
+    // `typed_id` (== index into `scene->nodes`), the same id the baked animation
+    // reports, so channels can find their target node by name.
+    std::vector<SCNNode *> nodeForId(scene->nodes.count, nil);
+    NSMutableArray<NSString *> *nodeNames =
+        [NSMutableArray arrayWithCapacity:scene->nodes.count];
+    for (size_t i = 0; i < scene->nodes.count; i++) [nodeNames addObject:@""];
+    for (size_t ni = 0; ni < scene->nodes.count; ni++) {
+        ufbx_node *node = scene->nodes.data[ni];
+        SCNNode *sn = [SCNNode node];
+        NSString *name = SanitizedUniqueNodeName(node);
+        sn.name = name;
+        sn.transform = SCNMatrixFromUfbx(&node->node_to_parent);
+        nodeForId[node->typed_id] = sn;
+        nodeNames[node->typed_id] = name;
+    }
+
+    // Pass 2: reconstruct parent/child links; root ufbx nodes hang off the scene
+    // root. (The ufbx root node itself becomes an SCNNode too, so any conversion
+    // adjustment folded into its transform is preserved.)
+    for (size_t ni = 0; ni < scene->nodes.count; ni++) {
+        ufbx_node *node = scene->nodes.data[ni];
+        SCNNode *sn = nodeForId[node->typed_id];
+        if (node->parent != NULL) {
+            [nodeForId[node->parent->typed_id] addChildNode:sn];
+        } else {
+            [scnScene.rootNode addChildNode:sn];
+        }
+    }
+
+    // Pass 3: attach geometry to each mesh node.
     for (size_t ni = 0; ni < scene->nodes.count; ni++) {
         ufbx_node *node = scene->nodes.data[ni];
         if (node == NULL || node->mesh == NULL) continue;
         ufbx_mesh *mesh = node->mesh;
         if (mesh->num_faces == 0) continue;
 
-        SCNNode *meshNode = [SCNNode node];
-        meshNode.name = NSStringFromUfbx(node->name);
-        meshNode.transform = SCNMatrixFromUfbx(&node->geometry_to_world);
+        SCNNode *meshNode = nodeForId[node->typed_id];
 
         // See `MirrorsChirality`: a handedness-mismatched source file bakes a
         // mirror into this node's transform rather than into vertex positions,
@@ -301,15 +478,29 @@ struct GroupBuffers {
             else if (gi < mesh->materials.count) umat = mesh->materials.data[gi];
             geometry.firstMaterial = MaterialFromUfbx(umat, unreadableExternalURLs);
 
+            // The geometry sits under the mesh node offset by `geometry_to_node`
+            // (the non-inherited geometry transform). Combined with the mesh
+            // node's world transform this reproduces `geometry_to_world` exactly,
+            // and — unlike baking `geometry_to_world` straight onto the mesh node
+            // — it leaves the mesh node free to carry the animated local
+            // transform.
             SCNNode *groupNode = [SCNNode nodeWithGeometry:geometry];
+            groupNode.transform = SCNMatrixFromUfbx(&node->geometry_to_node);
             [meshNode addChildNode:groupNode];
         }
+    }
 
-        [scnScene.rootNode addChildNode:meshNode];
+    // Bake each anim stack into a playable clip. Stacks that key no node
+    // transforms (e.g. property-only animation) yield nil and are skipped.
+    NSMutableArray<FBXAnimationClip *> *clips = [NSMutableArray array];
+    for (size_t si = 0; si < scene->anim_stacks.count; si++) {
+        FBXAnimationClip *clip = ClipFromStack(scene, scene->anim_stacks.data[si], nodeNames);
+        if (clip != nil) [clips addObject:clip];
     }
 
     ufbx_free_scene(scene);
     return [[FBXLoadResult alloc] initWithScene:scnScene
+                                     animations:clips
                   unreadableExternalTextureURLs:unreadableExternalURLs];
 }
 
