@@ -136,7 +136,7 @@ struct ContentView: View {
                 .pointerCursor()
                 .overlay(alignment: .top) {
                     if let gizmoHoverLabel {
-                        Text(gizmoHoverLabel)
+                        Text(LocalizedStringKey(gizmoHoverLabel))
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.white)
                             .fixedSize()
@@ -183,21 +183,22 @@ struct ContentView: View {
     }
 
     private func missingTextureBanner(_ prompt: (modelURL: URL, count: Int)) -> some View {
-        VStack {
+        let message = prompt.count == 1
+            ? String(localized: "missingTexture.singular", defaultValue: "1 external texture not loaded (folder permissions).")
+            : "\(prompt.count) " + String(localized: "missingTexture.pluralSuffix", defaultValue: "external textures not loaded (folder permissions).")
+        return VStack {
             Spacer()
             HStack(spacing: 12) {
-                Text(prompt.count == 1
-                     ? "1 texture esterna non caricata (permessi cartella)."
-                     : "\(prompt.count) texture esterne non caricate (permessi cartella).")
+                Text(message)
                     .font(.system(size: 13))
                     .foregroundStyle(.white)
-                Button("Concedi accesso alla cartella") { grantFolderAccessAndRetry(modelURL: prompt.modelURL) }
+                Button("Grant folder access") { grantFolderAccessAndRetry(modelURL: prompt.modelURL) }
                     .buttonStyle(.plain)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(.white.opacity(0.2), in: RoundedRectangle(cornerRadius: 6))
-                Button("Ignora") { missingTexturePrompt = nil }
+                Button("Dismiss") { missingTexturePrompt = nil }
                     .buttonStyle(.plain)
                     .foregroundStyle(.white.opacity(0.7))
             }
@@ -226,7 +227,8 @@ struct ContentView: View {
                     self.missingTexturePrompt = (url, model.missingExternalTextureURLs.count)
                 }
             case .failure(let error):
-                self.errorMessage = "Errore nel caricamento: \(error.localizedDescription)"
+                let prefix = String(localized: "error.loadPrefix", defaultValue: "Error loading:")
+                self.errorMessage = "\(prefix) \(error.localizedDescription)"
             }
         }
     }
@@ -236,7 +238,9 @@ struct ContentView: View {
     /// external textures resolve. The granted access lasts for this app session.
     private func grantFolderAccessAndRetry(modelURL: URL) {
         let panel = NSOpenPanel()
-        panel.message = "Seleziona la cartella che contiene \"\(modelURL.lastPathComponent)\" per abilitarne le texture esterne."
+        let prefix = String(localized: "folderAccess.prefix", defaultValue: "Select the folder that contains")
+        let suffix = String(localized: "folderAccess.suffix", defaultValue: "to enable its external textures.")
+        panel.message = "\(prefix) \"\(modelURL.lastPathComponent)\" \(suffix)"
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false

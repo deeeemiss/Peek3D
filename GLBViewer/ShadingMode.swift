@@ -17,7 +17,7 @@ import simd
 /// - `uvChecker` DOES respond to lights (uses `.blinn`) so surface shape still
 ///   reads while the checker exposes the UV layout.
 enum ShadingMode: String, CaseIterable, Identifiable {
-    case standard    // "Predefinito" — the file's own materials
+    case standard    // "Default" — the file's own materials
     case normals     // color-coded view-space normals
     case matcap      // procedural matcap sampled by view-space normal
     case unlit       // base colour only, no lighting (.constant)
@@ -25,14 +25,18 @@ enum ShadingMode: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    /// Italian label shown in the toolbar menu.
+    /// Localized label shown in the toolbar menu. `standard` gets its own key
+    /// (`shading.default`) because it shares the English word "Default" with
+    /// `LightingPreset.standard`, but the two need different Italian genders
+    /// ("Predefinito" vs "Predefinita") — a shared literal key would collide
+    /// in the string catalog.
     var displayName: String {
         switch self {
-        case .standard:  return "Predefinito"
-        case .normals:   return "Normali"
-        case .matcap:    return "Matcap"
-        case .unlit:     return "Unlit"
-        case .uvChecker: return "UV checker"
+        case .standard:  return String(localized: "shading.default", defaultValue: "Default")
+        case .normals:   return String(localized: "Normals")
+        case .matcap:    return String(localized: "Matcap")
+        case .unlit:     return String(localized: "Unlit")
+        case .uvChecker: return String(localized: "UV checker")
         }
     }
 

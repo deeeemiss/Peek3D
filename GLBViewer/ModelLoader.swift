@@ -12,7 +12,8 @@ enum ModelLoadError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .loadFailed(let name):
-            return "Impossibile caricare \(name)."
+            let prefix = String(localized: "error.loadFailedPrefix", defaultValue: "Could not load")
+            return "\(prefix) \(name)."
         }
     }
 }

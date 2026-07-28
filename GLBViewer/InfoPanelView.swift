@@ -6,17 +6,17 @@ struct InfoPanelView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Info modello")
+            Text("Model info")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.white)
 
             Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 20, verticalSpacing: 8) {
-                row("Triangoli", stats.triangleCountFormatted)
-                row("Vertici", stats.vertexCountFormatted)
+                row("Triangles", stats.triangleCountFormatted)
+                row("Vertices", stats.vertexCountFormatted)
                 row("Mesh", "\(stats.meshCount)")
-                row("Materiali", "\(stats.materialCount)")
-                row("Dimensioni", stats.dimensionsFormatted)
-                row("Dimensione file", stats.fileSizeFormatted)
+                row("Materials", "\(stats.materialCount)")
+                row("Size", stats.dimensionsFormatted)
+                row("File size", stats.fileSizeFormatted)
             }
         }
         .padding(16)
@@ -29,7 +29,7 @@ struct InfoPanelView: View {
     @ViewBuilder
     private func row(_ label: String, _ value: String) -> some View {
         GridRow {
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.system(size: 13))
                 .foregroundStyle(.white.opacity(0.5))
             Text(value)

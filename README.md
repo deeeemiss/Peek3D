@@ -41,15 +41,15 @@ modes, and stats never need to know where a model came from.
 - Viewport screenshot → PNG
 
 ### Shading
-- **Predefinito** — the file's own materials/textures
-- **Normali** — color-coded view-space normals
+- **Default** — the file's own materials/textures
+- **Normals** — color-coded view-space normals
 - **Matcap** — procedural matcap by view-space normal
 - **Unlit** — base colour only, no lighting
 - **UV checker** — procedural checkerboard on the real UVs
 - Wireframe overlay, readable in every shading mode above
 
 ### Lighting
-- **Predefinita** / **Studio** / **Esterni** / **Soffusa** presets
+- **Default** / **Studio** / **Outdoor** / **Dark mood** presets
 
 ### Animation
 - Timeline with play / pause and clip selection for animated `.glb`/`.gltf`
@@ -58,6 +58,11 @@ modes, and stats never need to know where a model came from.
 
 ### Info
 - Triangles, vertices, meshes, materials, bounding-box size, file size, file name
+
+### Localization
+- English (primary) and Italian, via a native Xcode String Catalog — follows
+  the per-app language set in macOS System Settings → General → Language &
+  Region. More languages (incl. non-Latin scripts) planned.
 
 ## Build
 

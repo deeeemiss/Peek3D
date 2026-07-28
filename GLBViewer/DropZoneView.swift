@@ -23,7 +23,7 @@ struct DropZoneView: View {
                     .font(.system(size: 52, weight: .thin))
                     .foregroundStyle(.white.opacity(isTargeted ? 0.8 : 0.4))
                 VStack(spacing: 4) {
-                    Text("Trascina un modello 3D qui")
+                    Text("Drag a 3D model here")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(.white.opacity(0.75))
                     Text(".glb  .gltf  .obj  .stl  .usdz  .usd  .dae  .ply")
@@ -31,7 +31,7 @@ struct DropZoneView: View {
                         .foregroundStyle(.white.opacity(0.35))
                 }
                 Button(action: openPanel) {
-                    Text("Scegli un file…")
+                    Text("Choose a file…")
                         .font(.system(size: 13, weight: .medium))
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)

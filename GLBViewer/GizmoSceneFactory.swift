@@ -19,9 +19,9 @@ enum GizmoSceneFactory {
     /// Tooltip text for the bright, positive-end nodes only. The dim
     /// negative ends are just as clickable but stay unlabeled by design.
     static let axisTooltips: [String: String] = [
-        "axis+X": "Vista laterale",
-        "axis+Y": "Vista dall'alto",
-        "axis+Z": "Vista frontale",
+        "axis+X": "Side view",
+        "axis+Y": "Top view",
+        "axis+Z": "Front view",
     ]
 
     static func makeScene() -> SCNScene {

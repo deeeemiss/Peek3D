@@ -1,4 +1,9 @@
 CLAUDE.md
+AGENTS.md
+.claude/
+.headroom/
+.tokensave/
+graphify-out/
 .DS_Store
 build/
 build-release/

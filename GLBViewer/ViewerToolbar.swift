@@ -8,25 +8,25 @@ struct ViewerToolbar: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            iconButton("plus.magnifyingglass", label: "Zoom avanti") { controller.zoom(by: 0.25) }
-            iconButton("minus.magnifyingglass", label: "Zoom indietro") { controller.zoom(by: -0.25) }
+            iconButton("plus.magnifyingglass", label: "Zoom in") { controller.zoom(by: 0.25) }
+            iconButton("minus.magnifyingglass", label: "Zoom out") { controller.zoom(by: -0.25) }
 
             divider
 
-            iconButton("viewfinder", label: "Inquadra tutto") { controller.fitToView() }
+            iconButton("viewfinder", label: "Fit to view") { controller.fitToView() }
 
             divider
 
             iconButton("triangle", label: "Wireframe", active: controller.isWireframe) { controller.toggleWireframe() }
-            iconButton("circle.grid.3x3", label: "Griglia", active: controller.isGridVisible) { controller.toggleGrid() }
+            iconButton("circle.grid.3x3", label: "Grid", active: controller.isGridVisible) { controller.toggleGrid() }
             ShadingMenuButton(controller: controller)
             LightingMenuButton(controller: controller)
-            iconButton("info.circle", label: "Info modello", active: showInfo) { showInfo.toggle() }
+            iconButton("info.circle", label: "Model info", active: showInfo) { showInfo.toggle() }
 
             divider
 
             iconButton("camera", label: "Screenshot") { controller.takeScreenshot() }
-            iconButton("arrow.up.left.and.arrow.down.right", label: "Schermo intero") { controller.toggleFullScreen() }
+            iconButton("arrow.up.left.and.arrow.down.right", label: "Fullscreen") { controller.toggleFullScreen() }
         }
         .padding(6)
         .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 14))
@@ -84,7 +84,7 @@ private struct ToolbarIconButton: View {
     }
 
     private var tooltip: some View {
-        Text(label)
+        Text(LocalizedStringKey(label))
             .font(.system(size: 12, weight: .medium))
             .foregroundStyle(.white)
             .fixedSize()
@@ -130,7 +130,7 @@ private struct SidebarTooltip: ViewModifier {
     }
 
     private var tooltip: some View {
-        Text(label)
+        Text(LocalizedStringKey(label))
             .font(.system(size: 12, weight: .medium))
             .foregroundStyle(.white)
             .fixedSize()
@@ -204,7 +204,7 @@ private struct ShadingMenuButton: View {
 
     var body: some View {
         Menu {
-            Section("Materiale") {
+            Section("Shading") {
                 ForEach(ShadingMode.allCases) { mode in
                     Button {
                         controller.setShadingMode(mode)
@@ -237,7 +237,7 @@ private struct ShadingMenuButton: View {
             withAnimation(.easeOut(duration: 0.15)) { isHovering = inside }
             if inside { NSCursor.pointingHand.set() }
         })
-        .sidebarTooltip("Materiale")
+        .sidebarTooltip("Shading")
     }
 
     private var backgroundColor: Color {
@@ -285,7 +285,7 @@ private struct LightingMenuButton: View {
             withAnimation(.easeOut(duration: 0.15)) { isHovering = inside }
             if inside { NSCursor.pointingHand.set() }
         })
-        .sidebarTooltip("Illuminazione")
+        .sidebarTooltip("Lighting")
     }
 
     private var backgroundColor: Color {

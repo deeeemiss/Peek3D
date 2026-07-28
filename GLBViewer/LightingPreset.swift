@@ -9,20 +9,21 @@ import simd
 /// procedural rigs built entirely in code — no external HDRI or asset — that
 /// **replace** scene illumination (see `LightingRig` and `ViewerController`).
 enum LightingPreset: String, CaseIterable, Identifiable {
-    case standard   // "Predefinita"
+    case standard   // "Default"
     case studio     // "Studio"
-    case outdoor    // "Esterni"
-    case darkMood   // "Soffusa"
+    case outdoor    // "Outdoor"
+    case darkMood   // "Dark mood"
 
     var id: String { rawValue }
 
-    /// Italian label shown in the toolbar menu.
+    /// Localized label shown in the toolbar menu. `standard` gets its own key
+    /// (`lighting.default`) — see `ShadingMode.displayName` for why.
     var displayName: String {
         switch self {
-        case .standard: return "Predefinita"
-        case .studio:   return "Studio"
-        case .outdoor:  return "Esterni"
-        case .darkMood: return "Soffusa"
+        case .standard: return String(localized: "lighting.default", defaultValue: "Default")
+        case .studio:   return String(localized: "Studio")
+        case .outdoor:  return String(localized: "Outdoor")
+        case .darkMood: return String(localized: "Dark mood")
         }
     }
 

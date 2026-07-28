@@ -60,7 +60,7 @@ struct TimelineControlsView: View {
         }
         .buttonStyle(.plain)
         .pointerCursor()
-        .help(controller.isPlaying ? "Pausa" : "Riproduci")
+        .help(controller.isPlaying ? "Pause" : "Play")
     }
 
     // MARK: - Progress
@@ -115,7 +115,7 @@ struct TimelineControlsView: View {
         .menuIndicator(.hidden)
         .fixedSize()
         .pointerCursor()
-        .help("Scegli animazione")
+        .help("Choose animation")
     }
 
     // MARK: - Formatting
