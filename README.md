@@ -1,6 +1,6 @@
 <div align="center">
 
-# GLBViewer
+# Peek3D
 
 **Drop a 3D file. Look at it.**
 
@@ -69,11 +69,11 @@ modes, and stats never need to know where a model came from.
 Requires Xcode 16+ (developed on 26.6), macOS 13+.
 
 ```sh
-xcodebuild -scheme GLBViewer -project GLBViewer.xcodeproj \
+xcodebuild -scheme Peek3D -project Peek3D.xcodeproj \
   -destination 'platform=macOS' build
 ```
 
-Or just open `GLBViewer.xcodeproj` in Xcode and hit Run.
+Or just open `Peek3D.xcodeproj` in Xcode and hit Run.
 
 ## Sandbox
 

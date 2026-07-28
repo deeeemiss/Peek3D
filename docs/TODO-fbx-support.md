@@ -26,14 +26,14 @@ Confronto ufbx vs Assimp per lo scope v1 (sola visualizzazione):
   formati che non ci servono), storia di sandbox/firma più complicata, nessun
   vantaggio reale per uno scope ristretto a geometria + materiali. Scartata.
 
-Versione vendorizzata: **ufbx v0.23.0**, in `GLBViewer/ThirdParty/ufbx/`.
+Versione vendorizzata: **ufbx v0.23.0**, in `Peek3D/ThirdParty/ufbx/`.
 
 ## Cosa fa la v1 (implementata)
 
 - Terzo backend nel `ModelLoader`, accanto a GLTFKit2 e Model I/O; converge
   nello stesso `SCNScene` usato dal resto dell'app (viewer, wireframe, shading,
   preset di illuminazione).
-- Bridge Objective-C++ `GLBViewer/FBX/FBXSceneBuilder.mm` che chiama ufbx e
+- Bridge Objective-C++ `Peek3D/FBX/FBXSceneBuilder.mm` che chiama ufbx e
   costruisce nodi/geometrie/materiali SceneKit.
 - Geometria triangolata (poligoni n-gon inclusi), normali (generate se assenti).
 - Materiali: base color / diffuse, con texture **embedded** (funziona in sandbox

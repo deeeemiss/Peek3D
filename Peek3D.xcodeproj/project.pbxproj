@@ -11,7 +11,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		1A00000000000000000000A4 /* GLBViewer */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = GLBViewer; sourceTree = "<group>"; };
+		1A00000000000000000000A4 /* Peek3D */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Peek3D; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -29,7 +29,7 @@
 		1A00000000000000000000A2 = {
 			isa = PBXGroup;
 			children = (
-				1A00000000000000000000A4 /* GLBViewer */,
+				1A00000000000000000000A4 /* Peek3D */,
 				1A00000000000000000000A3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -37,7 +37,7 @@
 		1A00000000000000000000A3 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1A00000000000000000000A6 /* GLBViewer.app */,
+				1A00000000000000000000A6 /* Peek3D.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -45,9 +45,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1A00000000000000000000A5 /* GLBViewer */ = {
+		1A00000000000000000000A5 /* Peek3D */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1A00000000000000000000A8 /* Build configuration list for PBXNativeTarget "GLBViewer" */;
+			buildConfigurationList = 1A00000000000000000000A8 /* Build configuration list for PBXNativeTarget "Peek3D" */;
 			buildPhases = (
 				1A00000000000000000000C1 /* Sources */,
 				1A00000000000000000000C2 /* Frameworks */,
@@ -58,14 +58,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				1A00000000000000000000A4 /* GLBViewer */,
+				1A00000000000000000000A4 /* Peek3D */,
 			);
-			name = GLBViewer;
+			name = Peek3D;
 			packageProductDependencies = (
 				1A00000000000000000000D2 /* GLTFKit2 */,
 			);
-			productName = GLBViewer;
-			productReference = 1A00000000000000000000A6 /* GLBViewer.app */;
+			productName = Peek3D;
+			productReference = 1A00000000000000000000A6 /* Peek3D.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -83,7 +83,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 1A00000000000000000000A7 /* Build configuration list for PBXProject "GLBViewer" */;
+			buildConfigurationList = 1A00000000000000000000A7 /* Build configuration list for PBXProject "Peek3D" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -101,7 +101,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1A00000000000000000000A5 /* GLBViewer */,
+				1A00000000000000000000A5 /* Peek3D */,
 			);
 		};
 /* End PBXProject section */
@@ -171,7 +171,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = NO;
-				CODE_SIGN_ENTITLEMENTS = GLBViewer/GLBViewer.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Peek3D/Peek3D.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -179,7 +179,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = GLBViewer;
+				INFOPLIST_KEY_CFBundleDisplayName = Peek3D;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = "";
@@ -190,11 +190,11 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.seb.GLBViewer;
+				PRODUCT_BUNDLE_IDENTIFIER = com.seb.Peek3D;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "GLBViewer/GLBViewer-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "Peek3D/Peek3D-Bridging-Header.h";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				SWIFT_VERSION = 5.0;
@@ -205,7 +205,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = NO;
-				CODE_SIGN_ENTITLEMENTS = GLBViewer/GLBViewer.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Peek3D/Peek3D.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -213,7 +213,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = GLBViewer;
+				INFOPLIST_KEY_CFBundleDisplayName = Peek3D;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = "";
@@ -224,11 +224,11 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.seb.GLBViewer;
+				PRODUCT_BUNDLE_IDENTIFIER = com.seb.Peek3D;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "GLBViewer/GLBViewer-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "Peek3D/Peek3D-Bridging-Header.h";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				SWIFT_VERSION = 5.0;
@@ -238,7 +238,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1A00000000000000000000A7 /* Build configuration list for PBXProject "GLBViewer" */ = {
+		1A00000000000000000000A7 /* Build configuration list for PBXProject "Peek3D" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1A00000000000000000000B1 /* Debug */,
@@ -247,7 +247,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1A00000000000000000000A8 /* Build configuration list for PBXNativeTarget "GLBViewer" */ = {
+		1A00000000000000000000A8 /* Build configuration list for PBXNativeTarget "Peek3D" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1A00000000000000000000B3 /* Debug */,

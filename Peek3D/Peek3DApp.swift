@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct GLBViewerApp: App {
+struct Peek3DApp: App {
 
     init() {
         SelfTest.runIfRequested()

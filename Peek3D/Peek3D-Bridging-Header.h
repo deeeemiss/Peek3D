@@ -1,5 +1,5 @@
 //
-//  GLBViewer-Bridging-Header.h
+//  Peek3D-Bridging-Header.h
 //  Exposes Objective-C(++) interfaces to Swift.
 //
 

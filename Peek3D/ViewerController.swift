@@ -374,7 +374,7 @@ final class ViewerController: ObservableObject {
     //   • `SCNAnimation.usesSceneTimeBase = true` + `SCNView.sceneTime`  → no motion
     //   • `speed = 0` + `SCNAnimation.timeOffset`  (the CA freeze trick)   → no motion
     // Both were verified STATIC against real rendered pixels (Fox, BoxAnimated)
-    // via the `SelfTest` harness in GLBViewerApp.swift; only wall-clock produced
+    // via the `SelfTest` harness in Peek3DApp.swift; only wall-clock produced
     // distinct frames. See that harness for the reproducible evidence.
     //
     // Consequence: there is no public API to jump a wall-clock player to an

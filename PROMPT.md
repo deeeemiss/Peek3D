@@ -1,4 +1,4 @@
-# GLBViewer — brief per Claude Code
+# Peek3D — brief per Claude Code
 
 ## Obiettivo
 
@@ -9,7 +9,7 @@ vedi `reference-ui.png` allegato (screenshot di un viewer online simile a
 quello che voglio, per stile/layout — non per stack tecnico, quello è
 mio qui sotto).
 
-Nome progetto: **GLBViewer**.
+Nome progetto: **Peek3D**.
 
 ## Formati da supportare
 

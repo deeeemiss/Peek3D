@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1A00000000000000000000A5"
-               BuildableName = "GLBViewer"
-               BlueprintName = "GLBViewer"
-               ReferencedContainer = "container:GLBViewer.xcodeproj">
+               BuildableName = "Peek3D"
+               BlueprintName = "Peek3D"
+               ReferencedContainer = "container:Peek3D.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1A00000000000000000000A5"
-            BuildableName = "GLBViewer"
-            BlueprintName = "GLBViewer"
-            ReferencedContainer = "container:GLBViewer.xcodeproj">
+            BuildableName = "Peek3D"
+            BlueprintName = "Peek3D"
+            ReferencedContainer = "container:Peek3D.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1A00000000000000000000A5"
-            BuildableName = "GLBViewer"
-            BlueprintName = "GLBViewer"
-            ReferencedContainer = "container:GLBViewer.xcodeproj">
+            BuildableName = "Peek3D"
+            BlueprintName = "Peek3D"
+            ReferencedContainer = "container:Peek3D.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
