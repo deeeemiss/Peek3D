@@ -1,446 +1,591 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "1 external texture not loaded (folder permissions)." : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "1 texture esterna non caricata (permessi cartella)."
+  "sourceLanguage": "en",
+  "strings": {
+    "1 external texture not loaded (folder permissions).": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 texture esterna non caricata (permessi cartella)."
           }
         }
       }
     },
-    "Animation" : {
-      "comment" : "clip.fallback",
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Animazione"
+    "Animation": {
+      "comment": "clip.fallback",
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Animazione"
           }
         }
       }
     },
-    "Choose a file…" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scegli un file…"
+    "Choose a file…": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scegli un file…"
           }
         }
       }
     },
-    "Choose animation" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scegli animazione"
+    "Choose animation": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scegli animazione"
           }
         }
       }
     },
-    "Could not load" : {
-      "comment" : "error.loadFailedPrefix",
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossibile caricare"
+    "Could not load": {
+      "comment": "error.loadFailedPrefix",
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile caricare"
           }
         }
       }
     },
-    "Dark mood" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Soffusa"
+    "Dark mood": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soffusa"
           }
         }
       }
     },
-    "Dismiss" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ignora"
+    "Dismiss": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignora"
           }
         }
       }
     },
-    "Drag a 3D model here" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trascina un modello 3D qui"
+    "Drag a 3D model here": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trascina un modello 3D qui"
           }
         }
       }
     },
-    "Error loading:" : {
-      "comment" : "error.loadPrefix",
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Errore nel caricamento:"
+    "Error loading:": {
+      "comment": "error.loadPrefix",
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Errore nel caricamento:"
           }
         }
       }
     },
-    "File size" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dimensione file"
+    "File size": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dimensione file"
           }
         }
       }
     },
-    "Fit to view" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Inquadra tutto"
+    "Fit to view": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inquadra tutto"
           }
         }
       }
     },
-    "Front view" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vista frontale"
+    "Front view": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista frontale"
           }
         }
       }
     },
-    "Fullscreen" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schermo intero"
+    "Fullscreen": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schermo intero"
           }
         }
       }
     },
-    "Grant folder access" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concedi accesso alla cartella"
+    "Grant folder access": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concedi accesso alla cartella"
           }
         }
       }
     },
-    "Grid" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Griglia"
+    "Grid": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Griglia"
           }
         }
       }
     },
-    "Lighting" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Illuminazione"
+    "Lighting": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Illuminazione"
           }
         }
       }
     },
-    "Matcap" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Matcap"
+    "Matcap": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Matcap"
           }
         }
       }
     },
-    "Materials" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Materiali"
+    "Materials": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Materiali"
           }
         }
       }
     },
-    "Mesh" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mesh"
+    "Mesh": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesh"
           }
         }
       }
     },
-    "Model info" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Info modello"
+    "Model info": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Info modello"
           }
         }
       }
     },
-    "Normals" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Normali"
-          }
-        }
-      }
-    },
-    "Outdoor" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esterni"
-          }
-        }
-      }
-    },
-    "Pause" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa"
-          }
-        }
-      }
-    },
-    "Play" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Riproduci"
-          }
-        }
-      }
-    },
-    "Screenshot" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screenshot"
-          }
-        }
-      }
-    },
-    "Select the folder that contains" : {
-      "comment" : "folderAccess.prefix",
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Seleziona la cartella che contiene"
-          }
-        }
-      }
-    },
-    "Shading" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Materiale"
-          }
-        }
-      }
-    },
-    "Side view" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vista laterale"
-          }
-        }
-      }
-    },
-    "Size" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dimensioni"
-          }
-        }
-      }
-    },
-    "Studio" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Studio"
-          }
-        }
-      }
-    },
-    "Top view" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vista dall'alto"
-          }
-        }
-      }
-    },
-    "Triangles" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Triangoli"
-          }
-        }
-      }
-    },
-    "UV checker" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "UV checker"
-          }
-        }
-      }
-    },
-    "Unlit" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unlit"
-          }
-        }
-      }
-    },
-    "Vertices" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vertici"
-          }
-        }
-      }
-    },
-    "Wireframe" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wireframe"
-          }
-        }
-      }
-    },
-    "Zoom in" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zoom avanti"
-          }
-        }
-      }
-    },
-    "Zoom out" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zoom indietro"
-          }
-        }
-      }
-    },
-    "external textures not loaded (folder permissions)." : {
-      "comment" : "missingTexture.pluralSuffix",
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "texture esterne non caricate (permessi cartella)."
-          }
-        }
-      }
-    },
-    "lighting.default" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Default"
+    "New Panel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Panel"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Predefinita"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuovo pannello"
           }
         }
       }
     },
-    "shading.default" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Default"
+    "New Window": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Window"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Predefinito"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuova finestra"
           }
         }
       }
     },
-    "to enable its external textures." : {
-      "comment" : "folderAccess.suffix",
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "per abilitarne le texture esterne."
+    "Normals": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Normali"
+          }
+        }
+      }
+    },
+    "Open in New Panel…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in New Panel…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri in un nuovo pannello…"
+          }
+        }
+      }
+    },
+    "Open in New Window…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in New Window…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri in una nuova finestra…"
+          }
+        }
+      }
+    },
+    "Open…": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri…"
+          }
+        }
+      }
+    },
+    "Outdoor": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esterni"
+          }
+        }
+      }
+    },
+    "Pause": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pausa"
+          }
+        }
+      }
+    },
+    "Play": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Riproduci"
+          }
+        }
+      }
+    },
+    "Scene": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scene"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scena"
+          }
+        }
+      }
+    },
+    "Screenshot": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screenshot"
+          }
+        }
+      }
+    },
+    "Select the folder that contains": {
+      "comment": "folderAccess.prefix",
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleziona la cartella che contiene"
+          }
+        }
+      }
+    },
+    "Shading": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Materiale"
+          }
+        }
+      }
+    },
+    "Side view": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista laterale"
+          }
+        }
+      }
+    },
+    "Size": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dimensioni"
+          }
+        }
+      }
+    },
+    "Studio": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Studio"
+          }
+        }
+      }
+    },
+    "Top view": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista dall'alto"
+          }
+        }
+      }
+    },
+    "Triangles": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triangoli"
+          }
+        }
+      }
+    },
+    "UV checker": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UV checker"
+          }
+        }
+      }
+    },
+    "Unlit": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlit"
+          }
+        }
+      }
+    },
+    "Vertices": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vertici"
+          }
+        }
+      }
+    },
+    "Wireframe": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wireframe"
+          }
+        }
+      }
+    },
+    "Zoom in": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom avanti"
+          }
+        }
+      }
+    },
+    "Zoom out": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom indietro"
+          }
+        }
+      }
+    },
+    "dropzone.chooseShort": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose…"
+          }
+        }
+      }
+    },
+    "external textures not loaded (folder permissions).": {
+      "comment": "missingTexture.pluralSuffix",
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "texture esterne non caricate (permessi cartella)."
+          }
+        }
+      }
+    },
+    "folderAccess.grantShort": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grant access"
+          }
+        }
+      }
+    },
+    "lighting.default": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Predefinita"
+          }
+        }
+      }
+    },
+    "shading.default": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Predefinito"
+          }
+        }
+      }
+    },
+    "stats.trianglesShort": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tris"
+          }
+        }
+      }
+    },
+    "to enable its external textures.": {
+      "comment": "folderAccess.suffix",
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "per abilitarne le texture esterne."
+          }
+        }
+      }
+    },
+    "welcome.recents": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recenti"
           }
         }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

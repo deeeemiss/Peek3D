@@ -1,8 +1,17 @@
 import SwiftUI
 import SceneKit
+import AppKit
 import UniformTypeIdentifiers
 
+/// Renders one open document. `url` comes from `DocumentGroup(viewing:)`'s
+/// `FileDocumentConfiguration.fileURL` — always a real file (`.viewing`
+/// documents have no blank/untitled state), loaded once on appear. Dropping a
+/// different file over an already-loaded scene still swaps the model in place
+/// rather than opening a new window — that part is unchanged from before the
+/// document-based rewrite.
 struct ContentView: View {
+    let url: URL
+
     @StateObject private var controller = ViewerController()
     @State private var scene: SCNScene?
     @State private var stats: ModelStats?
@@ -15,6 +24,15 @@ struct ContentView: View {
     /// folder-access prompt + reload instead of silently showing a textureless
     /// model.
     @State private var missingTexturePrompt: (modelURL: URL, count: Int)?
+    /// Bumped on every `load(url:)` call and captured by that call's
+    /// completion handler. `ModelLoader.load` runs off-main and offers no
+    /// ordering guarantee — if the user drops a second file while the first
+    /// is still decoding, the two completions can land in either order. Without
+    /// this guard, a slow first load finishing AFTER a fast second load would
+    /// silently overwrite the newer model/stats with the stale one. Only the
+    /// completion whose token still matches the latest `loadGeneration` is
+    /// allowed to apply its result.
+    @State private var loadGeneration = 0
 
     var body: some View {
         ZStack {
@@ -26,8 +44,6 @@ struct ContentView: View {
                     .grabCursor()
 
                 overlays
-            } else {
-                DropZoneView(onPick: load)
             }
 
             if let errorMessage {
@@ -39,15 +55,60 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 900, minHeight: 620)
-        // Allow replacing the model by dropping a new file over a loaded scene.
+        .task(id: url) { load(url: url) }
+        // Tells the "Scene" menu (Peek3DApp.swift) this window is a viewer,
+        // not the Welcome window — see `peek3dViewerFocused`. Scene-level, not
+        // `.focusedValue`: that one requires an actual SwiftUI-focused control
+        // (`@FocusState`) somewhere in this hierarchy, which nothing here has;
+        // `.focusedSceneValue` only needs this window to be key, which is what
+        // "menu applies to the frontmost viewer" actually means.
+        .focusedSceneValue(\.peek3dViewerFocused, true)
+        // Same rationale as above: lets the "Scene" menu's Shading/Lighting
+        // submenus show a checkmark + live icon for whichever mode/preset is
+        // active on the frontmost viewer, mirroring `ViewerToolbar`'s own
+        // menu buttons.
+        .focusedSceneValue(\.peek3dShadingMode, controller.shadingMode)
+        .focusedSceneValue(\.peek3dLightingPreset, controller.lightingPreset)
+        // Allow replacing the model by dropping a new file over the loaded
+        // scene — this does NOT open a new document/window, it just swaps
+        // this window's content; the document itself keeps pointing at `url`.
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             guard let provider = providers.first else { return false }
-            _ = provider.loadObject(ofClass: URL.self) { url, _ in
-                guard let url else { return }
-                DispatchQueue.main.async { load(url: url) }
+            _ = provider.loadObject(ofClass: URL.self) { droppedURL, _ in
+                guard let droppedURL else { return }
+                DispatchQueue.main.async { load(url: droppedURL) }
             }
             return true
         }
+        // Menu-bar commands (Peek3DApp.swift) post to `NotificationCenter.default`,
+        // which every open document window's `ContentView` subscribes to — with
+        // several windows open, an unguarded handler here would apply the
+        // command to ALL of them at once instead of just the one the user is
+        // looking at. `guardKeyWindow` drops the notification unless this
+        // window is actually key, matching what the "Scene" menu's disabled
+        // state (`peek3dViewerFocused`) already implies: these commands act on
+        // the focused viewer only.
+        .onReceive(NotificationCenter.default.publisher(for: .peek3dFitToView)) { _ in guardKeyWindow { controller.fitToView() } }
+        .onReceive(NotificationCenter.default.publisher(for: .peek3dToggleWireframe)) { _ in guardKeyWindow { controller.toggleWireframe() } }
+        .onReceive(NotificationCenter.default.publisher(for: .peek3dToggleGrid)) { _ in guardKeyWindow { controller.toggleGrid() } }
+        .onReceive(NotificationCenter.default.publisher(for: .peek3dToggleInfo)) { _ in guardKeyWindow { showInfo.toggle() } }
+        .onReceive(NotificationCenter.default.publisher(for: .peek3dTakeScreenshot)) { _ in guardKeyWindow { controller.takeScreenshot() } }
+        .onReceive(NotificationCenter.default.publisher(for: .peek3dToggleFullScreen)) { _ in guardKeyWindow { controller.toggleFullScreen() } }
+        .onReceive(NotificationCenter.default.publisher(for: .peek3dSetShadingMode)) { note in
+            guard let raw = note.userInfo?["mode"] as? String, let mode = ShadingMode(rawValue: raw) else { return }
+            guardKeyWindow { controller.setShadingMode(mode) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .peek3dSetLightingPreset)) { note in
+            guard let raw = note.userInfo?["preset"] as? String, let preset = LightingPreset(rawValue: raw) else { return }
+            guardKeyWindow { controller.setLightingPreset(preset) }
+        }
+    }
+
+    /// Runs `action` only if this window is the key window — see the
+    /// `.onReceive` chain above for why this guard exists.
+    private func guardKeyWindow(_ action: () -> Void) {
+        guard controller.scnView?.window?.isKeyWindow == true else { return }
+        action()
     }
 
     // MARK: - Overlays
@@ -214,7 +275,13 @@ struct ContentView: View {
     private func load(url: URL) {
         errorMessage = nil
         missingTexturePrompt = nil
+        loadGeneration += 1
+        let generation = loadGeneration
         ModelLoader.load(url: url) { result in
+            // A newer load (e.g. a second file dropped before this one
+            // finished decoding) has already started or completed — discard
+            // this stale result instead of clobbering the newer state.
+            guard generation == self.loadGeneration else { return }
             switch result {
             case .success(let model):
                 // Set animations before the scene so the new list is in place
