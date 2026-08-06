@@ -212,7 +212,7 @@ private struct ShadingMenuButton: View {
                         if mode == controller.shadingMode {
                             Label(mode.displayName, systemImage: "checkmark")
                         } else {
-                            Text(mode.displayName)
+                            Label(mode.displayName, systemImage: mode.iconName)
                         }
                     }
                 }
@@ -266,7 +266,7 @@ private struct LightingMenuButton: View {
                     if preset == controller.lightingPreset {
                         Label(preset.displayName, systemImage: "checkmark")
                     } else {
-                        Text(preset.displayName)
+                        Label(preset.displayName, systemImage: preset.iconName)
                     }
                 }
             }

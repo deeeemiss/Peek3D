@@ -243,10 +243,20 @@ final class ViewerController: ObservableObject {
     /// already swaps in fresh materials rather than editing existing ones.
     private func applyWireframe() {
         let fillMode: SCNFillMode = isWireframe ? .lines : .fill
-        for node in modelNodes {
-            node.enumerateHierarchy { child, _ in
-                guard let geometry = child.geometry else { return }
-                geometry.materials = geometry.materials.map { material in
+        // Rebuilds from `capturedGeometries`' saved originals (or the active
+        // shading mode's factory output) every time, rather than restamping
+        // whatever `geometry.materials` currently holds. Restamping the live
+        // materials looked right going fill→lines, but going lines→fill it
+        // copied the WIREFRAME material itself — still carrying the white
+        // diffuse/emission/`.constant` lighting model applied below — so the
+        // model came back solid white instead of its real colour/shading.
+        // Always starting from the true base material makes ON→OFF an exact
+        // restore regardless of how many times wireframe was toggled before.
+        for entry in capturedGeometries {
+            let base = (shadingMode == .standard)
+                ? entry.originalMaterials
+                : ShadingMaterialFactory.materials(for: shadingMode, original: entry.originalMaterials)
+            entry.geometry.materials = base.map { material in
                     let copy = material.copy() as! SCNMaterial
                     copy.fillMode = fillMode
                     if fillMode == .lines {
@@ -272,7 +282,6 @@ final class ViewerController: ObservableObject {
                 }
             }
         }
-    }
 
     // MARK: - Shading
 
@@ -516,8 +525,8 @@ final class ViewerController: ObservableObject {
         panel.nameFieldStringValue = "\(currentModelName)-screenshot.png"
 
         // `runModal()`, not `begin(completionHandler:)` — the async variant
-        // is unreliable here (never surfaces); `NSOpenPanel.runModal()` in
-        // `DropZoneView.openPanel()` is the proven-working pattern in this app.
+        // is unreliable here (never surfaces); `NSOpenPanel.runModal()` /
+        // `NSSavePanel.runModal()` is the proven-working pattern in this app.
         guard panel.runModal() == .OK, let url = panel.url,
               let tiff = image.tiffRepresentation,
               let rep = NSBitmapImageRep(data: tiff),
