@@ -201,16 +201,8 @@ private struct SceneCommands: View {
             // pattern as `ShadingMenuButton`/`LightingMenuButton` in
             // `ViewerToolbar.swift`.
             Menu {
-                ForEach(ShadingMode.allCases) { mode in
-                    Button {
-                        NotificationCenter.default.post(name: .peek3dSetShadingMode, object: nil, userInfo: ["mode": mode.rawValue])
-                    } label: {
-                        if mode == focusedShadingMode {
-                            Label(mode.displayName, systemImage: "checkmark")
-                        } else {
-                            Label(mode.displayName, systemImage: mode.iconName)
-                        }
-                    }
+                ModeMenuItems(current: focusedShadingMode ?? .standard, iconName: \.iconName, displayName: \.displayName) { mode in
+                    NotificationCenter.default.post(name: .peek3dSetShadingMode, object: nil, userInfo: ["mode": mode.rawValue])
                 }
             } label: {
                 Label("Shading", systemImage: (focusedShadingMode ?? .standard).iconName)
@@ -225,16 +217,8 @@ private struct SceneCommands: View {
             // that applying `.disabled` directly on the `Menu` itself changes
             // nothing either — same root cause, same platform ceiling.
             Menu {
-                ForEach(LightingPreset.allCases) { preset in
-                    Button {
-                        NotificationCenter.default.post(name: .peek3dSetLightingPreset, object: nil, userInfo: ["preset": preset.rawValue])
-                    } label: {
-                        if preset == focusedLightingPreset {
-                            Label(preset.displayName, systemImage: "checkmark")
-                        } else {
-                            Label(preset.displayName, systemImage: preset.iconName)
-                        }
-                    }
+                ModeMenuItems(current: focusedLightingPreset ?? .standard, iconName: \.iconName, displayName: \.displayName) { preset in
+                    NotificationCenter.default.post(name: .peek3dSetLightingPreset, object: nil, userInfo: ["preset": preset.rawValue])
                 }
             } label: {
                 Label("Lighting", systemImage: (focusedLightingPreset ?? .standard).iconName)

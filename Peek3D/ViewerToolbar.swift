@@ -196,6 +196,34 @@ private final class HoverCatcherView: NSView {
 /// pattern as `LightingMenuButton`). Glows green while any non-Default mode is
 /// active. The tile icon mirrors the active mode for a quick at-a-glance cue.
 /// Independent of the separate wireframe toggle — the two compose freely.
+/// Shared "pick one case, checkmark the active one" menu content — used by
+/// both `ShadingMenuButton`/`LightingMenuButton` below and `SceneCommands`'
+/// Shading/Lighting submenus in `Peek3DApp.swift`. Only the action differs
+/// (direct controller call here vs. a `NotificationCenter` post from the menu
+/// bar, which has no direct handle on the focused window's controller), so
+/// this factors out everything else: the `ForEach`, the checkmark-vs-icon
+/// label swap, all of it.
+struct ModeMenuItems<Mode: CaseIterable & Identifiable & Equatable>: View where Mode.AllCases: RandomAccessCollection {
+    let current: Mode
+    let iconName: (Mode) -> String
+    let displayName: (Mode) -> String
+    let onSelect: (Mode) -> Void
+
+    var body: some View {
+        ForEach(Mode.allCases) { mode in
+            Button {
+                onSelect(mode)
+            } label: {
+                if mode == current {
+                    Label(displayName(mode), systemImage: "checkmark")
+                } else {
+                    Label(displayName(mode), systemImage: iconName(mode))
+                }
+            }
+        }
+    }
+}
+
 private struct ShadingMenuButton: View {
     @ObservedObject var controller: ViewerController
     @State private var isHovering = false
@@ -205,16 +233,8 @@ private struct ShadingMenuButton: View {
     var body: some View {
         Menu {
             Section("Shading") {
-                ForEach(ShadingMode.allCases) { mode in
-                    Button {
-                        controller.setShadingMode(mode)
-                    } label: {
-                        if mode == controller.shadingMode {
-                            Label(mode.displayName, systemImage: "checkmark")
-                        } else {
-                            Label(mode.displayName, systemImage: mode.iconName)
-                        }
-                    }
+                ModeMenuItems(current: controller.shadingMode, iconName: \.iconName, displayName: \.displayName) { mode in
+                    controller.setShadingMode(mode)
                 }
             }
         } label: {
@@ -259,16 +279,8 @@ private struct LightingMenuButton: View {
 
     var body: some View {
         Menu {
-            ForEach(LightingPreset.allCases) { preset in
-                Button {
-                    controller.setLightingPreset(preset)
-                } label: {
-                    if preset == controller.lightingPreset {
-                        Label(preset.displayName, systemImage: "checkmark")
-                    } else {
-                        Label(preset.displayName, systemImage: preset.iconName)
-                    }
-                }
+            ModeMenuItems(current: controller.lightingPreset, iconName: \.iconName, displayName: \.displayName) { preset in
+                controller.setLightingPreset(preset)
             }
         } label: {
             Image(systemName: controller.lightingPreset.iconName)
