@@ -39,7 +39,15 @@ struct WelcomeView: View {
             .padding(40)
             .frame(maxWidth: 420)
         }
-        .frame(width: 560, height: 480)
+        // Was a fixed `.frame(width: 560, height: 480)` back when this
+        // window used `.windowResizability(.contentSize)` (a real fixed-size
+        // dialog). Peek3DApp.swift now sets `.contentMinSize` with a
+        // 900×620 outer minimum instead — a fixed inner size smaller than
+        // that minimum left the ZStack's black background (560×480) stranded
+        // in the middle of a bigger, resizable window, exposing the raw
+        // NSWindow chrome color around it. Matching the same min here lets
+        // the ZStack (and its background) actually fill the window.
+        .frame(minWidth: 900, minHeight: 620)
         .onAppear(perform: refreshRecents)
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
             handleDrop(providers)
