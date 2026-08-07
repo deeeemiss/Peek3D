@@ -16,7 +16,9 @@ A tiny, native macOS viewer — no editing, no export, no format conversion.
 
 </div>
 
-![reference UI](reference-ui.png)
+![Peek3D screenshot](assets/screenshot.png)
+
+![Peek3D demo](assets/demo.gif)
 
 ---
 
