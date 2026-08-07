@@ -254,7 +254,17 @@ struct Peek3DApp: App {
                 .frame(minWidth: 900, minHeight: 620)
         }
         .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentMinSize)
+        // No `.windowResizability` override here (default `.automatic`,
+        // same as the DocumentGroup below, which resizes fine) — an earlier
+        // `.contentMinSize` looked right for enforcing the 900×620 minimum,
+        // but that mode derives sizing from the content's own reported
+        // flexibility. WelcomeView's content has no growable element (no
+        // Spacer/`.frame(maxHeight: .infinity)`), so `.contentMinSize`
+        // pinned the window's height at its minimum instead of letting it
+        // grow — width happened to still resize, so it silently looked like
+        // "resizable" until you actually dragged for height. The `.frame
+        // (minWidth: 900, minHeight: 620)` on WelcomeView already enforces
+        // the minimum on its own regardless of resizability mode.
 
         // One document window per open 3D file. `.viewing` (read-only, no
         // Save/Save As — this app never writes files) gives Open, Open
