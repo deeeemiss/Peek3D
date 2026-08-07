@@ -194,7 +194,11 @@ struct ContentView: View {
                     withAnimation(.easeOut(duration: 0.15)) { gizmoHoverLabel = label }
                 }
                 .frame(width: 96, height: 96)
-                .pointerCursor()
+                // Cursor is set per-dot inside AxisGizmoView's own mouse
+                // handling (pointing hand only over an actual axis dot,
+                // arrow otherwise) — a blanket `.pointerCursor()` here would
+                // show the hand over the whole 96x96 box, including the
+                // mostly-empty space between dots.
                 .overlay(alignment: .top) {
                     if let gizmoHoverLabel {
                         Text(LocalizedStringKey(gizmoHoverLabel))

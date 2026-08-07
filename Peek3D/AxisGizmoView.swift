@@ -40,6 +40,9 @@ struct AxisGizmoView: NSViewRepresentable {
         weak var controller: ViewerController?
         weak var axesRoot: SCNNode?
         var onHoverLabel: (String?) -> Void
+        /// The dot currently scaled up for hover, so it can be scaled back
+        /// down the moment the pointer leaves it (or the whole gizmo).
+        private weak var hoveredNode: SCNNode?
 
         init(controller: ViewerController, onHoverLabel: @escaping (String?) -> Void) {
             self.controller = controller
@@ -53,30 +56,46 @@ struct AxisGizmoView: NSViewRepresentable {
         }
 
         func handleClick(at point: CGPoint, in view: SCNView) {
-            guard let name = axisName(at: point, in: view),
+            guard let node = axisNode(at: point, in: view),
+                  let name = node.name,
                   let direction = GizmoSceneFactory.axisDirections[name] else { return }
             controller?.snapToAxis(direction)
         }
 
         func handleHover(at point: CGPoint?, in view: SCNView) {
-            let label = point.flatMap { axisName(at: $0, in: view) }
-                .flatMap { GizmoSceneFactory.axisTooltips[$0] }
+            let node = point.flatMap { axisNode(at: $0, in: view) }
+            setHoveredNode(node)
+            let label = node?.name.flatMap { GizmoSceneFactory.axisTooltips[$0] }
             onHoverLabel(label)
+            (node != nil ? NSCursor.pointingHand : NSCursor.arrow).set()
+        }
+
+        /// Scales the newly-hovered dot up and the previously-hovered one
+        /// back down — a quick, explicit nudge so hovering the gizmo feels
+        /// clickable even though nothing else on it looks interactive.
+        private func setHoveredNode(_ node: SCNNode?) {
+            guard node !== hoveredNode else { return }
+            SCNTransaction.begin()
+            SCNTransaction.animationDuration = 0.12
+            hoveredNode?.simdScale = .init(repeating: 1)
+            node?.simdScale = .init(repeating: 1.35)
+            SCNTransaction.commit()
+            hoveredNode = node
         }
 
         /// The dots render at roughly 10px on screen in a 96x96 view — an
         /// exact-pixel hit test misses on a slightly-off click. Sample a
         /// small cross of points around the click instead of just the one.
-        private func axisName(at point: CGPoint, in view: SCNView) -> String? {
+        private func axisNode(at point: CGPoint, in view: SCNView) -> SCNNode? {
             let offsets: [CGVector] = [
                 .zero, CGVector(dx: 6, dy: 0), CGVector(dx: -6, dy: 0),
                 CGVector(dx: 0, dy: 6), CGVector(dx: 0, dy: -6),
             ]
             for offset in offsets {
                 let testPoint = CGPoint(x: point.x + offset.dx, y: point.y + offset.dy)
-                if let name = view.hitTest(testPoint, options: [:])
-                    .first(where: { $0.node.name?.hasPrefix("axis") == true })?.node.name {
-                    return name
+                if let node = view.hitTest(testPoint, options: [:])
+                    .first(where: { $0.node.name?.hasPrefix("axis") == true })?.node {
+                    return node
                 }
             }
             return nil
