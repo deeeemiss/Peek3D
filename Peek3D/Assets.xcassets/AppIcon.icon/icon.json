@@ -1,29 +1,30 @@
 {
-  "fill" : {
-    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
-  },
-  "groups" : [
+  "groups": [
     {
-      "layers" : [
+      "layers": [
         {
-          "image-name" : "peek3d_icon_source.png",
-          "name" : "peek3d_icon_source"
+          "hidden": false,
+          "image-name": "peek3d_icon_source.png",
+          "name": "peek3d_icon_source",
+          "position": {
+            "scale": 1.19,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
-      },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
+      "translucency": {
+        "enabled": false,
+        "value": 0.0
       }
     }
   ],
-  "supported-platforms" : {
-    "circles" : [
+  "supported-platforms": {
+    "circles": [
       "watchOS"
     ],
-    "squares" : "shared"
+    "squares": "shared"
   }
 }
