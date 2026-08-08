@@ -19,3 +19,21 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+## Third-party notices
+
+Peek3D bundles or depends on the following open-source software. All are
+permissively licensed and compatible with the MIT license above.
+
+- **[GLTFKit2](https://github.com/warrenm/GLTFKit2)** by Warren Moore — MIT.
+  Loads `.glb`/`.gltf`. Vendors two further dependencies:
+  - **[cgltf](https://github.com/jkuhlmann/cgltf)** by Johannes Kuhlmann — MIT.
+  - **[KTX-Software](https://github.com/KhronosGroup/KTX-Software)** by The
+    Khronos Group — Apache License 2.0 (unused in Peek3D: KTX2 textures are
+    not wired up, see README § Known limits).
+- **[ufbx](https://github.com/ufbx/ufbx)** by Samuli Raivio — MIT / Unlicense
+  (dual-licensed, vendored under `Peek3D/ThirdParty/ufbx`). Loads `.fbx`.
+
+Full license texts are included with each dependency's source.
