@@ -57,13 +57,22 @@ struct WelcomeView: View {
     // MARK: - Header
 
     private var header: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "cube.transparent")
-                .font(.system(size: 44, weight: .thin))
-                .foregroundStyle(.white.opacity(0.7))
+        VStack(spacing: 14) {
+            Image("Logo")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 84, height: 84)
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
             Text("Peek3D")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.9))
+                .font(.system(size: 26, weight: .bold, design: .rounded))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [Color(red: 0.35, green: 0.68, blue: 1.0), .white],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
         }
     }
 
