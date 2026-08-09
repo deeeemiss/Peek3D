@@ -569,6 +569,40 @@
         }
       }
     },
+    "welcome.dropHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag & drop a file anywhere in this window"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trascina un file in un punto qualsiasi di questa finestra"
+          }
+        }
+      }
+    },
+    "welcome.formats": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supported formats"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formati supportati"
+          }
+        }
+      }
+    },
     "welcome.recents": {
       "extractionState": "manual",
       "localizations": {
@@ -582,6 +616,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recenti"
+          }
+        }
+      }
+    },
+    "welcome.recents.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files you open will appear here"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I file che apri appariranno qui"
+          }
+        }
+      }
+    },
+    "welcome.tagline": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drop a 3D file. Look at it."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trascina un file 3D. Guardalo."
           }
         }
       }
