@@ -53,7 +53,22 @@ final class LicenseStore {
         // hash is naturally a no-op.
         hashes.insert(hash)
 
-        let record = LicenseRecord(seenFileHashes: Array(hashes), licenseKeyText: licenseText)
+        // `.sorted()`, not `Array(hashes)`: Swift's `Set` iteration order is
+        // unspecified and depends on a per-process hash seed — the exact
+        // same set of hashes can legitimately serialize to a
+        // differently-ordered array depending on insertion history and even
+        // which process (self-test harness vs. GUI) built it. `LicenseRecord`
+        // is `Equatable` array-order-sensitively, and `repairIfNeeded` below
+        // relies on that equality to decide whether a side is already
+        // up to date. An arbitrary order makes that comparison spuriously
+        // false on nearly every read, forcing a write on every launch
+        // regardless of whether anything changed — which is exactly the
+        // kind of unnecessary Keychain/UserDefaults write that widens the
+        // window for a genuine multi-process lost-update race. Sorting
+        // makes the array a canonical, deterministic function of the set's
+        // *contents*, so two processes that agree on content always agree
+        // on bytes.
+        let record = LicenseRecord(seenFileHashes: hashes.sorted(), licenseKeyText: licenseText)
         persist(record)
         return record
     }
@@ -90,7 +105,11 @@ final class LicenseStore {
         let licenseText = recordA.licenseKeyText ?? recordB.licenseKeyText
         var hashes = Set(recordA.seenFileHashes)
         hashes.formUnion(recordB.seenFileHashes)
-        return LicenseRecord(seenFileHashes: Array(hashes), licenseKeyText: licenseText)
+        // `.sorted()` — see the matching comment in `recordFileOpened`: makes
+        // the array a canonical, order-independent function of set content,
+        // so `LicenseRecord`'s array-order-sensitive `Equatable` doesn't
+        // spuriously flag two content-equal records as different.
+        return LicenseRecord(seenFileHashes: hashes.sorted(), licenseKeyText: licenseText)
     }
 
     private static func record(from outcome: StoreOutcome) -> LicenseRecord {

@@ -5,14 +5,16 @@
 **Drop a 3D file. Look at it.**
 
 A tiny, native macOS viewer — no editing, no export, no format conversion.
+Free to try on your first 10 files, then **€19.99 once** — no subscription.
 
 [![macOS](https://img.shields.io/badge/macOS-13%2B-blue?style=flat-square)]()
 [![Swift](https://img.shields.io/badge/Swift-SwiftUI%20%2B%20SceneKit-orange?style=flat-square)]()
 [![glTF](https://img.shields.io/badge/glTF-GLTFKit2-brightgreen?style=flat-square)](https://github.com/warrenm/GLTFKit2)
 [![FBX](https://img.shields.io/badge/FBX-ufbx-9cf?style=flat-square)](https://github.com/ufbx/ufbx)
-[![License](https://img.shields.io/badge/license-MIT-grey?style=flat-square)]()
+[![Price](https://img.shields.io/badge/price-%E2%82%AC19.99%20once-success?style=flat-square)](https://peek3d.app/buy)
+[![License](https://img.shields.io/badge/source-MIT-grey?style=flat-square)](LICENSE.md)
 
-[Formats](#formats) · [Features](#features) · [Build](#build) · [Sandbox](#sandbox) · [Known limits](#known-limits)
+[Formats](#formats) · [Features](#features) · [Trial & pricing](#trial--pricing) · [Activation](#activation) · [Build](#build) · [Sandbox](#sandbox) · [Known limits](#known-limits)
 
 </div>
 
@@ -66,6 +68,47 @@ modes, and stats never need to know where a model came from.
   the per-app language set in macOS System Settings → General → Language &
   Region. More languages (incl. non-Latin scripts) planned.
 
+## Trial & pricing
+
+Peek3D is free to try, then a one-time purchase — no subscription, ever.
+
+- **Free trial** — open **10 distinct files** before you need a license.
+  Reopening a file you've already opened doesn't use up a slot; only
+  genuinely new files count. Once the 10 are used, opening any *further new*
+  file is blocked until you activate a license — files you already opened
+  during the trial stay reachable forever.
+- **€19.99, once** — all future updates are included for as long as Peek3D
+  exists. You never pay again.
+- **Multi-Mac packs** — discounted 2-license and 3-license bundles are
+  available for people who use Peek3D on more than one Mac.
+- **14-day refund** — not happy? Full refund within 14 days of purchase, see
+  the [license FAQ](docs/FAQ.en.md#refunds) for how.
+
+Buy at [peek3d.app/buy](https://peek3d.app/buy). Purchases and payments are
+handled by [Polar.sh](https://polar.sh), Peek3D's merchant of record.
+
+## Activation
+
+- One license activates **one Mac**. A multi-license pack lets you activate
+  on that many Macs.
+- Enter your license key from **Settings ▸ Cambia licenza…** (or the "Ho già
+  una licenza" link on the trial screen) — the key is a cryptographically
+  signed string, checked entirely **offline**, so activation works with no
+  internet connection.
+- Once activated, Peek3D periodically re-verifies the license online. If it
+  can't reach the verification service (no internet, service down), the app
+  keeps working normally for **up to 30 days** since the last successful
+  check before it asks you to reconnect.
+- Replacing a Mac? Free up its seat yourself before activating on the new
+  one — see the [license FAQ](docs/FAQ.en.md) for the exact steps and what
+  to do if the old Mac is no longer available.
+- Lost your key? Use the in-app "Recover license" flow (or the same on the
+  website) with the email you purchased with, and we'll resend it.
+
+Full details, edge cases, and what data activation stores:
+[license FAQ](docs/FAQ.en.md) · [FAQ licenza (italiano)](docs/FAQ.it.md) ·
+[privacy notice](docs/PRIVACY.en.md) · [informativa privacy (italiano)](docs/PRIVACY.it.md).
+
 ## Build
 
 Requires Xcode 16+ (developed on 26.6), macOS 13+.
@@ -99,4 +142,8 @@ app prompts for folder access and retries automatically if it's missing.
 
 ## License
 
-MIT.
+Peek3D's source code is MIT-licensed (see [LICENSE.md](LICENSE.md), which
+also lists third-party attributions). The compiled app sold through
+[peek3d.app](https://peek3d.app/buy) is a paid product — see
+[Trial & pricing](#trial--pricing) above and the [license FAQ](docs/FAQ.en.md)
+for what buying and activating a license actually gets you.

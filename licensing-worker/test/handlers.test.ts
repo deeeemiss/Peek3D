@@ -1,12 +1,12 @@
 import { createHmac } from "node:crypto";
 import * as ed from "@noble/ed25519";
 import { sha512 } from "@noble/hashes/sha512";
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { FakeEmailSender } from "../src/email.js";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { FakeEmailSender, type EmailSender } from "../src/email.js";
 import { handleRecover, handleWebhook, type HandlerDeps } from "../src/handlers.js";
 import { decodePayload } from "../src/license.js";
 import { decodeCrockford } from "../src/crockford.js";
-import { FakePolarClient, type PolarOrder } from "../src/polar.js";
+import { FakePolarClient, type PolarClient, type PolarOrder } from "../src/polar.js";
 import { InMemoryRateLimiter } from "../src/rate-limit.js";
 
 beforeAll(() => {
@@ -38,6 +38,23 @@ function extractLicenseString(emailText: string): string {
   return match[0];
 }
 
+/**
+ * Test double for deps.waitUntil: collects the promises handed to it
+ * instead of firing-and-forgetting them, so tests can deterministically
+ * `await drain()` before asserting on the background work's side effects
+ * (e.g. FakeEmailSender.sent) -- mirroring how the real ExecutionContext
+ * keeps the isolate alive until the promise settles, just observable.
+ */
+function createWaitUntilCollector() {
+  const pending: Promise<unknown>[] = [];
+  return {
+    waitUntil: (p: Promise<unknown>) => {
+      pending.push(p);
+    },
+    drain: () => Promise.all(pending),
+  };
+}
+
 describe("handleWebhook", () => {
   let polar: FakePolarClient;
   let email: FakeEmailSender;
@@ -64,6 +81,10 @@ describe("handleWebhook", () => {
       webhookSecret: WEBHOOK_SECRET,
       ed25519PrivateKey: PRIVATE_KEY,
       recoverRateLimiter: new InMemoryRateLimiter(100, 60),
+      // handleWebhook never defers work to waitUntil -- it awaits everything
+      // inline so Polar's webhook delivery result reflects the real outcome.
+      // This is just here to satisfy HandlerDeps.
+      waitUntil: () => {},
     };
 
     polar.orders.set(order.id, order);
@@ -104,6 +125,35 @@ describe("handleWebhook", () => {
     expect(decoded.polarKey).toBe("POLAR-KEY-0001");
     // issued_at must come from the order's createdAt, never from "now".
     expect(decoded.issuedAt).toBe(Math.floor(order.createdAt.getTime() / 1000));
+  });
+
+  it("picks the MOST RECENT grant's license key when a customer has more than one grant", async () => {
+    // The `beforeEach` above seeds a single grant (lk_1) -- every other test
+    // in this file only ever exercises the single-grant case, so a
+    // comparator with its sign accidentally flipped in
+    // `FakePolarClient.listLicenseKeyGrantsForCustomer` / the real
+    // `PolarClient`'s equivalent (oldest-first instead of the intended
+    // "most recently created grant" -- see the comment on
+    // `buildLicenseForOrder` in src/handlers.ts) would never be caught: with
+    // only one candidate, "most recent" and "oldest" pick the same element.
+    // Seed a SECOND, OLDER grant here so only a correct descending sort
+    // returns lk_1 first.
+    polar.grantsByCustomer.set(order.customerId, [
+      { id: "grant_1", customerId: order.customerId, createdAt: new Date(2_000_000_000 * 1000), isGranted: true, licenseKeyId: "lk_1" },
+      { id: "grant_0", customerId: order.customerId, createdAt: new Date(1_000_000_000 * 1000), isGranted: true, licenseKeyId: "lk_0" },
+    ]);
+    polar.licenseKeys.set("lk_0", { id: "lk_0", key: "POLAR-KEY-0000-OLDER" });
+
+    const rawBody = JSON.stringify({ type: "order.paid", data: { id: order.id } });
+    const headers = buildWebhookHeaders(rawBody, nowSeconds());
+
+    const result = await handleWebhook(deps, { rawBody, headers });
+
+    expect(result.status).toBe(200);
+    const licenseString = extractLicenseString(email.sent[0]!.text);
+    const payload = decodeCrockford(licenseString.slice("PK3D-".length).replace(/-/g, ""));
+    const decoded = decodePayload(payload.subarray(0, payload.length - 64));
+    expect(decoded.polarKey).toBe("POLAR-KEY-0001");
   });
 
   it("does not process a delivery whose signature is invalid, even with a correct body", async () => {
@@ -173,6 +223,7 @@ describe("handleRecover", () => {
   let polar: FakePolarClient;
   let email: FakeEmailSender;
   let deps: HandlerDeps;
+  let waitUntilCollector: ReturnType<typeof createWaitUntilCollector>;
 
   const order: PolarOrder = {
     id: "order_2",
@@ -185,12 +236,14 @@ describe("handleRecover", () => {
   beforeEach(() => {
     polar = new FakePolarClient();
     email = new FakeEmailSender();
+    waitUntilCollector = createWaitUntilCollector();
     deps = {
       polar,
       email,
       webhookSecret: WEBHOOK_SECRET,
       ed25519PrivateKey: PRIVATE_KEY,
       recoverRateLimiter: new InMemoryRateLimiter(100, 60),
+      waitUntil: waitUntilCollector.waitUntil,
     };
 
     polar.customerIdByEmail.set(order.customerEmail!, order.customerId);
@@ -201,8 +254,32 @@ describe("handleRecover", () => {
     polar.licenseKeys.set("lk_2", { id: "lk_2", key: "POLAR-KEY-0002" });
   });
 
+  it("responds before the background Polar/email work has settled (does not await it)", async () => {
+    let deliveryFinished = false;
+    const originalSend = email.send.bind(email);
+    email.send = async (...args) => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      deliveryFinished = true;
+      return originalSend(...args);
+    };
+
+    const result = await handleRecover(deps, { email: order.customerEmail!, clientIp: "1.2.3.4" });
+
+    // The handler must have returned WITHOUT waiting for the slow email
+    // send -- this is the core of the fix, distinct from the response body
+    // (which was always correct/generic; only its timing leaked data).
+    expect(result.status).toBe(200);
+    expect(deliveryFinished).toBe(false);
+    expect(email.sent).toHaveLength(0);
+
+    await waitUntilCollector.drain();
+    expect(deliveryFinished).toBe(true);
+    expect(email.sent).toHaveLength(1);
+  });
+
   it("emails the same license string that the original webhook would have produced", async () => {
     const result = await handleRecover(deps, { email: order.customerEmail!, clientIp: "1.2.3.4" });
+    await waitUntilCollector.drain();
 
     expect(result.status).toBe(200);
     expect(email.sent).toHaveLength(1);
@@ -228,6 +305,7 @@ describe("handleRecover", () => {
   it("returns the same generic response whether or not the email has an order (no enumeration)", async () => {
     const knownResult = await handleRecover(deps, { email: order.customerEmail!, clientIp: "1.2.3.4" });
     const unknownResult = await handleRecover(deps, { email: "nobody@example.com", clientIp: "1.2.3.4" });
+    await waitUntilCollector.drain();
 
     expect(knownResult.status).toBe(unknownResult.status);
     expect(knownResult.body).toEqual(unknownResult.body);
@@ -242,6 +320,7 @@ describe("handleRecover", () => {
     deps.recoverRateLimiter = new InMemoryRateLimiter(1, 60);
     const first = await handleRecover(deps, { email: order.customerEmail!, clientIp: "9.9.9.9" });
     const second = await handleRecover(deps, { email: "someone-else@example.com", clientIp: "9.9.9.9" });
+    await waitUntilCollector.drain();
 
     expect(first.status).toBe(200);
     expect(second.status).toBe(429);
@@ -251,8 +330,149 @@ describe("handleRecover", () => {
     deps.recoverRateLimiter = new InMemoryRateLimiter(1, 60);
     const first = await handleRecover(deps, { email: order.customerEmail!, clientIp: "1.1.1.1" });
     const second = await handleRecover(deps, { email: order.customerEmail!, clientIp: "2.2.2.2" });
+    await waitUntilCollector.drain();
 
     expect(first.status).toBe(200);
     expect(second.status).toBe(429);
+  });
+
+  it("delivers the license even if the caller never awaits/observes the response (waitUntil work is not dropped)", async () => {
+    // Simulates the real Workers contract: the response is what the caller
+    // sees, but deps.waitUntil is what keeps the delivery work alive. If a
+    // future refactor accidentally fire-and-forgets without registering
+    // with waitUntil at all, this test's drain() would have nothing to
+    // await and email.sent would stay empty -- catching a regression back
+    // to "the promise silently rejects/never runs to completion".
+    await handleRecover(deps, { email: order.customerEmail!, clientIp: "5.5.5.5" });
+    await waitUntilCollector.drain();
+
+    expect(email.sent).toHaveLength(1);
+    expect(email.sent[0]!.to).toBe(order.customerEmail);
+  });
+
+  it("logs (does not silently swallow) a background delivery failure after the response was already sent", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    email.send = async () => {
+      throw new Error("Resend rejected the send");
+    };
+
+    const result = await handleRecover(deps, { email: order.customerEmail!, clientIp: "1.2.3.4" });
+    expect(result.status).toBe(200);
+
+    // The failure happens strictly after the response above was produced --
+    // proving it doesn't affect the response -- but must still be visible.
+    await waitUntilCollector.drain();
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    const [message, context] = consoleErrorSpy.mock.calls[0]!;
+    expect(String(message)).toContain("background license delivery failed");
+    expect((context as { email?: string }).email).toBe(order.customerEmail);
+
+    consoleErrorSpy.mockRestore();
+  });
+});
+
+describe("handleRecover: timing side channel (audit finding)", () => {
+  /**
+   * Reproduces the exact defect the audit flagged: a non-matching email
+   * used to cost a single Polar call, while a matching email with a paid
+   * order cost several sequential Polar calls plus an inline Resend send --
+   * a difference measured in hundreds of milliseconds, easily distinguished
+   * by timing alone even though the response BODY was already identical.
+   *
+   * This test builds fake dependencies with controlled, deliberately large
+   * latency on the "expensive" path (customer lookup, order lookup, grant
+   * list, key fetch, email send) and near-zero latency on the "cheap"
+   * path (a single customer lookup that finds nothing), the same shape as
+   * the real Polar/Resend calls. It then asserts the wall-clock time to
+   * get a *response* from handleRecover is close for both -- proving the
+   * fix (deferring that work via waitUntil) actually closes the channel,
+   * not just that the response body looks generic.
+   */
+  const LATENCY_MS = 150;
+  const MAX_ALLOWED_DIFFERENCE_MS = 40; // generous vs. LATENCY_MS=150 -- would fail hard pre-fix
+
+  function delay<T>(value: T, ms: number): Promise<T> {
+    return new Promise((resolve) => setTimeout(() => resolve(value), ms));
+  }
+
+  class SlowPathPolarClient implements PolarClient {
+    async getOrder(): Promise<PolarOrder | null> {
+      return null;
+    }
+    async listLicenseKeyGrantsForCustomer() {
+      return delay(
+        [{ id: "g", customerId: "cust_slow", createdAt: new Date(), isGranted: true, licenseKeyId: "lk_slow" }],
+        LATENCY_MS,
+      );
+    }
+    async getLicenseKey() {
+      return delay({ id: "lk_slow", key: "POLAR-KEY-SLOW" }, LATENCY_MS);
+    }
+    async findCustomerIdByEmail() {
+      return delay("cust_slow", LATENCY_MS);
+    }
+    async findLatestPaidOrderForCustomer() {
+      const order: PolarOrder = {
+        id: "order_slow",
+        customerId: "cust_slow",
+        customerEmail: "slow@example.com",
+        paid: true,
+        createdAt: new Date(),
+      };
+      return delay(order, LATENCY_MS);
+    }
+  }
+
+  class FastMissPolarClient implements PolarClient {
+    async getOrder(): Promise<PolarOrder | null> {
+      return null;
+    }
+    async listLicenseKeyGrantsForCustomer() {
+      return [];
+    }
+    async getLicenseKey() {
+      return null;
+    }
+    async findCustomerIdByEmail() {
+      // The one call a non-matching email actually costs -- fast, no order chain behind it.
+      return null;
+    }
+    async findLatestPaidOrderForCustomer() {
+      return null;
+    }
+  }
+
+  class SlowEmailSender implements EmailSender {
+    sent: Array<{ to: string; subject: string; text: string }> = [];
+    async send(to: string, subject: string, text: string): Promise<void> {
+      await delay(undefined, LATENCY_MS);
+      this.sent.push({ to, subject, text });
+    }
+  }
+
+  it("responds in roughly the same time for a matching vs. a non-matching email", async () => {
+    const matchDeps: HandlerDeps = {
+      polar: new SlowPathPolarClient(),
+      email: new SlowEmailSender(),
+      webhookSecret: WEBHOOK_SECRET,
+      ed25519PrivateKey: PRIVATE_KEY,
+      recoverRateLimiter: new InMemoryRateLimiter(1000, 60),
+      waitUntil: () => {}, // fire-and-forget is fine here; we only measure response latency
+    };
+    const missDeps: HandlerDeps = { ...matchDeps, polar: new FastMissPolarClient() };
+
+    const t0 = performance.now();
+    const matchResult = await handleRecover(matchDeps, { email: "slow@example.com", clientIp: "1.1.1.1" });
+    const matchElapsed = performance.now() - t0;
+
+    const t1 = performance.now();
+    const missResult = await handleRecover(missDeps, { email: "nobody@example.com", clientIp: "2.2.2.2" });
+    const missElapsed = performance.now() - t1;
+
+    expect(matchResult.body).toEqual(missResult.body);
+    expect(matchElapsed).toBeLessThan(MAX_ALLOWED_DIFFERENCE_MS);
+    expect(missElapsed).toBeLessThan(MAX_ALLOWED_DIFFERENCE_MS);
+    expect(Math.abs(matchElapsed - missElapsed)).toBeLessThan(MAX_ALLOWED_DIFFERENCE_MS);
   });
 });

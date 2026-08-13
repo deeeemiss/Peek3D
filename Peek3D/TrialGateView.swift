@@ -70,6 +70,7 @@ struct TrialGateView: View {
             Image(systemName: "lock.fill")
                 .font(.system(size: 34, weight: .light))
                 .foregroundStyle(.white.opacity(0.5))
+                .accessibilityHidden(true)
             Text(TrialCopy.exhaustedShort)
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(.white)
@@ -107,6 +108,11 @@ struct TrialGateView: View {
                 .font(.system(size: 11))
                 .foregroundStyle(.white.opacity(0.45))
         }
+        // Two `Text` siblings read as one sentence to a sighted user
+        // ("€19.99 · one-time, updates included") — combine them into one
+        // VoiceOver stop instead of two so the pause between price and
+        // reassurance doesn't read as two unrelated facts.
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - 3. Two actions, never ambiguous about which one applies

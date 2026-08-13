@@ -10,6 +10,25 @@ import CryptoKit
 /// Scene/document window — so every window (Welcome and every open
 /// document) agrees on the same trial count and the first frame ever drawn
 /// already has a stable status instead of flashing from an initial default.
+///
+/// `@MainActor`-isolated, and NOT incidentally — see `recordSuccessfulOpen`.
+/// Every call this app makes today happens to land on the main thread
+/// already (SwiftUI view bodies, and `ModelLoader.load`'s completion which
+/// is explicitly hopped to `DispatchQueue.main`), but that was a convention,
+/// not something the compiler checked. Multiple document windows in the
+/// same process is the whole reason this type exists as a single shared
+/// instance rather than per-window state — without real isolation, two
+/// windows finishing a load at close enough proximity could interleave
+/// `cachedRecord = updated` writes and lose one of the two file hashes, or
+/// worse, race on the same stored property (undefined behavior, not just a
+/// stale read). `@MainActor` on the type makes that impossible by
+/// construction: every method below runs on the same serial executor as
+/// every other, so two calls from two windows are always fully ordered, one
+/// completing before the next starts. It is also the right kind of
+/// isolation for the pattern used here — a single actor-isolated `func`, no
+/// `await` inside it, so no reentrancy — unlike a reentrant `actor`, which
+/// would need an explicit queue if it ever awaited mid-read-modify-write.
+@MainActor
 final class LicenseState: ObservableObject {
     @Published private(set) var status: LicenseStatus
 

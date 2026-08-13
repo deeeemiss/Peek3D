@@ -25,6 +25,12 @@ enum LicenseDebugHarness {
     ///
     /// Returns nil (do nothing, use the normal `LicenseState()` path) when
     /// the variable is unset or unrecognized.
+    ///
+    /// `@MainActor` purely as a mechanical consequence of `LicenseState`
+    /// itself becoming `@MainActor` (see its doc comment) — this function's
+    /// only caller is `Peek3DApp.init()`, itself main-actor-isolated via
+    /// `App`'s `body` requirement, so this changes no runtime behavior.
+    @MainActor
     static func makeState() -> LicenseState? {
         guard let raw = ProcessInfo.processInfo.environment["PEEK3D_LICENSE_DEBUG_STATE"] else {
             return nil
@@ -80,10 +86,20 @@ enum LicenseDebugHarness {
     /// One of `TestVectors.vectors` (mario.rossi@example.com), copied
     /// verbatim — a real, valid, schema-1 product-1 license string signed
     /// by the key above.
-    private static let testLicenseString =
+    ///
+    /// Internal (not `private`), not because anything outside this file
+    /// forces a "licensed" debug *state* — `LicenseSelfTest.swift` reuses
+    /// this exact string and `testPublicKey` below to exercise "a valid
+    /// license unlocks everything, permanently" through the same real
+    /// `LicenseState`/`LicenseStatusResolver` path, without maintaining a
+    /// third copy of this TEST-ONLY material alongside this file and
+    /// `PeekLicenseKitTests/TestVectors.swift`.
+    static let testLicenseString =
         "PK3D-040PE-F1S00-CN0KT-C8592-TGA26-4S2TG-T46CT-2THA6-6MV2T-DSR74-R1EVB-1E9MP-YBKJD-XSQ6T-A0CNW-62VBG-DHJJW-RVFDM-YM364-33MH9-0JFXZ-8X667-9FDN4-6MX64-15EH3-2HXWF-8F2CE-K15PG-1H28N-X13N1-HE97R-H344N-J9XTC-6TW5B-MEH2N-4SHZ5-0KQ0R-W3T7S-05"
 
-    private static var testPublicKey: Curve25519.Signing.PublicKey? {
+    /// Internal for the same reason as `testLicenseString` above —
+    /// `LicenseSelfTest.swift` is the other reader.
+    static var testPublicKey: Curve25519.Signing.PublicKey? {
         guard let data = Data(hexString: testPublicKeyHex) else { return nil }
         return try? Curve25519.Signing.PublicKey(rawRepresentation: data)
     }

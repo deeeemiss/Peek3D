@@ -10,6 +10,22 @@ export interface HandlerDeps {
   webhookSecret: string;
   ed25519PrivateKey: Uint8Array;
   recoverRateLimiter: RateLimiter;
+  /**
+   * Schedules work to run after the HTTP response has already been sent,
+   * without making the response wait on it. In production this wraps
+   * Cloudflare's `ExecutionContext.waitUntil` (see index.ts) -- the Workers
+   * runtime keeps the isolate alive until the promise settles, but the
+   * response itself is written the moment the handler returns.
+   *
+   * Tests supply a collector instead so they can deterministically await
+   * the background work before asserting on its side effects (e.g. which
+   * emails were sent) -- see test/handlers.test.ts.
+   *
+   * This exists specifically so /recover can respond BEFORE doing any of
+   * the Polar/Resend calls that differ in cost between "email matches a
+   * customer" and "email doesn't" -- see handleRecover below.
+   */
+  waitUntil: (promise: Promise<unknown>) => void;
 }
 
 export interface HttpResult {
@@ -166,22 +182,55 @@ export async function handleRecover(deps: HandlerDeps, input: RecoverRequestInpu
     return { status: 429, body: { error: "rate_limited" } };
   }
 
-  const customerId = await deps.polar.findCustomerIdByEmail(email);
-  if (!customerId) {
-    return GENERIC_RECOVER_RESPONSE;
-  }
-
-  const order = await deps.polar.findLatestPaidOrderForCustomer(customerId);
-  if (!order || !order.paid) {
-    return GENERIC_RECOVER_RESPONSE;
-  }
-
-  const result = await buildLicenseForOrder(deps, order);
-  if (!result) {
-    return GENERIC_RECOVER_RESPONSE;
-  }
-
-  await deps.email.send(email, "La tua licenza Peek3D", licenseEmailBody(result.licenseString));
+  // Everything past this point -- the Polar customer/order/grant lookups
+  // and the Resend email send -- is deliberately NOT awaited before
+  // responding. An email that matches a paying customer costs several
+  // sequential network calls (customer lookup, order lookup, grant list,
+  // key fetch, then the Resend send itself); an email that matches nobody
+  // costs exactly one. If that work ran inline, response latency alone
+  // would tell a caller which case they're in, turning the intentionally
+  // generic response body below into a customer-enumeration timing oracle
+  // (this was a real audit finding -- see PR/commit history for the report).
+  //
+  // deps.waitUntil hands the work to Cloudflare's ExecutionContext.waitUntil
+  // in production (via index.ts), which keeps it running after the response
+  // is sent without the caller ever seeing its latency.
+  deps.waitUntil(deliverRecoveredLicense(deps, email));
 
   return GENERIC_RECOVER_RESPONSE;
+}
+
+/**
+ * The actual "find the customer's order and email them their license" work
+ * for /recover, run in the background (see handleRecover). Every early
+ * return here is deliberately silent to the caller -- the HTTP response
+ * already went out before this started -- but a genuine failure (a Polar
+ * API error, Resend rejecting the send, etc.) is NOT the same as "no
+ * matching order" and must not be swallowed the same way: a customer who
+ * asked for their license and never got one, with nobody aware it
+ * happened, is worse than the timing leak this function exists to close.
+ */
+async function deliverRecoveredLicense(deps: HandlerDeps, email: string): Promise<void> {
+  try {
+    const customerId = await deps.polar.findCustomerIdByEmail(email);
+    if (!customerId) return;
+
+    const order = await deps.polar.findLatestPaidOrderForCustomer(customerId);
+    if (!order || !order.paid) return;
+
+    const result = await buildLicenseForOrder(deps, order);
+    if (!result) return;
+
+    await deps.email.send(email, "La tua licenza Peek3D", licenseEmailBody(result.licenseString));
+  } catch (err) {
+    // Runs after the response is already sent, so there's no request to
+    // fail -- surface it loudly (Cloudflare captures console.error in the
+    // worker's logs/Tail) instead of letting it disappear as a dropped
+    // waitUntil rejection. Whoever operates this worker needs to be able to
+    // find and manually resend to this customer.
+    console.error("recover: background license delivery failed", {
+      email,
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
 }

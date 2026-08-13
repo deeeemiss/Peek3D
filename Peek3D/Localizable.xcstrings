@@ -632,6 +632,23 @@
         }
       }
     },
+    "licenseSheet.fieldAccessibilityLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "License key"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chiave di licenza"
+          }
+        }
+      }
+    },
     "licenseSheet.instruction": {
       "extractionState": "manual",
       "localizations": {
@@ -819,6 +836,23 @@
         }
       }
     },
+    "settings.license.keyEndingWith": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key ending with %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chiave che termina con %@"
+          }
+        }
+      }
+    },
     "settings.license.keyLabel": {
       "extractionState": "manual",
       "localizations": {
@@ -832,6 +866,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chiave"
+          }
+        }
+      }
+    },
+    "settings.license.keyUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "License key unavailable"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chiave di licenza non disponibile"
           }
         }
       }
@@ -1201,6 +1252,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "· Sblocca Peek3D"
+          }
+        }
+      }
+    },
+    "welcome.trial.unlockLink.accessibilityLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock Peek3D"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sblocca Peek3D"
           }
         }
       }

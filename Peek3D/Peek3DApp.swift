@@ -263,12 +263,23 @@ struct Peek3DApp: App {
 
     init() {
         #if DEBUG
+        // Runs (and exits) the black-box license/trial self-test suite when
+        // PEEK3D_LICENSE_SELFTEST is set — see LicenseSelfTest. Checked
+        // first, before anything below touches the Keychain/UserDefaults
+        // state a normal launch would leave alone.
+        LicenseSelfTest.runIfRequested()
+
         // Forces an arbitrary trial/license state for manual QA when
         // PEEK3D_LICENSE_DEBUG_STATE is set — see LicenseDebugHarness for
         // the recognised values. Structurally absent from Release builds
         // (this whole call is behind #if DEBUG, and LicenseDebugHarness's
         // own file is too), never an obscure-but-reachable backdoor.
-        _licenseState = StateObject(wrappedValue: LicenseDebugHarness.makeState() ?? LicenseState())
+        let resolvedLicenseState = LicenseDebugHarness.makeState() ?? LicenseState()
+        _licenseState = StateObject(wrappedValue: resolvedLicenseState)
+
+        // Read-only probe: prints the state resolved above and exits when
+        // PEEK3D_LICENSE_STATE_QUERY is set — see LicenseStateQuery.
+        LicenseStateQuery.printAndExitIfRequested(resolvedLicenseState)
         #else
         _licenseState = StateObject(wrappedValue: LicenseState())
         #endif

@@ -149,6 +149,67 @@ describe("verifyPolarWebhook", () => {
     },
   );
 
+  // These three guard `timingSafeEqual`'s length check specifically. Without
+  // `if (a.length !== b.length) return false;`, the comparison loop only
+  // ever runs for `provided.length` iterations (`provided` is `a`), so any
+  // byte of `expected` beyond that point is never looked at, and any byte of
+  // `provided` beyond `expected`'s length is compared against `?? 0`. Three
+  // distinct exploitable shapes fall out of that:
+  //   - an EMPTY provided signature: the loop runs zero times, `diff` stays
+  //     0, and the comparison returns true unconditionally. This is the
+  //     concrete exploit the audit demonstrated: header
+  //     `signature: "v1,"` (empty base64 payload after the comma) against
+  //     ANY body/secret/timestamp produces `{ valid: true }`.
+  //   - a signature that's a genuine byte-for-byte PREFIX of the correct
+  //     one, just shorter: every byte the shortened loop does check matches,
+  //     so it passes despite being a different (much weaker) signature.
+  //   - a signature that's the correct one with extra zero bytes appended:
+  //     the loop's tail comparisons land on `expected[i] ?? 0` (0, out of
+  //     bounds) against the appended zero bytes, which also match.
+  it("rejects an empty signature instead of vacuously matching", async () => {
+    const result = await verifyPolarWebhook({
+      rawBody,
+      headers: { id, timestamp, signature: "v1," },
+      secret: SECRET_WITH_PREFIX,
+      nowSeconds,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.reason).toBe("signature_mismatch");
+  });
+
+  it("rejects a signature that is a truncated (shorter) prefix of the correct one", async () => {
+    const validSignature = computeValidSignatureHeader(SECRET_RAW_BASE64, id, timestamp, rawBody);
+    const validBytes = Buffer.from(validSignature.slice("v1,".length), "base64");
+    const truncatedB64 = validBytes.subarray(0, validBytes.length - 1).toString("base64");
+
+    const result = await verifyPolarWebhook({
+      rawBody,
+      headers: { id, timestamp, signature: `v1,${truncatedB64}` },
+      secret: SECRET_WITH_PREFIX,
+      nowSeconds,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.reason).toBe("signature_mismatch");
+  });
+
+  it("rejects a signature that is the correct one with extra zero bytes appended", async () => {
+    const validSignature = computeValidSignatureHeader(SECRET_RAW_BASE64, id, timestamp, rawBody);
+    const validBytes = Buffer.from(validSignature.slice("v1,".length), "base64");
+    const extendedB64 = Buffer.concat([validBytes, Buffer.from([0, 0])]).toString("base64");
+
+    const result = await verifyPolarWebhook({
+      rawBody,
+      headers: { id, timestamp, signature: `v1,${extendedB64}` },
+      secret: SECRET_WITH_PREFIX,
+      nowSeconds,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.reason).toBe("signature_mismatch");
+  });
+
   it("accepts when the matching signature is one of several space-separated candidates", async () => {
     const validSignature = computeValidSignatureHeader(SECRET_RAW_BASE64, id, timestamp, rawBody);
     const combined = `v1,bogus-signature-one ${validSignature} v1,bogus-signature-two`;

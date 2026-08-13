@@ -48,6 +48,7 @@ struct SettingsView: View {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
+                    .accessibilityHidden(true)
                 Text("settings.license.active", comment: "Header shown when a valid license is active")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
@@ -61,7 +62,8 @@ struct SettingsView: View {
                 settingsRow(
                     label: String(localized: "settings.license.keyLabel", defaultValue: "Key", comment: "Row label above the masked license key"),
                     value: maskedKey,
-                    monospacedValue: true
+                    monospacedValue: true,
+                    accessibilityValueOverride: maskedKeyAccessibilityDescription
                 )
             }
 
@@ -80,10 +82,30 @@ struct SettingsView: View {
     /// taking the suffix rather than the raw string's last four characters,
     /// so formatting punctuation in the stored text never counts as one of
     /// the four.
-    private var maskedKey: String {
-        guard let key = licenseState.licenseKeyText else { return "••••" }
+    private var licenseKeyLastFour: String {
+        guard let key = licenseState.licenseKeyText else { return "" }
         let compact = key.filter { $0.isLetter || $0.isNumber }
-        return "•••• " + compact.suffix(4)
+        return String(compact.suffix(4))
+    }
+
+    private var maskedKey: String {
+        let last4 = licenseKeyLastFour
+        guard !last4.isEmpty else { return "••••" }
+        return "•••• " + last4
+    }
+
+    /// What VoiceOver actually speaks for the masked-key row, in place of
+    /// the raw "•••• A1B2" string — read character by character, the bullets
+    /// alone are eight-plus seconds of "bullet bullet bullet bullet" before
+    /// anything meaningful, per this feature's brief. A full sentence
+    /// ("Key ending with A1B2") says the same thing the sighted mask
+    /// communicates, in the time it takes to say it once.
+    private var maskedKeyAccessibilityDescription: String {
+        let last4 = licenseKeyLastFour
+        guard !last4.isEmpty else {
+            return String(localized: "settings.license.keyUnavailable", defaultValue: "License key unavailable", comment: "VoiceOver value for the masked-key row when no license key text is stored to mask.")
+        }
+        return String(localized: "settings.license.keyEndingWith", defaultValue: "Key ending with \(last4)", comment: "VoiceOver value for the masked-key row, spoken instead of the bullet characters, e.g. 'Key ending with A1B2'.")
     }
 
     // `monospacedValue` used to be `label == "Chiave"` — a comparison against
@@ -91,7 +113,13 @@ struct SettingsView: View {
     // resolved (and locale-dependent) string via `String(localized:)`.
     // An explicit flag at the call site is what the string content itself
     // can no longer safely encode.
-    private func settingsRow(label: String, value: String, monospacedValue: Bool = false) -> some View {
+    //
+    // `accessibilityValueOverride` lets a caller (the masked-key row) supply
+    // a VoiceOver value distinct from what's drawn on screen, while
+    // `.accessibilityElement(children: .ignore)` + explicit label/value
+    // collapses the label+value pair into a single stop instead of two,
+    // matching how a sighted user reads the row as one fact, not two.
+    private func settingsRow(label: String, value: String, monospacedValue: Bool = false, accessibilityValueOverride: String? = nil) -> some View {
         HStack {
             Text(label)
                 .font(.system(size: 12))
@@ -101,6 +129,9 @@ struct SettingsView: View {
                 .font(.system(size: 12, weight: .medium, design: monospacedValue ? .monospaced : .default))
                 .foregroundStyle(.white.opacity(0.9))
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(label))
+        .accessibilityValue(Text(accessibilityValueOverride ?? value))
     }
 
     // MARK: - Trial / exhausted
@@ -110,6 +141,7 @@ struct SettingsView: View {
             HStack(spacing: 8) {
                 Image(systemName: "lock")
                     .foregroundStyle(.white.opacity(0.5))
+                    .accessibilityHidden(true)
                 Text("settings.license.none", comment: "Header shown when no license is active (trial or trial-exhausted state)")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)

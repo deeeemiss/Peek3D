@@ -109,6 +109,13 @@ export async function verifyPolarWebhook(options: VerifyWebhookOptions): Promise
     return { valid: false, reason: "missing_headers" };
   }
 
+  // Number.parseInt("1700000000xyz", 10) === 1700000000 -- it happily
+  // parses a leading run of digits and silently ignores any trailing
+  // garbage, so it alone can't tell a well-formed timestamp header from a
+  // malformed one. Require the header to be nothing but digits first.
+  if (!/^\d+$/.test(headers.timestamp)) {
+    return { valid: false, reason: "invalid_timestamp" };
+  }
   const timestamp = Number.parseInt(headers.timestamp, 10);
   if (!Number.isFinite(timestamp)) {
     return { valid: false, reason: "invalid_timestamp" };

@@ -36,7 +36,7 @@ function hexToBytes(hex: string): Uint8Array {
   return bytes;
 }
 
-function buildDeps(env: Env): HandlerDeps {
+function buildDeps(env: Env, waitUntil: (promise: Promise<unknown>) => void): HandlerDeps {
   const polar = new HttpPolarClient({
     apiBase: env.POLAR_API_BASE,
     accessToken: env.POLAR_ACCESS_TOKEN,
@@ -65,6 +65,7 @@ function buildDeps(env: Env): HandlerDeps {
     webhookSecret: env.POLAR_WEBHOOK_SECRET,
     ed25519PrivateKey: hexToBytes(env.LICENSE_ED25519_PRIVATE_KEY),
     recoverRateLimiter,
+    waitUntil,
   };
 }
 
@@ -74,7 +75,7 @@ app.get("/health", (c) => c.json({ ok: true }));
 
 app.post("/webhooks/polar", async (c) => {
   const rawBody = await c.req.text();
-  const deps = buildDeps(c.env);
+  const deps = buildDeps(c.env, (p) => c.executionCtx.waitUntil(p));
   const result = await handleWebhook(deps, { rawBody, headers: c.req.raw.headers });
   return c.json(result.body, result.status as ContentfulStatusCode);
 });
@@ -93,9 +94,22 @@ app.post("/recover", async (c) => {
   }
 
   const clientIp = c.req.header("cf-connecting-ip") ?? "unknown";
-  const deps = buildDeps(c.env);
+  // deps.waitUntil is wired to the real ExecutionContext here so the
+  // background Polar/Resend work in handleRecover keeps running after this
+  // handler returns -- see the comment on handleRecover in handlers.ts for
+  // why that matters (timing side channel on /recover).
+  const deps = buildDeps(c.env, (p) => c.executionCtx.waitUntil(p));
   const result = await handleRecover(deps, { email, clientIp });
   return c.json(result.body, result.status as ContentfulStatusCode);
+});
+
+// Explicit default error handler: Hono's built-in default already returns a
+// generic 500 without leaking the thrown error's message, but pinning that
+// behavior here makes the guarantee visible in code instead of resting on
+// framework default behavior that could change or be misread.
+app.onError((err, c) => {
+  console.error("unhandled error", { path: c.req.path, message: err instanceof Error ? err.message : String(err) });
+  return c.json({ error: "internal_error" }, 500);
 });
 
 export default app;

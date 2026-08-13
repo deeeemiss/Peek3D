@@ -222,4 +222,40 @@ final class LicenseVerifierTests: XCTestCase {
         let license = makeLicenseString()
         XCTAssertEqual(LicenseVerifier.verify(license), .signatureInvalid)
     }
+
+    // MARK: - Security guard: the TEST key must never become a trusted key
+    //
+    // Requested by the pre-release security audit. `TestVectors`'s keypair
+    // (used everywhere in this file) is derived from the passphrase
+    // "PeekLicenseKit-TEST-KEY-DO-NOT-USE-IN-PRODUCTION", committed in
+    // cleartext in TestVectors.swift — anyone with this repository can
+    // rederive its PRIVATE half. `LicenseVerifier.trustedPublicKeys` is
+    // intentionally empty today with a `TODO(release)` to populate it with
+    // the real production key before shipping. If that population ever
+    // accidentally includes (or is entirely replaced by) this test key —
+    // e.g. copy-pasted from the wrong place, or a placeholder left in by
+    // mistake — every Peek3D installation would accept licenses anyone
+    // could self-sign for free, indistinguishable from a real purchase.
+    //
+    // This test is a no-op today (the list is empty, so there's nothing to
+    // find) — that's correct and expected. Its entire value is as a
+    // tripwire for the day someone populates that list: it must turn red
+    // the instant the test key appears there, whether alone or alongside a
+    // real key. Verified by sabotage: temporarily setting
+    // `trustedPublicKeys = [TestVectors.publicKey]` and confirming this
+    // test fails before reverting (see the QA report for this change).
+    func test_trustedPublicKeys_neverContainsTheTestKey() {
+        let testKeyBytes = TestVectors.publicKey.rawRepresentation
+        let productionKeyBytes = LicenseVerifier.trustedPublicKeys.map { $0.rawRepresentation }
+
+        XCTAssertFalse(
+            productionKeyBytes.contains(testKeyBytes),
+            """
+            LicenseVerifier.trustedPublicKeys contains the TEST public key (derived from a passphrase \
+            committed in cleartext in TestVectors.swift). Anyone with this repository can derive the \
+            matching private key and self-sign unlimited Peek3D licenses. Remove it and populate this \
+            list with the real production Ed25519 public key instead.
+            """
+        )
+    }
 }

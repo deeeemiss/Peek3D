@@ -3,7 +3,16 @@ import Foundation
 /// The entire persisted state of the trial/license system, serialized as one
 /// JSON blob and written as a single atomic item to both the Keychain and
 /// its UserDefaults mirror — see `LicenseStore`.
-struct LicenseRecord: Codable, Equatable {
+///
+/// `Sendable` is declared explicitly, not left to implicit inference: every
+/// stored property is a value type (`[String]`, `String?`), so the compiler
+/// would infer this anyway today — but this struct is exactly the kind of
+/// "obviously fine" type a later edit could quietly break by adding a
+/// reference-type field (a cache, a delegate) without anyone noticing the
+/// conformance silently vanished. An explicit declaration turns that future
+/// mistake into a compile error instead of a data race discovered in the
+/// field.
+struct LicenseRecord: Codable, Equatable, Sendable {
     /// Trial limit: 10 *distinct* files. Reopening an already-counted file
     /// (its hash already in `seenFileHashes`) never consumes another slot.
     static let trialLimit = 10

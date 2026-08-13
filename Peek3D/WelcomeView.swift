@@ -33,9 +33,19 @@ struct WelcomeView: View {
                     formatsRow
                     recentsSection
                     if let errorMessage {
+                        // `Color.peekError` (LicenseUITokens.swift), not
+                        // `.red.opacity(0.85)`: hand-computing the latter's
+                        // contrast against this screen's near-black
+                        // background (`Color(white: 0.04)`) came out to
+                        // ≈4.24:1 — just under WCAG AA's 4.5:1 for 12pt
+                        // text. `peekError` at full opacity computes to
+                        // ≈7.1:1 against the same background, and reusing it
+                        // keeps "red means error" consistent with
+                        // `LicenseEntrySheet`'s banner instead of a second,
+                        // independently-tuned red.
                         Text(errorMessage)
                             .font(.system(size: 12))
-                            .foregroundStyle(.red.opacity(0.85))
+                            .foregroundStyle(Color.peekError)
                     }
                     trialStatusFooter
                     footer
@@ -83,6 +93,11 @@ struct WelcomeView: View {
                 .frame(width: 84, height: 84)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
+                // Decorative — the "Peek3D" text right below already states
+                // the app's identity, so the logo has nothing to add for
+                // VoiceOver and would otherwise announce as an unlabeled
+                // image.
+                .accessibilityHidden(true)
             VStack(spacing: 6) {
                 Text("Peek3D")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -136,6 +151,7 @@ struct WelcomeView: View {
             Image(systemName: "square.and.arrow.down.on.square")
                 .font(.system(size: 30, weight: .light))
                 .foregroundStyle(Color(red: 0.35, green: 0.68, blue: 1.0).opacity(0.85))
+                .accessibilityHidden(true)
             Text("welcome.dropHint", comment: "Instructs the user they can drag a 3D file onto the window")
                 .font(.system(size: 13))
                 .foregroundStyle(.white.opacity(0.55))
@@ -146,7 +162,16 @@ struct WelcomeView: View {
                     .padding(.vertical, 9)
             }
             .buttonStyle(.plain)
-            .focusable(false)
+            // Was `.focusable(false)`: that opted this button out of the Tab
+            // key-view loop entirely, which for a keyboard-only user (no
+            // VoiceOver, just Tab + Space/Return) made this the one action
+            // on the whole Welcome screen with no way to reach it without a
+            // mouse. Removed rather than reworked — nothing here depended on
+            // it staying unfocusable; it reads as a leftover from suppressing
+            // a focus-ring visual rather than an intentional accessibility
+            // choice, and this is the primary CTA of the non-exhausted
+            // Welcome screen (including the one a user lands back on right
+            // after activating a license from `exhaustedDropZone` below).
             .background(.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
             .foregroundStyle(.white)
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.15)))
@@ -171,6 +196,7 @@ struct WelcomeView: View {
             Image(systemName: "lock.fill")
                 .font(.system(size: 30, weight: .light))
                 .foregroundStyle(.white.opacity(0.5))
+                .accessibilityHidden(true)
             Text(
                 String(
                     localized: "welcome.trial.exhaustedMessage",
@@ -266,6 +292,20 @@ struct WelcomeView: View {
                     }
                     .buttonStyle(.plain)
                     .pointerCursor()
+                    // The on-screen string leads with "· " to read as a
+                    // continuation of the countdown text next to it — sighted
+                    // punctuation, not something VoiceOver should speak as
+                    // "middle dot". A dedicated, separator-free label is what
+                    // it announces instead.
+                    .accessibilityLabel(
+                        Text(
+                            String(
+                                localized: "welcome.trial.unlockLink.accessibilityLabel",
+                                defaultValue: "Unlock Peek3D",
+                                comment: "VoiceOver label for the critical-phase unlock link, without the leading '· ' visual separator used in the on-screen text."
+                            )
+                        )
+                    )
                 }
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(Color.peekAmber)
@@ -324,6 +364,7 @@ private struct RecentRow: View {
     let action: () -> Void
 
     @State private var isHovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Button(action: action) {
@@ -331,6 +372,7 @@ private struct RecentRow: View {
                 Image(systemName: "cube.transparent")
                     .font(.system(size: 13))
                     .foregroundStyle(.white.opacity(0.6))
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(url.lastPathComponent)
                         .font(.system(size: 12, weight: .medium))
@@ -350,7 +392,16 @@ private struct RecentRow: View {
         .pointerCursor()
         .background(isHovering ? Color.white.opacity(0.08) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
         .onHover { inside in
-            withAnimation(.easeOut(duration: 0.1)) { isHovering = inside }
+            // Reduce Motion is a contract (per this project's CLAUDE.md),
+            // not a suggestion — a 0.1s crossfade is minor, but skipping it
+            // entirely when the preference is on costs nothing and keeps
+            // every motion decision in this screen consistent rather than
+            // picking and choosing which ones "count".
+            if reduceMotion {
+                isHovering = inside
+            } else {
+                withAnimation(.easeOut(duration: 0.1)) { isHovering = inside }
+            }
         }
     }
 }

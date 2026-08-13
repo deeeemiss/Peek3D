@@ -16,6 +16,18 @@ extension Color {
     /// the first color that means "pay attention", so it gets a name instead
     /// of being a literal repeated at every call site.
     static let peekAmber = Color(red: 0.95, green: 0.65, blue: 0.25)
+
+    /// Genuine-failure accent for `LicenseEntrySheet`'s four error states —
+    /// distinct from `peekAmber`'s "pay attention, not broken" register per
+    /// this feature's color mapping (red = error, amber = warning, green =
+    /// success). Verified by hand-computing WCAG relative luminance for both
+    /// the icon (opaque, against the banner background below) and the
+    /// message text (white at 80% opacity, against the same background):
+    /// icon contrast ≈4.8:1, text contrast ≈9.1:1 against
+    /// `Color.peekError.opacity(0.18)` composited over the sheet's
+    /// `Color(white: 0.1)` base — both clear WCAG AA's 4.5:1 for normal text
+    /// with margin.
+    static let peekError = Color(red: 1.0, green: 0.42, blue: 0.38)
 }
 
 /// Solid accent-blue button chrome. Until this feature, every button in the
