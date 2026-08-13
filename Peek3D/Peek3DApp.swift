@@ -168,6 +168,23 @@ extension FocusedValues {
     }
 }
 
+/// Wraps a single "Licenze open source…" menu item so `@Environment(\.openWindow)`
+/// can be read — like `FileMenuCommands` above, `.commands` itself isn't a
+/// view context. Lives in the app menu (`CommandGroup(after: .appInfo)`,
+/// right below "About Peek3D") rather than Help, since it's about this
+/// specific binary's third-party notices, not general assistance.
+private struct LicensesMenuCommand: View {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button {
+            openWindow(id: "licenses")
+        } label: {
+            Text("ossLicenses.menuItem", comment: "App-menu item that opens the open-source licenses window")
+        }
+    }
+}
+
 /// Wraps the "Scene" menu's content so `@FocusedValue` can be read — like
 /// `openWindow` above, `.commands` itself isn't a view context.
 private struct SceneCommands: View {
@@ -239,8 +256,22 @@ private struct SceneCommands: View {
 
 @main
 struct Peek3DApp: App {
+    /// Single shared instance, not one per Scene — resolved here so the
+    /// very first frame any window draws already has a stable trial/license
+    /// status instead of flashing from an initial default.
+    @StateObject private var licenseState: LicenseState
 
     init() {
+        #if DEBUG
+        // Forces an arbitrary trial/license state for manual QA when
+        // PEEK3D_LICENSE_DEBUG_STATE is set — see LicenseDebugHarness for
+        // the recognised values. Structurally absent from Release builds
+        // (this whole call is behind #if DEBUG, and LicenseDebugHarness's
+        // own file is too), never an obscure-but-reachable backdoor.
+        _licenseState = StateObject(wrappedValue: LicenseDebugHarness.makeState() ?? LicenseState())
+        #else
+        _licenseState = StateObject(wrappedValue: LicenseState())
+        #endif
         SelfTest.runIfRequested()
     }
 
@@ -250,6 +281,7 @@ struct Peek3DApp: App {
         // this is what fills that gap — Open button, recent files, drag&drop.
         WindowGroup(id: "welcome") {
             WelcomeView()
+                .environmentObject(licenseState)
                 .preferredColorScheme(.dark)
                 .frame(minWidth: 900, minHeight: 620)
         }
@@ -275,14 +307,32 @@ struct Peek3DApp: App {
             // `.viewing` documents have no "New"/untitled state, so every
             // window this closure builds is for a real, already-opened file —
             // `fileURL` is non-nil in practice for every case that reaches here.
+            //
+            // This closure is the ONE point every open path funnels through
+            // — Finder double-click, Dock drop, Open Recent, and
+            // WelcomeView's own `openDocument`/`NSDocumentController` calls
+            // all end up here, never straight at `ContentView`. It's
+            // therefore where the trial gate belongs for brand-new document
+            // windows. The other path a new file can enter through — dropping
+            // a file onto an ALREADY-open document window, which never
+            // re-enters this closure — is gated separately, inside
+            // `ContentView.load(url:)`.
             if let url = file.fileURL {
-                ContentView(url: url)
+                // `TrialGateView` owns the trial-gate branch itself (not a
+                // `Group { if ... }` here) — see its own doc comment for why
+                // that's what makes an in-place license activation actually
+                // unblock this exact window instead of leaving it stuck.
+                TrialGateView(url: url)
+                    .environmentObject(licenseState)
                     .preferredColorScheme(.dark)
                     .frame(minWidth: 900, minHeight: 620)
             }
         }
         .windowStyle(.hiddenTitleBar)
         .commands {
+            CommandGroup(after: .appInfo) {
+                LicensesMenuCommand()
+            }
             CommandGroup(replacing: .newItem) {
                 FileMenuCommands()
             }
@@ -299,5 +349,29 @@ struct Peek3DApp: App {
                 SceneCommands()
             }
         }
+
+        // License status/entry (see SettingsView) — the third Scene this
+        // app needed: not Welcome (already dense) and not a document window
+        // (unreachable with none open). `Cmd+,` is wired up automatically
+        // by SwiftUI for any `Settings` scene.
+        Settings {
+            SettingsView()
+                .environmentObject(licenseState)
+        }
+
+        // Third-party license notices (see OpenSourceLicensesView), opened
+        // via the "Licenze open source…" app-menu item wired up above. Its
+        // own Scene rather than a sheet on Welcome/Settings — it needs to be
+        // reachable regardless of which window (if any) is currently key.
+        // No `.windowResizability` override here — same reasoning as the
+        // "welcome" WindowGroup above: `.contentMinSize` previously pinned
+        // a window at its minimum because its content had no growable
+        // element. `OpenSourceLicensesView`'s own `.frame(minWidth:
+        // minHeight:)` already enforces the minimum under the default mode.
+        WindowGroup(id: "licenses") {
+            OpenSourceLicensesView()
+                .preferredColorScheme(.dark)
+        }
+        .windowStyle(.hiddenTitleBar)
     }
 }

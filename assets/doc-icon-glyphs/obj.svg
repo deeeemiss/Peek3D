@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>OBJ</title>
+  <!-- Same cube as glTF, but open/unfilled — OBJ is raw geometry with no
+       material or texture baked in, so it gets the "skeleton" of the cube
+       instead of the solid. Same base shape as glTF is intentional: the
+       fill state (solid vs wireframe) is the standard, 16px-safe way to
+       tell a "complete" format from a "bare geometry" one. -->
+  <path d="M16,4 L26.4,10 L26.4,22 L16,28 L5.6,22 L5.6,10 Z"
+        fill="none" stroke="#1E5FA8" stroke-width="2.8" stroke-linejoin="miter" stroke-miterlimit="4"/>
+  <path d="M16,16 L26.4,10 M16,16 L16,28 M16,16 L5.6,10"
+        fill="none" stroke="#1E5FA8" stroke-width="2.2" stroke-linecap="round"/>
+</svg>

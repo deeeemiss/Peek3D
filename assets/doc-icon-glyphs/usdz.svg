@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>USDZ</title>
+  <!-- Same layer stack as usd.svg, scaled down and sealed inside a rounded
+       frame — USDZ is the zipped, self-contained, AR-ready package of the
+       same underlying composition. The frame is the ONLY thing that
+       separates this glyph from usd.svg; see the caveat in the design
+       notes about how much of that survives at 16px. -->
+  <rect x="3" y="3" width="26" height="26" rx="5" ry="5" fill="none" stroke="#1E5FA8" stroke-width="2.2"/>
+  <path d="M7,11.5 L16,8.5 L25,11.5 L16,14.5 Z" fill="none" stroke="#1E5FA8" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M7,16 L16,13 L25,16 L16,19 Z" fill="#59ADFF" stroke="#1E5FA8" stroke-width="0.8" stroke-linejoin="round"/>
+  <path d="M7,20.5 L16,17.5 L25,20.5 L16,23.5 Z" fill="#A6D4FF" stroke="#1E5FA8" stroke-width="0.8" stroke-linejoin="round"/>
+</svg>

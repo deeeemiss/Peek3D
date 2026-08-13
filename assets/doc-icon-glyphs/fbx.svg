@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>FBX</title>
+  <!-- A two-bone joint chain — FBX is the format most associated with
+       rigging and character animation, so the glyph is a small armature:
+       three joints, two bones. A thin bent line with dot terminals, unlike
+       any other silhouette in the set.
+       Stroke and joints thickened after 16px review (2026-08-13): FBX had
+       the second-lowest visual mass in the set after the old ply.svg.
+       Verified at 128px that the heavier weight still reads cleanly as an
+       armature rather than looking clumsy. -->
+  <path d="M10,7 L22,13 L14,27" fill="none" stroke="#1E5FA8" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="10" cy="7" r="3.8" fill="#A6D4FF"/>
+  <circle cx="22" cy="13" r="3.2" fill="#59ADFF"/>
+  <circle cx="14" cy="27" r="3.2" fill="#1E5FA8"/>
+</svg>

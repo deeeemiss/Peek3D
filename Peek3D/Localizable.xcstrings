@@ -491,6 +491,23 @@
         }
       }
     },
+    "error.trialExhausted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trial limit reached — this file can't be opened."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite di prova raggiunto — questo file non può essere aperto."
+          }
+        }
+      }
+    },
     "external textures not loaded (folder permissions).": {
       "comment": "missingTexture.pluralSuffix",
       "localizations": {
@@ -513,6 +530,159 @@
         }
       }
     },
+    "licenseSheet.activate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activate"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attiva"
+          }
+        }
+      }
+    },
+    "licenseSheet.cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annulla"
+          }
+        }
+      }
+    },
+    "licenseSheet.error.futureSchema": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This key requires a newer version of Peek3D. Update the app and try again."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questa chiave richiede una versione più recente di Peek3D. Aggiorna l'app e riprova."
+          }
+        }
+      }
+    },
+    "licenseSheet.error.malformed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This doesn't look like a valid license key. Make sure you copied the entire string from the email."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questa non sembra una chiave di licenza valida. Controlla di aver copiato l'intera stringa dall'email."
+          }
+        }
+      }
+    },
+    "licenseSheet.error.signatureInvalid": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The key's signature isn't valid. If you typed it in by hand, try pasting it directly from the original email instead."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La firma della chiave non è valida. Se l'hai digitata a mano, prova a incollarla direttamente dall'email originale."
+          }
+        }
+      }
+    },
+    "licenseSheet.error.wrongProduct": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This key belongs to a different product, not Peek3D."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questa chiave appartiene a un altro prodotto, non a Peek3D."
+          }
+        }
+      }
+    },
+    "licenseSheet.instruction": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste the key you received by email after your purchase."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incolla qui la chiave ricevuta via email dopo l'acquisto."
+          }
+        }
+      }
+    },
+    "licenseSheet.success": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "License activated. Enjoy!"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licenza attivata. Buon lavoro!"
+          }
+        }
+      }
+    },
+    "licenseSheet.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter your license"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inserisci la licenza"
+          }
+        }
+      }
+    },
     "lighting.default": {
       "extractionState": "manual",
       "localizations": {
@@ -526,6 +696,159 @@
           "stringUnit": {
             "state": "translated",
             "value": "Predefinita"
+          }
+        }
+      }
+    },
+    "ossLicenses.menuItem": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Source Licenses…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licenze open source…"
+          }
+        }
+      }
+    },
+    "ossLicenses.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Third-party components included in this binary."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Componenti di terze parti inclusi in questo binario."
+          }
+        }
+      }
+    },
+    "ossLicenses.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Source Licenses"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licenze open source"
+          }
+        }
+      }
+    },
+    "settings.license.active": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active license"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licenza attiva"
+          }
+        }
+      }
+    },
+    "settings.license.changeButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change license"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambia licenza"
+          }
+        }
+      }
+    },
+    "settings.license.enterButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter license"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inserisci licenza"
+          }
+        }
+      }
+    },
+    "settings.license.holderLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licensed to"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intestata a"
+          }
+        }
+      }
+    },
+    "settings.license.keyLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chiave"
+          }
+        }
+      }
+    },
+    "settings.license.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No active license"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessuna licenza attiva"
           }
         }
       }
@@ -565,6 +888,166 @@
           "stringUnit": {
             "state": "translated",
             "value": "per abilitarne le texture esterne."
+          }
+        }
+      }
+    },
+    "trial.exhaustedShort": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trial expired"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prova terminata"
+          }
+        }
+      }
+    },
+    "trial.remainingCount": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld opening left"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld openings left"
+                }
+              }
+            }
+          }
+        },
+        "it": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ti resta %lld apertura di prova"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ti restano %lld aperture di prova"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "trialGate.buyButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buy license"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acquista licenza"
+          }
+        }
+      }
+    },
+    "trialGate.haveLicenseButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I already have a license"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ho già una licenza"
+          }
+        }
+      }
+    },
+    "trialGate.price": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "€19.99 · one-time"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "€19,99 · una tantum"
+          }
+        }
+      }
+    },
+    "trialGate.reassurance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You've used all your trial opens (%lld/%lld). The file you tried to open hasn't been lost — it's still there, and you'll be able to reopen it as soon as you unlock Peek3D."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hai aperto tutti i file inclusi nella prova (%lld/%lld). Il file che hai provato ad aprire non è andato perso: resta dove si trova, potrai riaprirlo appena sblocchi Peek3D."
+          }
+        }
+      }
+    },
+    "trialGate.refundNote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "14-day money-back guarantee"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rimborso garantito entro 14 giorni"
+          }
+        }
+      }
+    },
+    "trialGate.updatesIncluded": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updates included forever"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiornamenti inclusi per sempre"
           }
         }
       }
@@ -650,6 +1133,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "Trascina un file 3D. Guardalo."
+          }
+        }
+      }
+    },
+    "welcome.tagline.trialExhausted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trial's over. Unlock to keep looking."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prova finita. Sblocca per continuare a guardare."
+          }
+        }
+      }
+    },
+    "welcome.trial.exhaustedMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You've used all your trial opens (%lld/%lld)."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hai esaurito le aperture di prova (%lld/%lld)."
+          }
+        }
+      }
+    },
+    "welcome.trial.unlockButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock Peek3D to continue"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sblocca Peek3D per continuare"
+          }
+        }
+      }
+    },
+    "welcome.trial.unlockLink": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· Unlock Peek3D"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· Sblocca Peek3D"
           }
         }
       }

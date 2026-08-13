@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>glTF</title>
+  <!-- Solid isometric cube: the app's own "3D object" motif, filled — glTF
+       is the native/primary format, so it gets the purest, most direct
+       treatment: a complete, ready-to-render solid. -->
+  <path d="M5.6,10 L16,4 L26.4,10 L16,16 Z" fill="#A6D4FF"/>
+  <path d="M26.4,10 L26.4,22 L16,28 L16,16 Z" fill="#1E5FA8"/>
+  <path d="M16,28 L5.6,22 L5.6,10 L16,16 Z" fill="#59ADFF"/>
+  <path d="M16,4 L26.4,10 L26.4,22 L16,28 L5.6,22 L5.6,10 Z" fill="none" stroke="#1E5FA8" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M16,16 L26.4,10 M16,16 L16,28 M16,16 L5.6,10" fill="none" stroke="#1E5FA8" stroke-width="1"/>
+</svg>

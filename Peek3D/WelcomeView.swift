@@ -9,9 +9,11 @@ import UniformTypeIdentifiers
 /// state for a read-only viewer, so this replaces it.
 struct WelcomeView: View {
     @Environment(\.openDocument) private var openDocument
+    @EnvironmentObject private var licenseState: LicenseState
     @State private var recents: [URL] = []
     @State private var isTargeted = false
     @State private var errorMessage: String?
+    @State private var showLicenseSheet = false
 
     var body: some View {
         ZStack {
@@ -35,6 +37,7 @@ struct WelcomeView: View {
                             .font(.system(size: 12))
                             .foregroundStyle(.red.opacity(0.85))
                     }
+                    trialStatusFooter
                     footer
                 }
                 .padding(.horizontal, 48)
@@ -54,7 +57,19 @@ struct WelcomeView: View {
         .frame(minWidth: 900, minHeight: 620)
         .onAppear(perform: refreshRecents)
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
-            handleDrop(providers)
+            // Trial exhausted: a dropped file would only reach the paywall
+            // in a brand-new document window (see `TrialGateView`) after a
+            // real load attempt — the same dead end the drop zone's button
+            // avoids below. Route straight to license entry instead, and
+            // still return true so the drag doesn't show a "rejected" cursor.
+            guard !isTrialExhausted else {
+                showLicenseSheet = true
+                return true
+            }
+            return handleDrop(providers)
+        }
+        .sheet(isPresented: $showLicenseSheet) {
+            LicenseEntrySheet()
         }
     }
 
@@ -78,7 +93,16 @@ struct WelcomeView: View {
                             endPoint: .trailing
                         )
                     )
-                Text("welcome.tagline", comment: "Short tagline under the app name on the Welcome screen")
+                // "Drop a 3D file. Look at it." is an invitation to do the
+                // one thing that's currently blocked — swap in a tagline
+                // that doesn't dangle a carrot the trial-exhausted state
+                // won't let the user reach. `isTrialExhausted` is declared
+                // further down in this file; Swift resolves it fine since
+                // both are members of the same type.
+                Text(
+                    isTrialExhausted ? "welcome.tagline.trialExhausted" : "welcome.tagline",
+                    comment: "Short tagline under the app name on the Welcome screen. The trial-exhausted variant must NOT invite the drag/drop action the exhausted state blocks."
+                )
                     .font(.system(size: 13))
                     .foregroundStyle(.white.opacity(0.45))
             }
@@ -87,7 +111,27 @@ struct WelcomeView: View {
 
     // MARK: - Drop zone
 
+    /// True once the distinct-file trial is used up. Read-only here — the
+    /// gate itself (`LicenseState.canOpen(url:)`, enforced by `TrialGateView`
+    /// at document-open time) stays the single source of truth; this only
+    /// decides what the Welcome screen shows and where its drop zone/button
+    /// send the user, so the dead-end of loading a file into a fresh window
+    /// just to hit the paywall there is avoided.
+    private var isTrialExhausted: Bool {
+        if case .trialExhausted = licenseState.status { return true }
+        return false
+    }
+
+    @ViewBuilder
     private var dropZone: some View {
+        if isTrialExhausted {
+            exhaustedDropZone
+        } else {
+            openDropZone
+        }
+    }
+
+    private var openDropZone: some View {
         VStack(spacing: 14) {
             Image(systemName: "square.and.arrow.down.on.square")
                 .font(.system(size: 30, weight: .light))
@@ -106,6 +150,43 @@ struct WelcomeView: View {
             .background(.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
             .foregroundStyle(.white)
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.15)))
+            .pointerCursor()
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 36)
+        .background(.white.opacity(0.03), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(.white.opacity(0.08), style: StrokeStyle(lineWidth: 1, dash: [6, 5]))
+        )
+    }
+
+    /// Same container chrome as `openDropZone`, but the copy, icon, and
+    /// action all come from the trial-exhausted register already established
+    /// by `TrialGateView` — a neutral lock (not the inviting accent blue), a
+    /// sentence naming the trial limit, and a filled CTA straight into
+    /// `LicenseEntrySheet` instead of `NSOpenPanel`.
+    private var exhaustedDropZone: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "lock.fill")
+                .font(.system(size: 30, weight: .light))
+                .foregroundStyle(.white.opacity(0.5))
+            Text(
+                String(
+                    localized: "welcome.trial.exhaustedMessage",
+                    defaultValue: "You've used all your trial opens (\(LicenseRecord.trialLimit)/\(LicenseRecord.trialLimit)).",
+                    comment: "Welcome screen's exhausted-trial drop zone message. Both %lld are the same trial-limit constant, shown as an N/N ratio."
+                )
+            )
+                .font(.system(size: 13))
+                .foregroundStyle(.white.opacity(0.55))
+                .multilineTextAlignment(.center)
+            Button {
+                showLicenseSheet = true
+            } label: {
+                Text("welcome.trial.unlockButton", comment: "CTA in the Welcome screen's exhausted-trial drop zone")
+            }
+            .buttonStyle(PeekFilledButtonStyle())
             .pointerCursor()
         }
         .frame(maxWidth: .infinity)
@@ -160,6 +241,38 @@ struct WelcomeView: View {
                         RecentRow(url: url) { open(url: url) }
                     }
                 }
+            }
+        }
+    }
+
+    // MARK: - Trial status
+
+    /// Invisible above 5 opens remaining. Quiet (11pt, white 40%) from 5
+    /// down to 4; from 3 down to 1 it escalates to 12pt amber medium-weight
+    /// with a clickable "· Sblocca Peek3D" straight into license entry —
+    /// the critical phase where the user is about to hit `TrialGateView`
+    /// for real.
+    @ViewBuilder
+    private var trialStatusFooter: some View {
+        if case .trial(let remaining) = licenseState.status, remaining <= 5 {
+            if remaining <= 3 {
+                HStack(spacing: 4) {
+                    Text(TrialCopy.remainingText(remaining))
+                    Button {
+                        showLicenseSheet = true
+                    } label: {
+                        Text("welcome.trial.unlockLink", comment: "Inline underlined link appended after the critical-phase countdown, e.g. '· Unlock Peek3D'. Leading separator is part of the localized string since some languages may punctuate differently.")
+                            .underline()
+                    }
+                    .buttonStyle(.plain)
+                    .pointerCursor()
+                }
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Color.peekAmber)
+            } else {
+                Text(TrialCopy.remainingText(remaining))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.4))
             }
         }
     }
