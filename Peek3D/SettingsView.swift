@@ -15,7 +15,10 @@ import SwiftUI
 /// brief.
 struct SettingsView: View {
     @EnvironmentObject private var licenseState: LicenseState
+    @EnvironmentObject private var licenseActivationService: LicenseActivationService
     @State private var showLicenseSheet = false
+    @State private var isDeactivating = false
+    @State private var deactivationFeedback: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -38,6 +41,14 @@ struct SettingsView: View {
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showLicenseSheet) {
             LicenseEntrySheet()
+        }
+        // Same discipline `LicenseEntrySheet` established for its own
+        // error/success banners (see `AccessibilityAnnouncer`'s doc
+        // comment) — a VoiceOver user who just pressed "Disattiva questo
+        // Mac" and has moved focus elsewhere should still hear the outcome.
+        .onChange(of: deactivationFeedback) { newValue in
+            guard let newValue else { return }
+            AccessibilityAnnouncer.post(newValue)
         }
     }
 
@@ -67,6 +78,10 @@ struct SettingsView: View {
                 )
             }
 
+            Divider().overlay(.white.opacity(0.1))
+
+            activationSection
+
             Button {
                 showLicenseSheet = true
             } label: {
@@ -74,6 +89,98 @@ struct SettingsView: View {
             }
                 .buttonStyle(PeekGhostButtonStyle())
                 .pointerCursor()
+        }
+    }
+
+    // MARK: - This Mac's activation (single-machine enforcement)
+
+    /// This device's status against Polar's single-machine activation
+    /// system — a DIFFERENT fact from the license-holder/key rows above,
+    /// which only reflect the offline, signature-verified layer. A device
+    /// can be `.licensed` (valid signature) while this section shows
+    /// anything from "not yet verified" to "revoked" — see
+    /// `LicenseActivationService`'s own doc comment for why the two layers
+    /// are deliberately independent.
+    private var activationSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("settings.activation.header", comment: "Section header for this device's single-machine activation status, distinct from the license-holder/key rows above it")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.45))
+
+            let display = activationStatusDisplay
+            HStack(spacing: 8) {
+                if case .checking = licenseActivationService.remoteStatus {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Image(systemName: display.icon)
+                        .foregroundStyle(display.tint)
+                        .accessibilityHidden(true)
+                }
+                Text(display.text)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.85))
+            }
+            .accessibilityElement(children: .combine)
+
+            if licenseActivationService.hasActivationToFree {
+                Button {
+                    deactivateThisDevice()
+                } label: {
+                    if isDeactivating {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Text("settings.activation.deactivateButton", comment: "Button that frees this Mac's seat on the currently activated license — what a user does before selling or replacing this Mac")
+                    }
+                }
+                .buttonStyle(PeekGhostButtonStyle())
+                .disabled(isDeactivating)
+                .pointerCursor()
+            }
+
+            if let deactivationFeedback {
+                Text(deactivationFeedback)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+        }
+    }
+
+    private var activationStatusDisplay: (icon: String, tint: Color, text: String) {
+        switch licenseActivationService.remoteStatus {
+        case .notActivated:
+            return ("questionmark.circle", .white.opacity(0.4), String(localized: "settings.activation.status.notActivated", defaultValue: "Not yet verified online", comment: "This device's activation status in Settings: no activation attempt has completed yet"))
+        case .checking:
+            return ("circle", .white.opacity(0.4), String(localized: "settings.activation.status.checking", defaultValue: "Verifying…", comment: "This device's activation status in Settings: a check is in flight right now"))
+        case .active(let lastVerifiedAt):
+            let dateText = lastVerifiedAt.formatted(date: .abbreviated, time: .shortened)
+            return ("checkmark.circle.fill", .green, String(localized: "settings.activation.status.active", defaultValue: "Active on this Mac (verified \(dateText))", comment: "This device's activation status in Settings: currently confirmed active, with the last successful verification timestamp"))
+        case .unreachable(let lastKnownGoodAt, let withinOfflineGrace):
+            if withinOfflineGrace {
+                let dateText = lastKnownGoodAt?.formatted(date: .abbreviated, time: .shortened) ?? String(localized: "settings.activation.status.never", defaultValue: "never", comment: "Fallback for 'verified never' when this device has no successful verification on record yet")
+                return ("wifi.slash", Color.peekAmber, String(localized: "settings.activation.status.offlineGrace", defaultValue: "Active on this Mac (offline since \(dateText), still working)", comment: "This device's activation status in Settings: can't reach the server right now, but still within the 30-day offline grace period"))
+            } else {
+                return ("wifi.slash", Color.peekError, String(localized: "settings.activation.status.offlineExpired", defaultValue: "Needs to reconnect to verify", comment: "This device's activation status in Settings: the 30-day offline grace period has elapsed"))
+            }
+        case .deviceConflict:
+            return ("exclamationmark.arrow.triangle.2.circlepath", Color.peekAmber, String(localized: "settings.activation.status.deviceConflict", defaultValue: "Not active on this Mac — the license seat is taken by another Mac", comment: "This device's activation status in Settings: this device's own activation attempt was rejected because the license is already active elsewhere"))
+        case .revokedGracePeriod(_, let hardBlockDeadline):
+            let dateText = hardBlockDeadline.formatted(date: .abbreviated, time: .shortened)
+            return ("exclamationmark.triangle.fill", Color.peekAmber, String(localized: "settings.activation.status.revokedGrace", defaultValue: "Revoked — access continues until \(dateText)", comment: "This device's activation status in Settings: revoked but still within the 72-hour grace period"))
+        case .blocked:
+            return ("lock.fill", Color.peekError, String(localized: "settings.activation.status.blocked", defaultValue: "Revoked — new files are blocked", comment: "This device's activation status in Settings: revoked and past the 72-hour grace period"))
+        }
+    }
+
+    private func deactivateThisDevice() {
+        guard let key = licenseState.licenseKeyText else { return }
+        isDeactivating = true
+        deactivationFeedback = nil
+        Task { @MainActor in
+            let success = await licenseActivationService.deactivateThisDevice(licenseKeyText: key)
+            isDeactivating = false
+            deactivationFeedback = success
+                ? String(localized: "settings.activation.deactivateSuccess", defaultValue: "This Mac's seat was freed. You can now activate a different license here, or the same one on another Mac.", comment: "Confirmation shown after successfully deactivating this Mac's seat on the currently activated license")
+                : String(localized: "settings.activation.deactivateFailure", defaultValue: "Couldn't reach the activation server — check your connection and try again.", comment: "Shown after a failed attempt to deactivate this Mac's seat. Per this feature's non-negotiable rule, this must never be worded as if the license itself were invalid.")
         }
     }
 

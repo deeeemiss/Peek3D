@@ -38,6 +38,40 @@ final class LicenseState: ObservableObject {
     private var extraTrustedKeys: [Curve25519.Signing.PublicKey] = []
     #endif
 
+    /// Additive hook for `LicenseActivationService` (a separate subsystem —
+    /// see its own doc comment, this file has and needs no compile-time
+    /// dependency on it) to learn synchronously, on the main actor, the
+    /// instant a new license key text is accepted. A plain optional closure
+    /// rather than Combine/NotificationCenter specifically so this stays a
+    /// private, one-to-one wire between the two types instead of a
+    /// broadcast anything in the process could listen to. `nil` by default —
+    /// every existing behavior in this file is unaffected whether or not
+    /// anything ever sets it.
+    var onLicenseKeyTextApplied: ((String) -> Void)?
+
+    /// True once `LicenseActivationService` has confirmed the 72-hour
+    /// revocation grace period has elapsed (`RemoteActivationStatus.blocked`)
+    /// — see `Peek3DApp.init()` for the wiring (a closure hook symmetrical to
+    /// `onLicenseKeyTextApplied` above, just in the opposite direction, for
+    /// the same reason: neither type needs a compile-time dependency on the
+    /// other). Independent of `status`: a revoked-but-still-in-grace, or a
+    /// revoked-and-now-blocked, device still has a perfectly valid LOCAL
+    /// signature, so `status` stays `.licensed` throughout — this is a
+    /// second, orthogonal gate `canOpen` consults, not a replacement for the
+    /// first. `@Published` so `TrialGateView` can read it directly to choose
+    /// between the trial paywall and a distinct "access blocked" screen,
+    /// rather than both paths reading the same misleading trial-exhausted copy.
+    @Published private(set) var isRemotelyBlocked: Bool = false
+
+    /// Only setter — called from the closure hook above, never read/written
+    /// anywhere else. A plain `Bool`, not the full `RemoteActivationStatus`
+    /// enum: this file has no reason to know Polar's grace-period timestamps,
+    /// device-conflict state, etc. — only the single yes/no fact that changes
+    /// what `canOpen` returns.
+    func setRemoteAccessBlocked(_ blocked: Bool) {
+        isRemotelyBlocked = blocked
+    }
+
     init(store: LicenseStore = LicenseStore()) {
         self.store = store
         let record = store.loadMergedRecord()
@@ -53,7 +87,16 @@ final class LicenseState: ObservableObject {
     /// closure and `ContentView.load(url:)`): true if `url` can be opened
     /// right now — licensed, trial not yet exhausted, or a file this trial
     /// already counted before (reopening never re-blocks).
+    ///
+    /// `isRemotelyBlocked` is checked FIRST and unconditionally denies —
+    /// deliberately with no "already-seen-file" exception like
+    /// `.trialExhausted` gets below. That exception exists for the trial
+    /// specifically because a distinct-file COUNT was what ran out, and a
+    /// file already counted doesn't consume anything further; a remote
+    /// revocation is a different kind of fact (the license itself, not a
+    /// counter) and reopening a specific file doesn't make it less revoked.
     func canOpen(url: URL) -> Bool {
+        if isRemotelyBlocked { return false }
         switch status {
         case .licensed, .trial:
             return true
@@ -93,6 +136,7 @@ final class LicenseState: ObservableObject {
         #else
         status = LicenseStatusResolver.resolve(updated)
         #endif
+        onLicenseKeyTextApplied?(text)
     }
 
     /// Raw key text behind an active `.licensed` status, for UI that needs to

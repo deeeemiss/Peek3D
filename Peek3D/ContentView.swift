@@ -19,6 +19,13 @@ struct ContentView: View {
     /// comment for the full picture.
     @EnvironmentObject private var licenseState: LicenseState
 
+    /// Needed here (not just by `RemoteActivationBanner` itself, which reads
+    /// the same environment object independently) to decide whether to mount
+    /// `remoteActivationBannerOverlay`'s positioning wrapper at all — see
+    /// that computed var below, same reasoning as `RemoteActivationStatus
+    /// .bannerSeverity`'s own doc comment.
+    @EnvironmentObject private var licenseActivationService: LicenseActivationService
+
     @StateObject private var controller = ViewerController()
     @State private var scene: SCNScene?
     @State private var stats: ModelStats?
@@ -63,6 +70,7 @@ struct ContentView: View {
 
                 overlays
                 trialToastBanner
+                remoteActivationBannerOverlay
             }
 
             if let errorMessage {
@@ -199,6 +207,28 @@ struct ContentView: View {
         guard showTrialToast else { return }
         trialToastDismissWorkItem?.cancel()
         withAnimation(.easeOut(duration: 0.15)) { showTrialToast = false }
+    }
+
+    /// Top-pinned, same slot `trialToastBanner` uses — the two are mutually
+    /// exclusive in practice (the toast only ever shows while `licenseState.status`
+    /// is `.trial`; this banner only has anything to say once a remote
+    /// activation has been attempted, which only happens once `status` is
+    /// `.licensed`), so there's no real risk of them stacking. Unlike the
+    /// toast, this does NOT auto-dismiss and does NOT disable hit-testing —
+    /// the device-conflict case has a real "Retry" button inside it. Only
+    /// mounted at all when there's something to show (`bannerSeverity !=
+    /// nil`), same as `if let errorMessage` elsewhere in this app — an
+    /// always-present `EmptyView()` still occupies this `VStack`'s implicit
+    /// layout slot even when invisible.
+    @ViewBuilder
+    private var remoteActivationBannerOverlay: some View {
+        if licenseActivationService.remoteStatus.bannerSeverity != nil {
+            VStack {
+                RemoteActivationBanner()
+                    .padding(.top, 16)
+                Spacer()
+            }
+        }
     }
 
     // MARK: - Overlays
@@ -375,10 +405,25 @@ struct ContentView: View {
         // of an already-counted file, or any file while the trial still has
         // room, or anything at all once licensed, always passes.
         guard licenseState.canOpen(url: url) else {
-            let message = String(
-                localized: "error.trialExhausted",
-                defaultValue: "Trial limit reached — this file can't be opened."
-            )
+            // Two distinct reasons `canOpen` can return false here — a
+            // remote revocation past its 72-hour grace, or the trial's
+            // distinct-file count — and they need distinct copy. Showing
+            // "trial limit reached" to a paying customer whose license was
+            // (rightly or wrongly) revoked would actively mislead them about
+            // what's actually going on, which is exactly the kind of wrong
+            // message this feature's non-negotiable rule exists to prevent
+            // for the "server unreachable" case — the same discipline
+            // applies here.
+            let message = licenseState.isRemotelyBlocked
+                ? String(
+                    localized: "error.remoteBlocked",
+                    defaultValue: "This license's activation was revoked and the grace period has ended — this file can't be opened until it's resolved.",
+                    comment: "Shown when dropping a new file onto an already-open document window while this device's remote activation is blocked (72h+ after a revocation)."
+                )
+                : String(
+                    localized: "error.trialExhausted",
+                    defaultValue: "Trial limit reached — this file can't be opened."
+                )
             errorMessage = message
             return
         }

@@ -261,13 +261,34 @@ struct Peek3DApp: App {
     /// status instead of flashing from an initial default.
     @StateObject private var licenseState: LicenseState
 
+    /// Single-machine enforcement — talks to Polar in the background, never
+    /// blocking anything `licenseState` already decided locally/offline.
+    /// See `LicenseActivationService`'s own doc comment for the full
+    /// design; wired to `licenseState` below via
+    /// `onLicenseKeyTextApplied`, not a compile-time dependency between the
+    /// two types.
+    @StateObject private var licenseActivationService: LicenseActivationService
+
     init() {
         #if DEBUG
+        // Makes ONE real HTTP call through HTTPPolarLicenseAPIClient and
+        // exits when PEEK3D_POLAR_CLIENT_QUERY is set — see
+        // PolarLicenseAPIClientQuery. Checked first, before anything else,
+        // since it has no dependency on license state at all.
+        PolarLicenseAPIClientQuery.printAndExitIfRequested()
+
         // Runs (and exits) the black-box license/trial self-test suite when
         // PEEK3D_LICENSE_SELFTEST is set — see LicenseSelfTest. Checked
         // first, before anything below touches the Keychain/UserDefaults
         // state a normal launch would leave alone.
         LicenseSelfTest.runIfRequested()
+
+        // Runs (and exits) the single-machine activation state-machine
+        // self-test when PEEK3D_ACTIVATION_SELFTEST is set — see
+        // LicenseActivationSelfTest. Same pattern as LicenseSelfTest just
+        // above: a scripted FakePolarLicenseAPIClient, zero network, no
+        // live Polar account.
+        LicenseActivationSelfTest.runIfRequested()
 
         // Forces an arbitrary trial/license state for manual QA when
         // PEEK3D_LICENSE_DEBUG_STATE is set — see LicenseDebugHarness for
@@ -277,12 +298,100 @@ struct Peek3DApp: App {
         let resolvedLicenseState = LicenseDebugHarness.makeState() ?? LicenseState()
         _licenseState = StateObject(wrappedValue: resolvedLicenseState)
 
-        // Read-only probe: prints the state resolved above and exits when
-        // PEEK3D_LICENSE_STATE_QUERY is set — see LicenseStateQuery.
-        LicenseStateQuery.printAndExitIfRequested(resolvedLicenseState)
+        // LicenseStateQuery.printAndExitIfRequested(resolvedLicenseState) is
+        // deliberately NOT called here anymore — see where it's called
+        // further down, after the LicenseActivationService wiring, and the
+        // comment there for why.
+
+        // Read-only probe: prints MachineIdentifier.current() and exits when
+        // PEEK3D_MACHINE_ID_QUERY is set — see MachineIdentifierQuery. Checked
+        // last among the read-only probes; order between them doesn't matter,
+        // none of them touch shared state the others depend on.
+        MachineIdentifierQuery.printAndExitIfRequested()
         #else
-        _licenseState = StateObject(wrappedValue: LicenseState())
+        let resolvedLicenseState = LicenseState()
+        _licenseState = StateObject(wrappedValue: resolvedLicenseState)
         #endif
+
+        #if DEBUG
+        // Forces the PERSISTED activation record for manual QA when
+        // PEEK3D_ACTIVATION_DEBUG_STATE is set — see ActivationDebugHarness.
+        // Must run before LicenseActivationService() below, since its
+        // init() reads this same persisted record synchronously.
+        // Structurally absent from Release builds.
+        ActivationDebugHarness.apply()
+        #endif
+
+        // Single-machine activation layer — see LicenseActivationService's
+        // top doc comment. Wired to resolvedLicenseState via a plain
+        // closure hook (LicenseState.onLicenseKeyTextApplied), not a
+        // constructor dependency, so neither type needs to know the other
+        // exists at compile time beyond this one line.
+        let resolvedActivationService = LicenseActivationService()
+        #if DEBUG
+        // Same test keypair PEEK3D_LICENSE_DEBUG_STATE=licensed already
+        // trusts on the LicenseState side (see LicenseDebugHarness) — without
+        // this, LicenseVerifier.verify would reject that manufactured
+        // license against this service's own (empty in production)
+        // trustedPublicKeys, and PEEK3D_LICENSE_DEBUG_STATE=licensed could
+        // never actually exercise a real /activate call for manual
+        // verification against a local fake Polar server. Harmless no-op
+        // for every other PEEK3D_LICENSE_DEBUG_STATE value (there's no
+        // license key text to check against it), and structurally absent
+        // from Release builds.
+        if let testKey = LicenseDebugHarness.testPublicKey {
+            resolvedActivationService.debugSetExtraTrustedKeys([testKey])
+        }
+        #endif
+        resolvedLicenseState.onLicenseKeyTextApplied = { [weak resolvedActivationService] text in
+            resolvedActivationService?.licenseKeyWasApplied(text)
+        }
+
+        // Opposite-direction hook — see LicenseActivationService.onBlockedStateChanged's
+        // own doc comment for why the explicit sync call below is required
+        // in addition to wiring the closure: `didSet` only fires on a CHANGE
+        // after this closure exists, so a `.blocked` state already persisted
+        // from a previous launch (resolved synchronously above, in
+        // LicenseActivationService.init()) would otherwise never reach
+        // resolvedLicenseState at all.
+        resolvedActivationService.onBlockedStateChanged = { [weak resolvedLicenseState] blocked in
+            resolvedLicenseState?.setRemoteAccessBlocked(blocked)
+        }
+        resolvedLicenseState.setRemoteAccessBlocked(resolvedActivationService.isBlocked)
+
+        #if DEBUG
+        // Read-only probe: prints the state resolved above (INCLUDING
+        // isRemotelyBlocked) and exits when PEEK3D_LICENSE_STATE_QUERY is
+        // set — see LicenseStateQuery. Moved here, after the
+        // LicenseActivationService wiring right above, rather than
+        // immediately after `resolvedLicenseState` is constructed: before
+        // this point, `isRemotelyBlocked` couldn't yet reflect a persisted
+        // `.blocked` record (see `LicenseActivationService.onBlockedStateChanged`'s
+        // own doc comment on the initial-sync ordering requirement) — a
+        // query run any earlier would silently always report `false`,
+        // regardless of what's actually on disk. Still exits well before
+        // `launchTimeCheck` below, so this probe never triggers a real
+        // network call.
+        LicenseStateQuery.printAndExitIfRequested(resolvedLicenseState)
+        #endif
+
+        _licenseActivationService = StateObject(wrappedValue: resolvedActivationService)
+
+        #if DEBUG
+        // Read-only probe: prints the PERSISTED DeviceActivationRecord and
+        // exits when PEEK3D_ACTIVATION_STATE_QUERY is set — see
+        // LicenseActivationStateQuery. Meant for a SEPARATE process launch
+        // after a normal run already made the real HTTP call; checked here
+        // (before launchTimeCheck below) purely so that separate launch
+        // exits immediately without also kicking off a network attempt of
+        // its own.
+        LicenseActivationStateQuery.printAndExitIfRequested()
+        #endif
+
+        // Background, 24-hour-gated reverify — never awaited here, never
+        // blocks app launch. See LicenseActivationService.launchTimeCheck.
+        resolvedActivationService.launchTimeCheck(licenseKeyText: resolvedLicenseState.licenseKeyText)
+
         SelfTest.runIfRequested()
     }
 
@@ -293,6 +402,7 @@ struct Peek3DApp: App {
         WindowGroup(id: "welcome") {
             WelcomeView()
                 .environmentObject(licenseState)
+                .environmentObject(licenseActivationService)
                 .preferredColorScheme(.dark)
                 .frame(minWidth: 900, minHeight: 620)
         }
@@ -335,6 +445,7 @@ struct Peek3DApp: App {
                 // unblock this exact window instead of leaving it stuck.
                 TrialGateView(url: url)
                     .environmentObject(licenseState)
+                    .environmentObject(licenseActivationService)
                     .preferredColorScheme(.dark)
                     .frame(minWidth: 900, minHeight: 620)
             }
@@ -368,6 +479,7 @@ struct Peek3DApp: App {
         Settings {
             SettingsView()
                 .environmentObject(licenseState)
+                .environmentObject(licenseActivationService)
         }
 
         // Third-party license notices (see OpenSourceLicensesView), opened

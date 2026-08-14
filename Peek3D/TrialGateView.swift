@@ -23,6 +23,7 @@ struct TrialGateView: View {
     let url: URL
 
     @EnvironmentObject private var licenseState: LicenseState
+    @EnvironmentObject private var licenseActivationService: LicenseActivationService
     @State private var showLicenseSheet = false
 
     /// TODO(release): point at the real purchase page once one exists —
@@ -35,6 +36,14 @@ struct TrialGateView: View {
         Group {
             if licenseState.canOpen(url: url) {
                 ContentView(url: url)
+            } else if licenseState.isRemotelyBlocked {
+                // Distinct from `paywall` below on purpose: that screen's
+                // copy ("you've used all your trial opens", "buy a
+                // license") is actively wrong for someone who already owns
+                // one — showing it here would tell a paying customer whose
+                // activation was revoked (rightly or wrongly) that they
+                // never bought anything at all.
+                remoteBlockedScreen
             } else {
                 paywall
             }
@@ -137,5 +146,66 @@ struct TrialGateView: View {
             .pointerCursor()
         }
         .frame(maxWidth: 320)
+    }
+
+    // MARK: - Remote block (revoked, 72h+ past grace)
+
+    /// Shown instead of `paywall` once `licenseState.isRemotelyBlocked` is
+    /// true — see `body`'s own comment for why the two can't share copy.
+    /// The local signature is still perfectly valid here (`status` stays
+    /// `.licensed` throughout a revocation — see `LicenseState.isRemotelyBlocked`'s
+    /// doc comment), so this screen never suggests re-entering the same key
+    /// would help; the two actions it offers are "try the activation check
+    /// again" (in case the revocation was a mistake already fixed
+    /// server-side) and "enter a different key" (in case it wasn't).
+    private var remoteBlockedScreen: some View {
+        ZStack {
+            Color(white: 0.04).ignoresSafeArea()
+            VStack(spacing: 32) {
+                VStack(spacing: 14) {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 34, weight: .light))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .accessibilityHidden(true)
+                    Text("trialGate.remoteBlocked.title", comment: "Headline on the screen shown once a revoked license's 72-hour grace period has ended")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.white)
+                    Text("trialGate.remoteBlocked.body", comment: "Explanation under the remote-block headline — the local license signature is still valid, only the remote activation check failed")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.white.opacity(0.65))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                VStack(spacing: 10) {
+                    Button {
+                        retryActivation()
+                    } label: {
+                        Text("activation.banner.retry", comment: "Button on the device-conflict banner, retries activation for this Mac")
+                    }
+                    .buttonStyle(PeekFilledButtonStyle(fillWidth: true))
+                    .keyboardShortcut(.defaultAction)
+                    .pointerCursor()
+
+                    Button {
+                        showLicenseSheet = true
+                    } label: {
+                        Text("trialGate.remoteBlocked.enterDifferentLicense", comment: "Secondary CTA on the remote-block screen, opens the license-entry sheet to enter a different key")
+                    }
+                    .buttonStyle(PeekGhostButtonStyle(fillWidth: true))
+                    .pointerCursor()
+                }
+                .frame(maxWidth: 320)
+            }
+            .padding(48)
+            .frame(maxWidth: 460)
+        }
+        .sheet(isPresented: $showLicenseSheet) {
+            LicenseEntrySheet()
+        }
+    }
+
+    private func retryActivation() {
+        guard let text = licenseState.licenseKeyText else { return }
+        licenseActivationService.retryActivation(licenseKeyText: text)
     }
 }

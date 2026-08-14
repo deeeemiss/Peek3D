@@ -30,6 +30,13 @@ enum LicenseStateQuery {
         case .licensed(let holder):
             print("LICENSE_STATE: licensed holder=\(holder)")
         }
+        // Printed on its own line (not folded into the switch above) since
+        // it's orthogonal to `status` — see `LicenseState.isRemotelyBlocked`'s
+        // own doc comment. Added for this task's verification: proves the
+        // `LicenseActivationService` → `LicenseState` closure hook actually
+        // ran, end to end, from a persisted `DeviceActivationRecord` (see
+        // `ActivationDebugHarness`) through to the exact flag `canOpen` reads.
+        print("LICENSE_STATE: isRemotelyBlocked=\(state.isRemotelyBlocked)")
         fflush(stdout)
         exit(0)
     }

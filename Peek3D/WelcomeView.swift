@@ -10,6 +10,12 @@ import UniformTypeIdentifiers
 struct WelcomeView: View {
     @Environment(\.openDocument) private var openDocument
     @EnvironmentObject private var licenseState: LicenseState
+    /// Read directly here (not just inside `RemoteActivationBanner` itself)
+    /// to decide whether to include the banner in this screen's `VStack` at
+    /// all — see `RemoteActivationStatus.bannerSeverity`'s own doc comment
+    /// for why an always-present `EmptyView()` isn't good enough in a spaced
+    /// stack like this one.
+    @EnvironmentObject private var licenseActivationService: LicenseActivationService
     @State private var recents: [URL] = []
     @State private var isTargeted = false
     @State private var errorMessage: String?
@@ -46,6 +52,9 @@ struct WelcomeView: View {
                         Text(errorMessage)
                             .font(.system(size: 12))
                             .foregroundStyle(Color.peekError)
+                    }
+                    if licenseActivationService.remoteStatus.bannerSeverity != nil {
+                        RemoteActivationBanner()
                     }
                     trialStatusFooter
                     footer
