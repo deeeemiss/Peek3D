@@ -12,7 +12,7 @@ Free to try on your first 10 files, then **€19.99 once** — no subscription.
 [![glTF](https://img.shields.io/badge/glTF-GLTFKit2-brightgreen?style=flat-square)](https://github.com/warrenm/GLTFKit2)
 [![FBX](https://img.shields.io/badge/FBX-ufbx-9cf?style=flat-square)](https://github.com/ufbx/ufbx)
 [![Price](https://img.shields.io/badge/price-%E2%82%AC19.99%20once-success?style=flat-square)](https://peek3d.app/buy)
-[![License](https://img.shields.io/badge/source-MIT-grey?style=flat-square)](LICENSE.md)
+[![License](https://img.shields.io/badge/source-available%20(ELv2)-grey?style=flat-square)](LICENSE.md)
 
 [Formats](#formats) · [Features](#features) · [Trial & pricing](#trial--pricing) · [Activation](#activation) · [Build](#build) · [Sandbox](#sandbox) · [Known limits](#known-limits)
 
@@ -142,8 +142,12 @@ app prompts for folder access and retries automatically if it's missing.
 
 ## License
 
-Peek3D's source code is MIT-licensed (see [LICENSE.md](LICENSE.md), which
-also lists third-party attributions). The compiled app sold through
-[peek3d.app](https://peek3d.app/buy) is a paid product — see
-[Trial & pricing](#trial--pricing) above and the [license FAQ](docs/FAQ.en.md)
-for what buying and activating a license actually gets you.
+Peek3D's source code is available under the Elastic License 2.0 (adapted
+— see [LICENSE.md](LICENSE.md), which also lists third-party
+attributions). It's source-available, not open source: you can read,
+study, and build the code, but the license explicitly forbids removing,
+disabling, or working around the trial/license-key logic. The compiled
+app sold through [peek3d.app](https://peek3d.app/buy) is a paid product —
+see [Trial & pricing](#trial--pricing) above and the
+[license FAQ](docs/FAQ.en.md) for what buying and activating a license
+actually gets you.
