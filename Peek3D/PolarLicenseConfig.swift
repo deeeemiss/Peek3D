@@ -23,15 +23,10 @@ enum PolarLicenseConfig {
     /// which storefront a request is against, the same way `POLAR_ORGANIZATION_ID`
     /// already does in `licensing-worker/wrangler.toml`.
     ///
-    /// **MUST be replaced with the real Polar organization ID before
-    /// shipping** — same placeholder pattern as the `REPLACE_WITH_...`
-    /// values already documented in `licensing-worker/TODO.md` item 7 (no
-    /// live Polar account exists yet as of this writing). Every call made
-    /// with this placeholder gets a `422`/`404` from the real API — which is
-    /// exactly what the manual verification in this task's handoff notes
-    /// exercises against a local fake server instead, since there is
-    /// nothing real to point at yet.
-    static let organizationId = "REPLACE_WITH_POLAR_ORGANIZATION_ID"
+    /// Set to the real Demichelis Studios / Peek3D organization ID
+    /// (2026-08-14) — matches `POLAR_ORGANIZATION_ID` in
+    /// `licensing-worker/wrangler.toml`.
+    static let organizationId = "7f3f54b3-470d-4704-be44-4d1e7e53b319"
 
     /// `https://api.polar.sh` in production.
     ///

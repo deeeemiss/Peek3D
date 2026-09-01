@@ -7,9 +7,9 @@ compatibility_date = "2026-08-01"
 # editing this block. None of these are sensitive.
 [vars]
 POLAR_API_BASE = "https://api.polar.sh"
-POLAR_ORGANIZATION_ID = "REPLACE_WITH_POLAR_ORG_ID"
-POLAR_LICENSE_KEYS_BENEFIT_ID = "REPLACE_WITH_LICENSE_KEYS_BENEFIT_ID"
-POLAR_PRODUCT_ID = "REPLACE_WITH_PEEK3D_PRODUCT_ID"
+POLAR_ORGANIZATION_ID = "7f3f54b3-470d-4704-be44-4d1e7e53b319"
+POLAR_LICENSE_KEYS_BENEFIT_ID = "bff08b35-a6a8-4aba-84a9-9f64987e8104"
+POLAR_PRODUCT_ID = "b3ad1438-ccfd-43b0-af78-65b9865e724d"
 RESEND_FROM_EMAIL = "Peek3D <licenze@peek3d.app>"
 
 # --- Secrets (never in this file, never in git) -------------------------

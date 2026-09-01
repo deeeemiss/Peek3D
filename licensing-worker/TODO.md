@@ -95,9 +95,8 @@ the Resend dashboard before the first real webhook fires, or emails will
 silently fail (the worker will return a 5xx from `ResendEmailSender.send`
 and Polar will retry, but no email reaches anyone in the meantime).
 
-## 7. Product ID / organization ID / benefit ID placeholders
+## 7. Product ID / organization ID / benefit ID placeholders -- DONE (2026-08-14)
 
-`wrangler.toml`'s `[vars]` block has three `REPLACE_WITH_...` placeholders.
-These come from the Polar dashboard once the product and its License Keys
-benefit exist for real: organization ID, product ID, and the License Keys
-benefit's ID (not the product ID -- benefits have their own IDs).
+`wrangler.toml`'s `[vars]` block and `Peek3D/PolarLicenseConfig.swift` now
+carry the real Demichelis Studios / Peek3D organization ID, product ID, and
+License Keys benefit ID from the live Polar dashboard.

@@ -22,7 +22,7 @@ private key held only as a Workers secret.
    regardless of whether the email actually has one, and is rate-limited by
    both IP and email.
 
-See `TODO.md` for the specific assumptions in this pipeline that still need
+See `SETUP.md` for the account/keys/deploy checklist, and `TODO.md` for the specific assumptions in this pipeline that still need
 confirming against a real Polar order (there's no live account to test
 against yet).
 
