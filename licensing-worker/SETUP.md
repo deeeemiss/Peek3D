@@ -26,6 +26,7 @@ Polar reali e il binding di rate limiting per `/recover`.
 
 | Cosa | Stato |
 |---|---|
+| Dominio `peek3d.app` registrato e delegato | **no** — blocca email, link di acquisto e indirizzo di supporto (punto 0) |
 | Codice worker + test | fatto |
 | ID Polar (org / prodotto / benefit) in `wrangler.toml` e `PolarLicenseConfig.swift` | fatto (2026-08-14) |
 | Coppia di chiavi Ed25519 di produzione | **da fare** (punto 2) |
@@ -36,6 +37,29 @@ Polar reali e il binding di rate limiting per `/recover`.
 | Dominio verificato su Resend | **da fare** (punto 4) |
 
 ## Gli step
+
+### 0. Registrare `peek3d.app` — blocco a monte di tutto il resto
+
+Verificato il 2026-09-01: `peek3d.app` **non risulta delegato** (NXDOMAIN
+sui record NS, risposta autorevole del registry `.app`). O non è registrato,
+o è registrato senza nameserver. Finché non è nostro e delegato:
+
+- Resend non può verificare il dominio → nessuna email di consegna licenza
+  parte (punto 4);
+- i link `peek3d.app/buy` nel README puntano nel vuoto;
+- l'indirizzo di supporto `licenze@peek3d.app` non riceve niente — e compare
+  già in `docs/FAQ.it.md`, `docs/FAQ.en.md`, `docs/PRIVACY.en.md` (dove è
+  l'indirizzo per l'esercizio dei diritti GDPR), in `src/email.ts` e nelle
+  stringhe localizzate dell'app (`Peek3D/Localizable.xcstrings`, messaggio
+  di licenza revocata). Sono stringhe che finiscono nella build.
+
+Nota: `peek3d.com` è già di qualcun altro (nameserver Wix), quindi non è
+un ripiego. Registra `peek3d.app` — costa poco e finché non lo fai chiunque
+può prenderselo, con dentro il nostro indirizzo di supporto già pubblicato
+nella documentazione.
+
+Dopo la registrazione, casella `licenze@peek3d.app` funzionante (inoltro
+verso la tua email personale basta) prima di pubblicare FAQ e privacy.
 
 ### 1. Login su Cloudflare
 
@@ -84,6 +108,8 @@ servono un secondo set di ID in `[vars]` e un deploy separato — non mescolare
 i due.
 
 ### 4. Resend
+
+Richiede il punto 0 fatto.
 
 1. Verifica il dominio `peek3d.app` su Resend (record SPF/DKIM nel DNS).
    Senza questo passaggio le email non partono e basta — il mittente
