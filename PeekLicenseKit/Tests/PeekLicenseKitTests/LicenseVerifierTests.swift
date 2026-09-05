@@ -214,11 +214,25 @@ final class LicenseVerifierTests: XCTestCase {
         XCTAssertEqual(LicenseVerifier.verify("PK3D-!!!!!!!!!!", trustedKeys: trustedKeys), .malformed)
     }
 
-    func test_productionTrustedPublicKeys_defaultsEmpty_failsClosed() {
-        // Documents the intentional fail-closed placeholder: until a real
-        // production key is populated, verification against the default
-        // trust store can never succeed.
-        XCTAssertTrue(LicenseVerifier.trustedPublicKeys.isEmpty)
+    func test_productionTrustedPublicKeys_pinsTheProductionKey() {
+        // Pins the compiled-in trust store to the key whose private half is
+        // the Worker's LICENSE_ED25519_PRIVATE_KEY secret. `publicKey(fromHex:)`
+        // deliberately returns nil rather than trapping on a malformed
+        // constant, so a typo in that hex string would leave the store empty
+        // and silently reject every real license: this assertion is what
+        // turns that red in CI instead of in a customer's hands.
+        let expected = "4a6a650d397fab8a2b6c3932093a657aee7c3427ca461b8a276e6dcdd4423b09"
+        let actual = LicenseVerifier.trustedPublicKeys
+            .map { $0.rawRepresentation.map { String(format: "%02x", $0) }.joined() }
+
+        XCTAssertEqual(actual, [expected])
+    }
+
+    func test_licenseSignedWithTestKey_isRejectedByProductionTrustStore() {
+        // The invariant that replaces the old "trust store is empty" one now
+        // that it's populated: a license signed by the TEST keypair — whose
+        // private half anyone with this repo can rederive — must never
+        // verify against the production trust store.
         let license = makeLicenseString()
         XCTAssertEqual(LicenseVerifier.verify(license), .signatureInvalid)
     }

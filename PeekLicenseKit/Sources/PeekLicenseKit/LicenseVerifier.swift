@@ -64,12 +64,33 @@ public enum LicenseVerifier {
     /// licenses already sold under a previous key: verification accepts a
     /// match against *any* key in this set.
     ///
-    /// TODO(release): populate with the real production Ed25519 public key
-    /// before shipping. Left empty by default, which is a safe fail-closed
-    /// default — with no trusted keys, `verify(_:)` can never return
-    /// anything but `.signatureInvalid` for a real key; it will never
-    /// produce a false positive.
-    public static let trustedPublicKeys: [Curve25519.Signing.PublicKey] = []
+    /// Populated 2026-09-05 with the production key. Its private half exists
+    /// in exactly two places — the `LICENSE_ED25519_PRIVATE_KEY` secret of
+    /// the `peek3d-licensing` Cloudflare Worker, and a password manager —
+    /// and never in this repository.
+    public static let trustedPublicKeys: [Curve25519.Signing.PublicKey] = [
+        "4a6a650d397fab8a2b6c3932093a657aee7c3427ca461b8a276e6dcdd4423b09",
+    ].compactMap(publicKey(fromHex:))
+
+    /// Decodes a 32-byte hex string into an Ed25519 public key, returning nil
+    /// instead of trapping. A typo in the constant above therefore yields an
+    /// *empty* trust store — fail-closed, no license verifies — rather than a
+    /// crash on every launch. That silent breakage is caught in CI by
+    /// `test_productionTrustedPublicKeys_pinsTheProductionKey`, which is
+    /// where it should be caught, not by a user.
+    private static func publicKey(fromHex hex: String) -> Curve25519.Signing.PublicKey? {
+        guard hex.count == 64 else { return nil }
+        var bytes: [UInt8] = []
+        bytes.reserveCapacity(32)
+        var index = hex.startIndex
+        while index < hex.endIndex {
+            let next = hex.index(index, offsetBy: 2)
+            guard let byte = UInt8(hex[index..<next], radix: 16) else { return nil }
+            bytes.append(byte)
+            index = next
+        }
+        return try? Curve25519.Signing.PublicKey(rawRepresentation: Data(bytes))
+    }
 
     // MARK: - Format constants
 

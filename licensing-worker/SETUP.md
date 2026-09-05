@@ -29,9 +29,9 @@ Polar reali e il binding di rate limiting per `/recover`.
 | Dominio `peek3d.app` registrato e delegato | **no** — blocca email, link di acquisto e indirizzo di supporto (punto 0) |
 | Codice worker + test | fatto |
 | ID Polar (org / prodotto / benefit) in `wrangler.toml` e `PolarLicenseConfig.swift` | fatto (2026-08-14) |
-| Coppia di chiavi Ed25519 di produzione | **da fare** (punto 2) |
-| `LicenseVerifier.trustedPublicKeys` nell'app | **vuoto** — l'app rifiuta ogni licenza finché non lo popoli (punto 2) |
-| 4 segreti su Cloudflare | **da fare** (punti 2–4) |
+| Coppia di chiavi Ed25519 di produzione | fatto (2026-09-05) |
+| `LicenseVerifier.trustedPublicKeys` nell'app | fatto (2026-09-05) — chiave di produzione, test di pin verde |
+| 4 segreti su Cloudflare | 1 di 4: `LICENSE_ED25519_PRIVATE_KEY` caricato. Mancano `POLAR_ACCESS_TOKEN`, `RESEND_API_KEY`, `POLAR_WEBHOOK_SECRET` |
 | Deploy del Worker | **da fare** (punto 5) |
 | Endpoint webhook su Polar | **da fare** (punto 6) |
 | Dominio verificato su Resend | **da fare** (punto 4) |
