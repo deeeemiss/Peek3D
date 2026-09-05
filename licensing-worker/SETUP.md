@@ -24,6 +24,8 @@ Polar reali e il binding di rate limiting per `/recover`.
 
 ## Stato attuale
 
+Resta solo il primo acquisto vero (punto 8): l'infrastruttura è in piedi.
+
 | Cosa | Stato |
 |---|---|
 | Dominio per email e supporto | deciso 2026-09-05: sottodominio di `sebdemichelis.dev`, niente `peek3d.app` (punto 0) |
@@ -31,10 +33,10 @@ Polar reali e il binding di rate limiting per `/recover`.
 | ID Polar (org / prodotto / benefit) in `wrangler.toml` e `PolarLicenseConfig.swift` | fatto (2026-08-14) |
 | Coppia di chiavi Ed25519 di produzione | fatto (2026-09-05) |
 | `LicenseVerifier.trustedPublicKeys` nell'app | fatto (2026-09-05) — chiave di produzione, test di pin verde |
-| 4 segreti su Cloudflare | 2 di 4: `LICENSE_ED25519_PRIVATE_KEY`, `POLAR_ACCESS_TOKEN`. Mancano `RESEND_API_KEY` (bloccato dal punto 0), `POLAR_WEBHOOK_SECRET` (punto 6) |
+| 4 segreti su Cloudflare | fatto (2026-09-05): tutti e quattro caricati |
 | Deploy del Worker | fatto (2026-09-05) — `https://peek3d-licensing.demichelis-studios.workers.dev`, `/health` risponde 200 |
-| Endpoint webhook su Polar | **da fare** (punto 6) — il worker già rifiuta le richieste non firmate con `401 invalid_signature` |
-| Sottodominio verificato su Resend | in verifica (2026-09-05): dominio creato su Resend (region Irlanda), 3 record DNS aggiunti su Vercel e risolvibili; Resend è ancora `Pending` — controlla da sé, può metterci ore |
+| Endpoint webhook su Polar | fatto (2026-09-05) — registrato, signing secret caricato; il worker rifiuta le richieste non firmate con `401 invalid_signature` |
+| Sottodominio verificato su Resend | fatto (2026-09-05) — `Verified`, pronto a inviare |
 
 ## Gli step
 
