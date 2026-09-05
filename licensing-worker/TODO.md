@@ -57,9 +57,12 @@ if this guess about the envelope is wrong in one direction, the worst case
 is a `400 missing_order_id` (visible immediately in Polar's webhook delivery
 log) rather than a corrupted license.
 
-**Verify:** trigger a real `order.paid` delivery (Polar's dashboard has a
-"send test event" / redelivery feature) and confirm the id is found. If not,
-adjust the one line in `handleWebhook` that reads `eventData.id`.
+**Verify:** trigger a real `order.paid` delivery and confirm the id is found.
+If not, adjust the one line in `handleWebhook` that reads `eventData.id`.
+
+Checked 2026-09-05: Polar's dashboard has **no "send test event" button** --
+the assumption above was wrong. Deliveries can only be *redelivered* once one
+exists, so this can't be exercised before a real (or 100%-discounted) order.
 
 ## 4. Grant timing race: does the benefit grant exist yet when `order.paid` fires?
 
@@ -81,15 +84,21 @@ Polar specifically yet.
 `wrangler.toml` configures Cloudflare's native Rate Limiting binding via
 `[[unsafe.bindings]]` with `type = "ratelimit"`. This was the documented
 syntax at the time of writing but the API may have graduated to a
-first-class `[[ratelimits]]` table since. **Verify with `wrangler deploy`**
--- if it rejects the binding, check current docs and adjust. Do not remove
-rate limiting from `/recover` as a workaround; that turns it into an email
-enumeration oracle (see `rate-limit.ts` and `handlers.ts` for why).
+first-class `[[ratelimits]]` table since.
+
+**Resolved 2026-09-05:** `wrangler deploy` accepted the binding as written
+(it reports `Unsafe Metadata: ratelimit: RECOVER_RATE_LIMITER`), only warning
+that "unsafe" fields are experimental. Nothing to change. If a future wrangler
+rejects it, fix the syntax -- never drop rate limiting from `/recover`, which
+would turn it into an email enumeration oracle (see `rate-limit.ts`).
 
 ## 6. Resend "from" domain verification
 
-`RESEND_FROM_EMAIL` in `wrangler.toml` is a placeholder
-(`licenze@peek3d.app`). Resend requires the sending domain to be verified
+`RESEND_FROM_EMAIL` sends from `licenze@peek3d.sebdemichelis.dev` -- a
+subdomain dedicated to sending, so its SPF/DKIM records never touch the
+apex record that iCloud+ uses for Sebastiano's personal mail. That subdomain
+has no MX, so `RESEND_REPLY_TO` points replies at `peek3d@sebdemichelis.dev`,
+a real iCloud+ alias. Resend requires the sending domain to be verified
 (SPF/DKIM records) before it will actually deliver -- this needs doing in
 the Resend dashboard before the first real webhook fires, or emails will
 silently fail (the worker will return a 5xx from `ResendEmailSender.send`

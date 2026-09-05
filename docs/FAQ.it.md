@@ -106,12 +106,12 @@ riattivazioni incluse copre il caso automaticamente.
 Se invece il vecchio Mac non è più disponibile (guasto, formattato,
 venduto) e non hai potuto liberarne il posto prima, e l'attivazione
 continua a rifiutarsi perché il posto risulta occupato, scrivi a
-**licenze@peek3d.app** con la conferma d'ordine — possiamo liberare
+**peek3d@sebdemichelis.dev** con la conferma d'ordine — possiamo liberare
 manualmente il vecchio posto dal nostro lato.
 
 ### Ho comprato due licenze per sbaglio. Posso farmi rimborsare una?
 
-Sì. Scrivi a **licenze@peek3d.app** allegando entrambe le conferme d'ordine
+Sì. Scrivi a **peek3d@sebdemichelis.dev** allegando entrambe le conferme d'ordine
 (o le due email di ricevuta) entro 14 giorni dall'acquisto che vuoi
 rimborsato, e processeremo il rimborso del duplicato.
 
@@ -119,7 +119,7 @@ rimborsato, e processeremo il rimborso del duplicato.
 
 Peek3D prevede un **rimborso entro 14 giorni, senza bisogno di
 motivazione**. Se non sei soddisfatto dell'acquisto, scrivi a
-**licenze@peek3d.app** allegando la conferma d'ordine entro 14 giorni
+**peek3d@sebdemichelis.dev** allegando la conferma d'ordine entro 14 giorni
 dall'acquisto, e procediamo al rimborso. I rimborsi vengono elaborati
 tramite Polar.sh, il fornitore di pagamento che ha gestito il tuo acquisto,
 e in genere tornano sul metodo di pagamento originale entro pochi giorni

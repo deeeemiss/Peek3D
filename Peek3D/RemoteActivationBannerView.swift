@@ -169,13 +169,13 @@ struct RemoteActivationBanner: View {
         case .revokedGracePeriod(_, let hardBlockDeadline):
             return String(
                 localized: "activation.banner.revokedGrace",
-                defaultValue: "Your license was reported as revoked. Peek3D keeps working normally until \(hardBlockDeadline.formatted(date: .abbreviated, time: .shortened)) — contact licenze@peek3d.app if this looks wrong.",
+                defaultValue: "Your license was reported as revoked. Peek3D keeps working normally until \(hardBlockDeadline.formatted(date: .abbreviated, time: .shortened)) — contact peek3d@sebdemichelis.dev if this looks wrong.",
                 comment: "Banner shown once the server reports this device's activation as revoked/disabled, during the 72-hour grace period before access is actually restricted. The embedded date/time is the moment the grace period ends."
             )
         case .blocked:
             return String(
                 localized: "activation.banner.blocked",
-                defaultValue: "This license's activation was revoked more than 72 hours ago. New files can no longer be opened — contact licenze@peek3d.app if this looks wrong.",
+                defaultValue: "This license's activation was revoked more than 72 hours ago. New files can no longer be opened — contact peek3d@sebdemichelis.dev if this looks wrong.",
                 comment: "Banner shown once the 72-hour revocation grace period has elapsed and new file opens are now blocked."
             )
         case .deviceConflict:

@@ -26,7 +26,7 @@ Polar reali e il binding di rate limiting per `/recover`.
 
 | Cosa | Stato |
 |---|---|
-| Dominio `peek3d.app` registrato e delegato | **no** — blocca email, link di acquisto e indirizzo di supporto (punto 0) |
+| Dominio per email e supporto | deciso 2026-09-05: sottodominio di `sebdemichelis.dev`, niente `peek3d.app` (punto 0) |
 | Codice worker + test | fatto |
 | ID Polar (org / prodotto / benefit) in `wrangler.toml` e `PolarLicenseConfig.swift` | fatto (2026-08-14) |
 | Coppia di chiavi Ed25519 di produzione | fatto (2026-09-05) |
@@ -34,32 +34,32 @@ Polar reali e il binding di rate limiting per `/recover`.
 | 4 segreti su Cloudflare | 2 di 4: `LICENSE_ED25519_PRIVATE_KEY`, `POLAR_ACCESS_TOKEN`. Mancano `RESEND_API_KEY` (bloccato dal punto 0), `POLAR_WEBHOOK_SECRET` (punto 6) |
 | Deploy del Worker | fatto (2026-09-05) — `https://peek3d-licensing.demichelis-studios.workers.dev`, `/health` risponde 200 |
 | Endpoint webhook su Polar | **da fare** (punto 6) — il worker già rifiuta le richieste non firmate con `401 invalid_signature` |
-| Dominio verificato su Resend | **da fare** (punto 4) |
+| Sottodominio verificato su Resend | **da fare** (punto 4) — è l'ultimo blocco alla consegna delle licenze |
 
 ## Gli step
 
-### 0. Registrare `peek3d.app` — blocco a monte di tutto il resto
+### 0. Dominio: sottodominio di `sebdemichelis.dev`, non `peek3d.app`
 
-Verificato il 2026-09-01: `peek3d.app` **non risulta delegato** (NXDOMAIN
-sui record NS, risposta autorevole del registry `.app`). O non è registrato,
-o è registrato senza nameserver. Finché non è nostro e delegato:
+Deciso il 2026-09-05. `peek3d.app` era libero a 14,18 €/anno, ma si è
+preferito riusare il dominio personale già posseduto.
 
-- Resend non può verificare il dominio → nessuna email di consegna licenza
-  parte (punto 4);
-- i link `peek3d.app/buy` nel README puntano nel vuoto;
-- l'indirizzo di supporto `licenze@peek3d.app` non riceve niente — e compare
-  già in `docs/FAQ.it.md`, `docs/FAQ.en.md`, `docs/PRIVACY.en.md` (dove è
-  l'indirizzo per l'esercizio dei diritti GDPR), in `src/email.ts` e nelle
-  stringhe localizzate dell'app (`Peek3D/Localizable.xcstrings`, messaggio
-  di licenza revocata). Sono stringhe che finiscono nella build.
+Assetto scelto, e il motivo per cui non è un unico indirizzo:
 
-Nota: `peek3d.com` è già di qualcun altro (nameserver Wix), quindi non è
-un ripiego. Registra `peek3d.app` — costa poco e finché non lo fai chiunque
-può prenderselo, con dentro il nostro indirizzo di supporto già pubblicato
-nella documentazione.
+| Ruolo | Indirizzo | Perché |
+|---|---|---|
+| Invio email | `licenze@peek3d.sebdemichelis.dev` | Sottodominio dedicato: i record SPF/DKIM di Resend stanno lì e **non toccano il record SPF dell'apex**, che serve a iCloud+ per la posta personale. Sbagliare quella fusione manderebbe in spam la posta personale. Isola anche la reputazione di invio. |
+| Risposte e supporto | `peek3d@sebdemichelis.dev` | Il sottodominio di invio non ha MX, quindi non riceve niente: `RESEND_REPLY_TO` dirotta le risposte su un alias iCloud+ reale. È anche l'indirizzo pubblicato in FAQ e informativa privacy (esercizio dei diritti GDPR), quindi deve restare vivo finché esistono clienti. |
+| Link d'acquisto | link di checkout ospitato da Polar | Il prodotto è configurato come *private*: si vende solo tramite link diretto, non c'è una vetrina pubblica da linkare. |
 
-Dopo la registrazione, casella `licenze@peek3d.app` funzionante (inoltro
-verso la tua email personale basta) prima di pubblicare FAQ e privacy.
+Il DNS di `sebdemichelis.dev` è delegato a **Vercel** (`ns1/ns2.vercel-dns.com`),
+quindi i record che Resend chiederà al punto 4 vanno aggiunti nel pannello DNS
+di Vercel — non su Cloudflare, dove sta solo il Worker.
+
+Da fare a mano, fuori dal repo:
+1. Creare l'alias `peek3d@sebdemichelis.dev` nelle impostazioni iCloud+
+   (Custom Email Domain) e verificare che riceva davvero.
+2. Aggiungere i record DNS di Resend su Vercel per
+   `peek3d.sebdemichelis.dev` (punto 4).
 
 ### 1. Login su Cloudflare
 
@@ -111,9 +111,12 @@ i due.
 
 Richiede il punto 0 fatto.
 
-1. Verifica il dominio `peek3d.app` su Resend (record SPF/DKIM nel DNS).
+1. Su Resend aggiungi **`peek3d.sebdemichelis.dev`** (il sottodominio, non
+   l'apex) e inserisci i record SPF/DKIM che ti dà nel **DNS di Vercel**.
    Senza questo passaggio le email non partono e basta — il mittente
-   configurato è `Peek3D <licenze@peek3d.app>` in `wrangler.toml`.
+   configurato è `Peek3D <licenze@peek3d.sebdemichelis.dev>`, con
+   `Reply-To: peek3d@sebdemichelis.dev`.
+   Non aggiungere nulla al record SPF dell'apex: è di iCloud+ e non va toccato.
 2. Crea una API key:
    ```bash
    npx wrangler secret put RESEND_API_KEY

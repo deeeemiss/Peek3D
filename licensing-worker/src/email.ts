@@ -5,6 +5,9 @@ export interface EmailSender {
 export interface ResendConfig {
   apiKey: string;
   fromEmail: string;
+  /// The sending subdomain has no MX record, so a customer hitting "reply"
+  /// would write into the void. Point replies at a mailbox that exists.
+  replyTo: string;
 }
 
 export class ResendEmailSender implements EmailSender {
@@ -20,6 +23,7 @@ export class ResendEmailSender implements EmailSender {
       body: JSON.stringify({
         from: this.config.fromEmail,
         to,
+        reply_to: this.config.replyTo,
         subject,
         text,
       }),
@@ -51,8 +55,8 @@ export function licenseEmailBody(licenseString: string): string {
     "",
     "Incollala nella finestra di attivazione di Peek3D per sbloccare l'app.",
     "",
-    "Se in futuro perdi questa email, puoi richiederne una copia da:",
-    "https://peek3d.app/recover (o l'endpoint di recupero che esponi pubblicamente)",
-    "inserendo lo stesso indirizzo email usato per l'acquisto.",
+    "Se in futuro perdi questa email, rispondi a questo messaggio o scrivi a",
+    "peek3d@sebdemichelis.dev dallo stesso indirizzo usato per l'acquisto:",
+    "la chiave viene rigenerata identica, non è mai persa.",
   ].join("\n");
 }

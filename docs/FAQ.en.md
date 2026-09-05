@@ -102,19 +102,19 @@ covers it automatically.
 
 If the old Mac is genuinely gone (dead, wiped, sold) and you couldn't free
 up its seat first, and activation still refuses because the seat is
-considered occupied, contact **licenze@peek3d.app** with your order
+considered occupied, contact **peek3d@sebdemichelis.dev** with your order
 confirmation — we can release the old seat manually from our side.
 
 ### I bought two licenses by accident. Can I get one refunded?
 
-Yes. Email **licenze@peek3d.app** with both order confirmations (or the two
+Yes. Email **peek3d@sebdemichelis.dev** with both order confirmations (or the two
 receipt emails) within 14 days of the purchase you want refunded, and we'll
 process a refund for the duplicate.
 
 ## Refunds
 
 Peek3D comes with a **14-day, no-questions-asked refund**. If you're not
-happy with your purchase, email **licenze@peek3d.app** with your order
+happy with your purchase, email **peek3d@sebdemichelis.dev** with your order
 confirmation within 14 days of buying, and we'll refund it. Refunds are
 processed through Polar.sh, the payment provider that handled your
 purchase, and typically land back on your original payment method within a

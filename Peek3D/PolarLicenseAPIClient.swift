@@ -92,7 +92,7 @@ protocol PolarLicenseAPIClient {
     /// `POST /v1/customer-portal/license-keys/activate`. `label` is this
     /// device's identifier (see `MachineIdentifier`) — Polar's schema calls
     /// it a free-form "activation instance label"; using the machine
-    /// identifier hash there is what lets a human (or `licenze@peek3d.app`,
+    /// identifier hash there is what lets a human (or `peek3d@sebdemichelis.dev`,
     /// per the support flow in `docs/FAQ.en.md`) tell which Mac an
     /// activation belongs to without this app ever sending the raw hardware
     /// UUID.

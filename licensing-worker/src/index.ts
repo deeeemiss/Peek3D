@@ -12,6 +12,7 @@ export interface Env {
   POLAR_LICENSE_KEYS_BENEFIT_ID: string;
   POLAR_PRODUCT_ID: string;
   RESEND_FROM_EMAIL: string;
+  RESEND_REPLY_TO: string;
 
   // Secrets (wrangler secret put ...)
   POLAR_WEBHOOK_SECRET: string;
@@ -48,6 +49,7 @@ function buildDeps(env: Env, waitUntil: (promise: Promise<unknown>) => void): Ha
   const email = new ResendEmailSender({
     apiKey: env.RESEND_API_KEY,
     fromEmail: env.RESEND_FROM_EMAIL,
+    replyTo: env.RESEND_REPLY_TO,
   });
 
   // Falls back to an in-memory (per-isolate, best-effort) limiter if the

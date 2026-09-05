@@ -1296,13 +1296,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your license was reported as revoked. Peek3D keeps working normally until %@ — contact licenze@peek3d.app if this looks wrong."
+            "value": "Your license was reported as revoked. Peek3D keeps working normally until %@ — contact peek3d@sebdemichelis.dev if this looks wrong."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "La tua licenza risulta revocata. Peek3D continua a funzionare normalmente fino al %@ — scrivi a licenze@peek3d.app se pensi sia un errore."
+            "value": "La tua licenza risulta revocata. Peek3D continua a funzionare normalmente fino al %@ — scrivi a peek3d@sebdemichelis.dev se pensi sia un errore."
           }
         }
       }
@@ -1313,13 +1313,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This license's activation was revoked more than 72 hours ago. New files can no longer be opened — contact licenze@peek3d.app if this looks wrong."
+            "value": "This license's activation was revoked more than 72 hours ago. New files can no longer be opened — contact peek3d@sebdemichelis.dev if this looks wrong."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "L'attivazione di questa licenza è stata revocata più di 72 ore fa. Non è più possibile aprire nuovi file — scrivi a licenze@peek3d.app se pensi sia un errore."
+            "value": "L'attivazione di questa licenza è stata revocata più di 72 ore fa. Non è più possibile aprire nuovi file — scrivi a peek3d@sebdemichelis.dev se pensi sia un errore."
           }
         }
       }
@@ -1422,13 +1422,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This device's license activation was reported as revoked, and more than 72 hours have passed since then. Your license key itself is still recognized — only the online activation check failed. If this looks wrong, contact licenze@peek3d.app."
+            "value": "This device's license activation was reported as revoked, and more than 72 hours have passed since then. Your license key itself is still recognized — only the online activation check failed. If this looks wrong, contact peek3d@sebdemichelis.dev."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "L'attivazione della licenza su questo Mac risulta revocata, e sono passate più di 72 ore da allora. La chiave di licenza in sé è ancora riconosciuta valida — è solo il controllo online dell'attivazione ad aver fallito. Se pensi sia un errore, scrivi a licenze@peek3d.app."
+            "value": "L'attivazione della licenza su questo Mac risulta revocata, e sono passate più di 72 ore da allora. La chiave di licenza in sé è ancora riconosciuta valida — è solo il controllo online dell'attivazione ad aver fallito. Se pensi sia un errore, scrivi a peek3d@sebdemichelis.dev."
           }
         }
       }

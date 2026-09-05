@@ -21,7 +21,7 @@ funzionare il sistema di licenze di Peek3D.
 **Polar.sh** è un titolare del trattamento distinto e autonomo per il
 pagamento in sé — vedi "Polar.sh, il merchant of record" più sotto.
 
-Domande o richieste sui tuoi dati: **licenze@peek3d.app**.
+Domande o richieste sui tuoi dati: **peek3d@sebdemichelis.dev**.
 
 ## Quali dati trattiamo
 
@@ -121,7 +121,7 @@ Secondo il GDPR, puoi chiederci in qualsiasi momento di:
 - **Limitare** o **opporti** al loro trattamento.
 - **Riceverne una copia** in formato portabile.
 
-Per esercitare uno di questi diritti, scrivi a **licenze@peek3d.app**. Se
+Per esercitare uno di questi diritti, scrivi a **peek3d@sebdemichelis.dev**. Se
 ritieni che i tuoi dati siano stati trattati in modo scorretto, hai anche
 diritto a presentare reclamo alla tua autorità di controllo — in Italia, il
 [Garante per la protezione dei dati personali](https://www.garanteprivacy.it/).

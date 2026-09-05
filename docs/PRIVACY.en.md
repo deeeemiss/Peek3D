@@ -20,7 +20,7 @@ Peek3D's license system.
 **Polar.sh** is a separate, independent data controller for the payment
 itself — see "Polar.sh, the merchant of record" below.
 
-Questions or requests about your data: **licenze@peek3d.app**.
+Questions or requests about your data: **peek3d@sebdemichelis.dev**.
 
 ## What we collect
 
@@ -111,7 +111,7 @@ Under the GDPR, you can ask us at any time to:
 - **Restrict** or **object to** our processing of it.
 - **Receive a copy** of it in a portable format.
 
-To exercise any of these, email **licenze@peek3d.app**. If you believe
+To exercise any of these, email **peek3d@sebdemichelis.dev**. If you believe
 we've mishandled your data, you also have the right to lodge a complaint
 with your local data protection authority — in Italy, the
 [Garante per la protezione dei dati personali](https://www.garanteprivacy.it/).

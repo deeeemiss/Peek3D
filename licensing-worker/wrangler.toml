@@ -10,7 +10,10 @@ POLAR_API_BASE = "https://api.polar.sh"
 POLAR_ORGANIZATION_ID = "7f3f54b3-470d-4704-be44-4d1e7e53b319"
 POLAR_LICENSE_KEYS_BENEFIT_ID = "bff08b35-a6a8-4aba-84a9-9f64987e8104"
 POLAR_PRODUCT_ID = "b3ad1438-ccfd-43b0-af78-65b9865e724d"
-RESEND_FROM_EMAIL = "Peek3D <licenze@peek3d.app>"
+RESEND_FROM_EMAIL = "Peek3D <licenze@peek3d.sebdemichelis.dev>"
+# Il sottodominio di invio non riceve posta: le risposte vanno a una
+# casella reale (alias iCloud+ sul dominio principale).
+RESEND_REPLY_TO = "peek3d@sebdemichelis.dev"
 
 # --- Secrets (never in this file, never in git) -------------------------
 # Set each with:
