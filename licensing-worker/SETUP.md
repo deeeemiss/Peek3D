@@ -34,7 +34,7 @@ Polar reali e il binding di rate limiting per `/recover`.
 | 4 segreti su Cloudflare | 2 di 4: `LICENSE_ED25519_PRIVATE_KEY`, `POLAR_ACCESS_TOKEN`. Mancano `RESEND_API_KEY` (bloccato dal punto 0), `POLAR_WEBHOOK_SECRET` (punto 6) |
 | Deploy del Worker | fatto (2026-09-05) — `https://peek3d-licensing.demichelis-studios.workers.dev`, `/health` risponde 200 |
 | Endpoint webhook su Polar | **da fare** (punto 6) — il worker già rifiuta le richieste non firmate con `401 invalid_signature` |
-| Sottodominio verificato su Resend | **da fare** (punto 4) — è l'ultimo blocco alla consegna delle licenze |
+| Sottodominio verificato su Resend | in verifica (2026-09-05): dominio creato su Resend (region Irlanda), 3 record DNS aggiunti su Vercel e risolvibili; Resend è ancora `Pending` — controlla da sé, può metterci ore |
 
 ## Gli step
 
@@ -111,12 +111,28 @@ i due.
 
 Richiede il punto 0 fatto.
 
-1. Su Resend aggiungi **`peek3d.sebdemichelis.dev`** (il sottodominio, non
-   l'apex) e inserisci i record SPF/DKIM che ti dà nel **DNS di Vercel**.
-   Senza questo passaggio le email non partono e basta — il mittente
-   configurato è `Peek3D <licenze@peek3d.sebdemichelis.dev>`, con
-   `Reply-To: peek3d@sebdemichelis.dev`.
-   Non aggiungere nulla al record SPF dell'apex: è di iCloud+ e non va toccato.
+1. ~~Aggiungere il sottodominio su Resend e i record nel DNS~~ — **fatto il
+   2026-09-05.** Dominio `peek3d.sebdemichelis.dev` creato su Resend con
+   region Irlanda (eu-west-1), verifica **manuale** e non tramite
+   l'integrazione "Auto configure": quest'ultima avrebbe dato a Resend
+   accesso in scrittura all'intera zona DNS, dove vivono gli MX di iCloud.
+
+   I tre record aggiunti su Vercel, tutti su sottodomini, nessuno sull'apex:
+
+   | Nome (relativo, come va scritto su Vercel) | Tipo | Valore |
+   |---|---|---|
+   | `resend._domainkey.peek3d` | TXT | chiave pubblica DKIM (`p=MIGfMA0GCSq…`) |
+   | `send.peek3d` | MX (priorità 10) | `feedback-smtp.eu-west-1.amazonses.com` |
+   | `send.peek3d` | TXT | `v=spf1 include:amazonses.com ~all` |
+
+   Verificato dopo l'inserimento che l'apex sia rimasto intatto:
+   `v=spf1 include:icloud.com ~all` e gli MX `mx01/mx02.mail.icloud.com`
+   invariati.
+
+   **Non aggiunti di proposito**: il record DMARC (`_dmarc`, sull'apex —
+   riguarderebbe anche la posta personale iCloud, e non serve per inviare)
+   e l'MX di "Enable Receiving" (`inbound-smtp…`, serve solo per *ricevere*
+   posta su Resend, cosa che non facciamo: si riceve su iCloud).
 2. Crea una API key:
    ```bash
    npx wrangler secret put RESEND_API_KEY
