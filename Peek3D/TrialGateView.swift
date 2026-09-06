@@ -30,7 +30,10 @@ struct TrialGateView: View {
     /// nothing else in this codebase defines a product URL yet, so this is
     /// this feature's own placeholder, not a value carried over from
     /// elsewhere.
-    private static let purchaseURL = URL(string: "https://peek3d.app/buy")!
+    /// Checkout ospitato da Polar ("App e README" nei Checkout Links). Il
+    /// prodotto è *private*: non esiste una vetrina pubblica, si vende solo
+    /// da questo link.
+    private static let purchaseURL = URL(string: "https://buy.polar.sh/polar_cl_eAHc1m1lpTGYyUnVgE9TomrotIHM76hUXRm7e1g2VRP")!
 
     var body: some View {
         Group {

@@ -11,7 +11,7 @@ Free to try on your first 10 files, then **€19.99 once** — no subscription.
 [![Swift](https://img.shields.io/badge/Swift-SwiftUI%20%2B%20SceneKit-orange?style=flat-square)]()
 [![glTF](https://img.shields.io/badge/glTF-GLTFKit2-brightgreen?style=flat-square)](https://github.com/warrenm/GLTFKit2)
 [![FBX](https://img.shields.io/badge/FBX-ufbx-9cf?style=flat-square)](https://github.com/ufbx/ufbx)
-[![Price](https://img.shields.io/badge/price-%E2%82%AC19.99%20once-success?style=flat-square)](https://peek3d.app/buy)
+[![Price](https://img.shields.io/badge/price-%E2%82%AC19.99%20once-success?style=flat-square)](https://buy.polar.sh/polar_cl_eAHc1m1lpTGYyUnVgE9TomrotIHM76hUXRm7e1g2VRP)
 [![License](https://img.shields.io/badge/source-available%20(ELv2)-grey?style=flat-square)](LICENSE.md)
 
 [Formats](#formats) · [Features](#features) · [Trial & pricing](#trial--pricing) · [Activation](#activation) · [Build](#build) · [Sandbox](#sandbox) · [Known limits](#known-limits)
@@ -84,7 +84,7 @@ Peek3D is free to try, then a one-time purchase — no subscription, ever.
 - **14-day refund** — not happy? Full refund within 14 days of purchase, see
   the [license FAQ](docs/FAQ.en.md#refunds) for how.
 
-Buy at [peek3d.app/buy](https://peek3d.app/buy). Purchases and payments are
+[Buy a license](https://buy.polar.sh/polar_cl_eAHc1m1lpTGYyUnVgE9TomrotIHM76hUXRm7e1g2VRP). Purchases and payments are
 handled by [Polar.sh](https://polar.sh), Peek3D's merchant of record.
 
 ## Activation
@@ -147,7 +147,7 @@ Peek3D's source code is available under the Elastic License 2.0 (adapted
 attributions). It's source-available, not open source: you can read,
 study, and build the code, but the license explicitly forbids removing,
 disabling, or working around the trial/license-key logic. The compiled
-app sold through [peek3d.app](https://peek3d.app/buy) is a paid product —
+app sold through [Polar](https://buy.polar.sh/polar_cl_eAHc1m1lpTGYyUnVgE9TomrotIHM76hUXRm7e1g2VRP) is a paid product —
 see [Trial & pricing](#trial--pricing) above and the
 [license FAQ](docs/FAQ.en.md) for what buying and activating a license
 actually gets you.
