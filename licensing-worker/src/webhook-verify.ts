@@ -52,6 +52,36 @@ export function decodeWebhookSecret(secret: string): Uint8Array {
   return base64ToBytes(withoutPrefix);
 }
 
+/**
+ * Polar signs with one of two different HMAC keys derived from the same
+ * `whsec_…` secret, and which one depends on WHEN the secret was generated:
+ *
+ * - secrets generated before 2026-09-08T00:00Z ("Polar HMAC", what the
+ *   dashboard labels *Legacy signing*) use the UTF-8 bytes of the **entire**
+ *   `whsec_…` string, prefix included, as the key;
+ * - secrets generated on or after that instant use Standard Webhooks: the
+ *   part after `whsec_`, base64-decoded.
+ *
+ * The cutover is a property of the secret, not of the delivery, so an old
+ * endpoint keeps using the legacy key indefinitely — it does not migrate on
+ * its own. Verifying against both candidates is exactly what Polar's own
+ * SDKs do, and it costs nothing in security: an attacker still has to know
+ * the secret to produce either MAC.
+ *
+ * Found the hard way: the first real order returned 401 on every delivery
+ * because only the Standard Webhooks key was tried.
+ */
+function webhookKeyCandidates(secret: string): Uint8Array[] {
+  const keys: Uint8Array[] = [];
+  try {
+    keys.push(decodeWebhookSecret(secret));
+  } catch {
+    // Not valid base64 — only the legacy interpretation is possible.
+  }
+  keys.push(new TextEncoder().encode(secret));
+  return keys;
+}
+
 function base64ToBytes(b64: string): Uint8Array {
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);
@@ -125,16 +155,16 @@ export async function verifyPolarWebhook(options: VerifyWebhookOptions): Promise
     return { valid: false, reason: "timestamp_out_of_tolerance" };
   }
 
-  let keyBytes: Uint8Array;
-  try {
-    keyBytes = decodeWebhookSecret(secret);
-  } catch {
+  const keyCandidates = webhookKeyCandidates(secret);
+  if (keyCandidates.length === 0) {
     return { valid: false, reason: "invalid_secret_encoding" };
   }
 
   const signedContent = `${headers.id}.${headers.timestamp}.${rawBody}`;
-  const expectedMac = await hmacSha256(keyBytes, signedContent);
-  const expectedB64 = bytesToBase64(expectedMac);
+  const expectedSignatures: string[] = [];
+  for (const keyBytes of keyCandidates) {
+    expectedSignatures.push(bytesToBase64(await hmacSha256(keyBytes, signedContent)));
+  }
 
   const candidates = headers.signature.split(" ").filter(Boolean);
   for (const candidate of candidates) {
@@ -146,9 +176,10 @@ export async function verifyPolarWebhook(options: VerifyWebhookOptions): Promise
 
     try {
       const provided = base64ToBytes(sigB64);
-      const expected = base64ToBytes(expectedB64);
-      if (timingSafeEqual(provided, expected)) {
-        return { valid: true };
+      for (const expectedB64 of expectedSignatures) {
+        if (timingSafeEqual(provided, base64ToBytes(expectedB64))) {
+          return { valid: true };
+        }
       }
     } catch {
       // malformed candidate signature, try the next one

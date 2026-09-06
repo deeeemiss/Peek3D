@@ -57,8 +57,9 @@ if this guess about the envelope is wrong in one direction, the worst case
 is a `400 missing_order_id` (visible immediately in Polar's webhook delivery
 log) rather than a corrupted license.
 
-**Verify:** trigger a real `order.paid` delivery and confirm the id is found.
-If not, adjust the one line in `handleWebhook` that reads `eventData.id`.
+**Confirmed 2026-09-06** on the first real order: the envelope is
+`{"type": "order.paid", "timestamp": …, "api_version": "2026-10", "data": {…}}`,
+so reading `data.id` is correct. No change needed.
 
 Checked 2026-09-05: Polar's dashboard has **no "send test event" button** --
 the assumption above was wrong. Deliveries can only be *redelivered* once one
@@ -73,11 +74,11 @@ order. If grant creation happens asynchronously *after* the webhook fires,
 (deliberately outside the 2xx range, so standard webhook retry semantics
 treat this delivery as failed and retry it) rather than `200`.
 
-**Verify:** confirm Polar's actual retry policy (backoff schedule, max
-attempts, and that it really does retry any non-2xx rather than only
-specific codes) against a real account -- the 503 choice is a safe default
-under Standard-Webhooks-style semantics, not something confirmed against
-Polar specifically yet.
+**Confirmed 2026-09-06:** the grant already existed when `order.paid` was
+delivered — the first successful delivery returned `200` immediately, never
+`503`. Polar's retry behaviour was also observed for real: it re-sent the
+same event repeatedly while it kept returning 401 (18:05 → 18:18), so
+non-2xx really does trigger retries.
 
 ## 5. Rate limiting binding syntax
 
@@ -109,3 +110,28 @@ and Polar will retry, but no email reaches anyone in the meantime).
 `wrangler.toml`'s `[vars]` block and `Peek3D/PolarLicenseConfig.swift` now
 carry the real Demichelis Studios / Peek3D organization ID, product ID, and
 License Keys benefit ID from the live Polar dashboard.
+
+
+## 8. Webhook signature: two HMAC keys, depending on the secret's age -- RESOLVED (2026-09-06)
+
+The first real order failed on every delivery with `401 invalid_signature`,
+and no email went out. Cause: Polar derives the HMAC key from the `whsec_…`
+secret in two different ways, and which one applies depends on **when the
+secret was generated**, not on the delivery:
+
+- generated before 2026-09-08T00:00Z ("Polar HMAC", shown in the dashboard
+  as *Legacy signing*): the key is the UTF-8 bytes of the **whole** string,
+  `whsec_` prefix included;
+- generated on or after that instant (Standard Webhooks): the part after
+  `whsec_`, base64-decoded.
+
+The worker only implemented the second. An existing endpoint never migrates
+by itself, so this would not have fixed itself after the cutover date.
+
+`verifyPolarWebhook` now checks the signature against **both** candidate
+keys, which is what Polar's own SDKs do. It costs nothing in security — an
+attacker still has to know the secret to forge either MAC — and it means a
+future secret rotation works under either scheme without a code change.
+Covered by `accepts a legacy Polar HMAC signature…` in
+`test/webhook-verify.test.ts`, verified by sabotage (it fails if the legacy
+key is removed).

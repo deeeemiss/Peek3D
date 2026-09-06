@@ -24,7 +24,10 @@ Polar reali e il binding di rate limiting per `/recover`.
 
 ## Stato attuale
 
-Resta solo il primo acquisto vero (punto 8): l'infrastruttura è in piedi.
+Catena verificata end-to-end il 2026-09-06 con un ordine reale (sconto
+100%): webhook firmato → ordine → grant → licenza firmata → email
+consegnata. Vedi il punto 8 di `TODO.md` per il difetto di firma trovato e
+risolto in quell'occasione.
 
 | Cosa | Stato |
 |---|---|

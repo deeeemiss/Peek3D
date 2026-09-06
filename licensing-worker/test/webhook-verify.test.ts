@@ -2,6 +2,23 @@ import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { extractWebhookHeaders, verifyPolarWebhook } from "../src/webhook-verify.js";
 
+// The "Polar HMAC" (legacy) scheme: the key is the UTF-8 bytes of the whole
+// `whsec_…` string, prefix included -- NOT the base64-decoded tail that
+// Standard Webhooks uses. Which scheme applies depends on when the secret
+// was generated (cutover 2026-09-08T00:00Z), and an existing endpoint never
+// migrates by itself, so both must keep working.
+function computeLegacySignatureHeader(
+  fullSecretWithPrefix: string,
+  id: string,
+  timestamp: string,
+  rawBody: string,
+): string {
+  const key = Buffer.from(fullSecretWithPrefix, "utf8");
+  const signedContent = `${id}.${timestamp}.${rawBody}`;
+  const mac = createHmac("sha256", key).update(signedContent).digest("base64");
+  return `v1,${mac}`;
+}
+
 // Independent (not shared with src/webhook-verify.ts) computation of what a
 // valid Polar signature would look like, so the test isn't just checking
 // the implementation against itself.
@@ -47,6 +64,23 @@ describe("verifyPolarWebhook", () => {
       rawBody,
       headers: { id, timestamp, signature },
       secret: SECRET_RAW_BASE64,
+      nowSeconds,
+    });
+
+    expect(result.valid).toBe(true);
+  });
+
+  it("accepts a legacy Polar HMAC signature (secret generated before the 2026-09-08 cutover)", async () => {
+    // Regression guard for the real failure hit on the first live order:
+    // every order.paid delivery returned 401 because only the Standard
+    // Webhooks key was tried, while the endpoint's secret predated the
+    // cutover and was therefore signed with the legacy key.
+    const signature = computeLegacySignatureHeader(SECRET_WITH_PREFIX, id, timestamp, rawBody);
+
+    const result = await verifyPolarWebhook({
+      rawBody,
+      headers: { id, timestamp, signature },
+      secret: SECRET_WITH_PREFIX,
       nowSeconds,
     });
 
