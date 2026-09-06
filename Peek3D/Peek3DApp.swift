@@ -458,10 +458,13 @@ struct Peek3DApp: App {
             CommandGroup(replacing: .newItem) {
                 FileMenuCommands()
             }
-            // No text editing anywhere in this app — Undo/Redo/Cut/Copy/Paste/
-            // Select All would just sit there permanently disabled.
-            CommandGroup(replacing: .undoRedo) { }
-            CommandGroup(replacing: .pasteboard) { }
+            // These used to be replaced with nothing, on the reasoning that a
+            // read-only viewer has no text fields and the items would sit
+            // permanently disabled. That stopped being true when licensing
+            // added a key-entry field: removing the pasteboard group also
+            // removes ⌘V, so a customer who copied their key from the
+            // purchase email could not paste it — the one interaction the
+            // entire purchase depends on. Keep the standard groups.
             // Named "Scene", not "View" — macOS already injects its own
             // native "View" menu (Show Tab Bar / Show All Tabs / Full Screen,
             // from the window-tabbing feature) once any DocumentGroup app has
