@@ -58,6 +58,19 @@ if codesign -d --entitlements - --xml "$APP" 2>/dev/null | grep -q "get-task-all
 fi
 codesign -d --verbose=2 "$APP" 2>&1 | grep -E "TeamIdentifier|flags"
 
+if [[ "${1:-}" != "--skip-notarize" ]]; then
+  # Notarizzare e stapleare l'APP prima di impacchettarla. Stapleare solo il
+  # DMG lascia scoperto il caso concreto: l'utente trascina Peek3D in
+  # Applications, espelle il DMG e apre l'app da offline — senza ticket
+  # incorporato Gatekeeper deve interrogare Apple, e senza rete blocca.
+  echo "==> Notarizzazione dell'app"
+  ditto -c -k --keepParent "$APP" "$BUILD_DIR/Peek3D-app.zip"
+  xcrun notarytool submit "$BUILD_DIR/Peek3D-app.zip" --keychain-profile "$PROFILE" --wait
+  xcrun stapler staple "$APP"
+  xcrun stapler validate "$APP"
+  rm -f "$BUILD_DIR/Peek3D-app.zip"
+fi
+
 echo "==> Creazione DMG"
 STAGE="$BUILD_DIR/stage"
 mkdir -p "$STAGE"
