@@ -404,20 +404,17 @@ struct Peek3DApp: App {
                 .environmentObject(licenseState)
                 .environmentObject(licenseActivationService)
                 .preferredColorScheme(.dark)
-                .frame(minWidth: 900, minHeight: 620)
         }
         .windowStyle(.hiddenTitleBar)
-        // No `.windowResizability` override here (default `.automatic`,
-        // same as the DocumentGroup below, which resizes fine) — an earlier
-        // `.contentMinSize` looked right for enforcing the 900×620 minimum,
-        // but that mode derives sizing from the content's own reported
-        // flexibility. WelcomeView's content has no growable element (no
-        // Spacer/`.frame(maxHeight: .infinity)`), so `.contentMinSize`
-        // pinned the window's height at its minimum instead of letting it
-        // grow — width happened to still resize, so it silently looked like
-        // "resizable" until you actually dragged for height. The `.frame
-        // (minWidth: 900, minHeight: 620)` on WelcomeView already enforces
-        // the minimum on its own regardless of resizability mode.
+        // Sized to its content, deliberately: this screen holds a handful of
+        // fixed elements, and letting it be dragged to full screen would just
+        // strand them in the middle of a black expanse. An earlier note here
+        // described `.contentSize` pinning the height as a defect to avoid —
+        // it is now precisely the wanted behaviour, so WelcomeView reports
+        // one finite size (no ScrollView, fixed width, capped recents list).
+        // Document windows keep `.automatic` below and stay freely resizable
+        // and full-screenable, which is where a large window actually helps.
+        .windowResizability(.contentSize)
 
         // One document window per open 3D file. `.viewing` (read-only, no
         // Save/Save As — this app never writes files) gives Open, Open
@@ -489,11 +486,10 @@ struct Peek3DApp: App {
         // via the "Licenze open source…" app-menu item wired up above. Its
         // own Scene rather than a sheet on Welcome/Settings — it needs to be
         // reachable regardless of which window (if any) is currently key.
-        // No `.windowResizability` override here — same reasoning as the
-        // "welcome" WindowGroup above: `.contentMinSize` previously pinned
-        // a window at its minimum because its content had no growable
-        // element. `OpenSourceLicensesView`'s own `.frame(minWidth:
-        // minHeight:)` already enforces the minimum under the default mode.
+        // Stays resizable (default `.automatic`), unlike the Welcome window
+        // above: license texts are long and users scroll and widen them.
+        // `OpenSourceLicensesView`'s own `.frame(minWidth:minHeight:)`
+        // enforces the minimum.
         WindowGroup(id: "licenses") {
             OpenSourceLicensesView()
                 .preferredColorScheme(.dark)

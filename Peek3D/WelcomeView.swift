@@ -22,18 +22,14 @@ struct WelcomeView: View {
     @State private var showLicenseSheet = false
 
     var body: some View {
-        ZStack {
-            Color(white: 0.04).ignoresSafeArea()
-
-            RoundedRectangle(cornerRadius: 18)
-                .strokeBorder(
-                    isTargeted ? Color.green : Color.clear,
-                    style: StrokeStyle(lineWidth: 2, dash: [8, 6])
-                )
-                .padding(20)
-
-            ScrollView {
-                VStack(spacing: 30) {
+        // Background and drop outline are decorations APPLIED TO the content,
+        // not siblings of it in a ZStack. A `Color` is infinitely expandable,
+        // so as a ZStack child it made this whole view report a flexible
+        // size — and `.windowResizability(.contentSize)` then had nothing
+        // finite to pin the window to, leaving it full-screen. Same family of
+        // bug as the overlay-sizing rule in CLAUDE.md: a ZStack takes the
+        // union of its children.
+        VStack(spacing: 30) {
                     header
                     dropZone
                     formatsRow
@@ -59,21 +55,24 @@ struct WelcomeView: View {
                     trialStatusFooter
                     footer
                 }
-                .padding(.horizontal, 48)
-                .padding(.vertical, 40)
-                .frame(maxWidth: 560)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        // Was a fixed `.frame(width: 560, height: 480)` back when this
-        // window used `.windowResizability(.contentSize)` (a real fixed-size
-        // dialog). Peek3DApp.swift now sets `.contentMinSize` with a
-        // 900×620 outer minimum instead — a fixed inner size smaller than
-        // that minimum left the ZStack's black background (560×480) stranded
-        // in the middle of a bigger, resizable window, exposing the raw
-        // NSWindow chrome color around it. Matching the same min here lets
-        // the ZStack (and its background) actually fill the window.
-        .frame(minWidth: 900, minHeight: 620)
+        .padding(.horizontal, 48)
+        .padding(.vertical, 40)
+        .frame(width: 560)
+        .background(Color(white: 0.04).ignoresSafeArea())
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .strokeBorder(
+                    isTargeted ? Color.green : Color.clear,
+                    style: StrokeStyle(lineWidth: 2, dash: [8, 6])
+                )
+                .padding(20)
+        )
+        // No minimum frame and no ScrollView: this window is sized to its
+        // content by `.windowResizability(.contentSize)` in Peek3DApp, so the
+        // content must report one honest, finite size. A ScrollView reports a
+        // flexible height and would leave the window free to be dragged to
+        // sizes the content can't fill — the very thing this screen shouldn't
+        // do. Document windows are unaffected and stay freely resizable.
         .onAppear(perform: refreshRecents)
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
             // Trial exhausted: a dropped file would only reach the paywall
@@ -258,7 +257,7 @@ struct WelcomeView: View {
                     .padding(.vertical, 10)
             } else {
                 VStack(spacing: 2) {
-                    ForEach(recents, id: \.self) { url in
+                    ForEach(recents.prefix(5), id: \.self) { url in
                         RecentRow(url: url) { open(url: url) }
                     }
                 }
