@@ -480,6 +480,132 @@
         }
       }
     },
+    "activation.banner.blocked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This license's activation was revoked more than 72 hours ago. New files can no longer be opened — contact peek3d@sebdemichelis.dev if this looks wrong."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'attivazione di questa licenza è stata revocata più di 72 ore fa. Non è più possibile aprire nuovi file — scrivi a peek3d@sebdemichelis.dev se pensi sia un errore."
+          }
+        }
+      }
+    },
+    "activation.banner.deviceConflict": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This license is already active on another Mac. If that's you, open Peek3D there, go to Settings, and deactivate it — then come back here and retry."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questa licenza risulta già attiva su un altro Mac. Se sei tu, apri Peek3D su quel Mac, vai in Impostazioni e disattivalo — poi torna qui e riprova."
+          }
+        }
+      }
+    },
+    "activation.banner.offlineGraceExpired": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peek3D hasn't been able to verify your license online in over 30 days. Connect to the internet briefly to keep using it."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peek3D non riesce a verificare la tua licenza online da più di 30 giorni. Connettiti a internet per qualche istante per continuare a usarlo."
+          }
+        }
+      }
+    },
+    "activation.banner.remainingTransfers": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld free reactivation left."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld free reactivations left."
+                }
+              }
+            }
+          }
+        },
+        "it": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ti resta %lld riattivazione gratuita."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ti restano %lld riattivazioni gratuite."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "activation.banner.retry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Riprova"
+          }
+        }
+      }
+    },
+    "activation.banner.revokedGrace": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your license was reported as revoked. Peek3D keeps working normally until %@ — contact peek3d@sebdemichelis.dev if this looks wrong."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La tua licenza risulta revocata. Peek3D continua a funzionare normalmente fino al %@ — scrivi a peek3d@sebdemichelis.dev se pensi sia un errore."
+          }
+        }
+      }
+    },
     "dropzone.chooseShort": {
       "extractionState": "manual",
       "localizations": {
@@ -487,6 +613,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose…"
+          }
+        }
+      }
+    },
+    "error.remoteBlocked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This license's activation was revoked and the grace period has ended — this file can't be opened until it's resolved."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'attivazione di questa licenza è stata revocata e il periodo di tolleranza è terminato — questo file non può essere aperto finché il problema non viene risolto."
           }
         }
       }
@@ -764,6 +907,227 @@
           "stringUnit": {
             "state": "translated",
             "value": "Licenze open source"
+          }
+        }
+      }
+    },
+    "settings.activation.deactivateButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deactivate this Mac"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disattiva questo Mac"
+          }
+        }
+      }
+    },
+    "settings.activation.deactivateFailure": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't reach the activation server — check your connection and try again."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile contattare il server di attivazione — controlla la connessione e riprova."
+          }
+        }
+      }
+    },
+    "settings.activation.deactivateSuccess": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac's seat was freed. You can now activate a different license here, or the same one on another Mac."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il posto di questo Mac è stato liberato. Ora puoi attivare qui un'altra licenza, oppure la stessa su un altro Mac."
+          }
+        }
+      }
+    },
+    "settings.activation.header": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questo Mac"
+          }
+        }
+      }
+    },
+    "settings.activation.status.active": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active on this Mac (verified %@)"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attiva su questo Mac (verificata il %@)"
+          }
+        }
+      }
+    },
+    "settings.activation.status.blocked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revoked — new files are blocked"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revocata — i nuovi file sono bloccati"
+          }
+        }
+      }
+    },
+    "settings.activation.status.checking": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verifying…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verifica in corso…"
+          }
+        }
+      }
+    },
+    "settings.activation.status.deviceConflict": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not active on this Mac — the license seat is taken by another Mac"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non attiva su questo Mac — il posto della licenza è occupato da un altro Mac"
+          }
+        }
+      }
+    },
+    "settings.activation.status.never": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "never"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mai"
+          }
+        }
+      }
+    },
+    "settings.activation.status.notActivated": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not yet verified online"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non ancora verificata online"
+          }
+        }
+      }
+    },
+    "settings.activation.status.offlineExpired": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs to reconnect to verify"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serve riconnettersi per verificare"
+          }
+        }
+      }
+    },
+    "settings.activation.status.offlineGrace": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active on this Mac (offline since %@, still working)"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attiva su questo Mac (offline dal %@, funziona comunque)"
+          }
+        }
+      }
+    },
+    "settings.activation.status.revokedGrace": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revoked — access continues until %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revocata — l'accesso continua fino al %@"
           }
         }
       }
@@ -1086,6 +1450,57 @@
         }
       }
     },
+    "trialGate.remoteBlocked.body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This device's license activation was reported as revoked, and more than 72 hours have passed since then. Your license key itself is still recognized — only the online activation check failed. If this looks wrong, contact peek3d@sebdemichelis.dev."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'attivazione della licenza su questo Mac risulta revocata, e sono passate più di 72 ore da allora. La chiave di licenza in sé è ancora riconosciuta valida — è solo il controllo online dell'attivazione ad aver fallito. Se pensi sia un errore, scrivi a peek3d@sebdemichelis.dev."
+          }
+        }
+      }
+    },
+    "trialGate.remoteBlocked.enterDifferentLicense": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a different license"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inserisci un'altra licenza"
+          }
+        }
+      }
+    },
+    "trialGate.remoteBlocked.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access blocked"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accesso bloccato"
+          }
+        }
+      }
+    },
     "trialGate.updatesIncluded": {
       "extractionState": "manual",
       "localizations": {
@@ -1171,40 +1586,6 @@
         }
       }
     },
-    "welcome.tagline": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Drop a 3D file. Look at it."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trascina un file 3D. Guardalo."
-          }
-        }
-      }
-    },
-    "welcome.tagline.trialExhausted": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trial's over. Unlock to keep looking."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Prova finita. Sblocca per continuare a guardare."
-          }
-        }
-      }
-    },
     "welcome.trial.exhaustedMessage": {
       "extractionState": "manual",
       "localizations": {
@@ -1269,421 +1650,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sblocca Peek3D"
-          }
-        }
-      }
-    },
-    "activation.banner.retry": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Retry"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Riprova"
-          }
-        }
-      }
-    },
-    "activation.banner.revokedGrace": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your license was reported as revoked. Peek3D keeps working normally until %@ — contact peek3d@sebdemichelis.dev if this looks wrong."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La tua licenza risulta revocata. Peek3D continua a funzionare normalmente fino al %@ — scrivi a peek3d@sebdemichelis.dev se pensi sia un errore."
-          }
-        }
-      }
-    },
-    "activation.banner.blocked": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This license's activation was revoked more than 72 hours ago. New files can no longer be opened — contact peek3d@sebdemichelis.dev if this looks wrong."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L'attivazione di questa licenza è stata revocata più di 72 ore fa. Non è più possibile aprire nuovi file — scrivi a peek3d@sebdemichelis.dev se pensi sia un errore."
-          }
-        }
-      }
-    },
-    "activation.banner.deviceConflict": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This license is already active on another Mac. If that's you, open Peek3D there, go to Settings, and deactivate it — then come back here and retry."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Questa licenza risulta già attiva su un altro Mac. Se sei tu, apri Peek3D su quel Mac, vai in Impostazioni e disattivalo — poi torna qui e riprova."
-          }
-        }
-      }
-    },
-    "activation.banner.offlineGraceExpired": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Peek3D hasn't been able to verify your license online in over 30 days. Connect to the internet briefly to keep using it."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Peek3D non riesce a verificare la tua licenza online da più di 30 giorni. Connettiti a internet per qualche istante per continuare a usarlo."
-          }
-        }
-      }
-    },
-    "activation.banner.remainingTransfers": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld free reactivation left."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld free reactivations left."
-                }
-              }
-            }
-          }
-        },
-        "it": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Ti resta %lld riattivazione gratuita."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Ti restano %lld riattivazioni gratuite."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "trialGate.remoteBlocked.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Access blocked"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Accesso bloccato"
-          }
-        }
-      }
-    },
-    "trialGate.remoteBlocked.body": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This device's license activation was reported as revoked, and more than 72 hours have passed since then. Your license key itself is still recognized — only the online activation check failed. If this looks wrong, contact peek3d@sebdemichelis.dev."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L'attivazione della licenza su questo Mac risulta revocata, e sono passate più di 72 ore da allora. La chiave di licenza in sé è ancora riconosciuta valida — è solo il controllo online dell'attivazione ad aver fallito. Se pensi sia un errore, scrivi a peek3d@sebdemichelis.dev."
-          }
-        }
-      }
-    },
-    "trialGate.remoteBlocked.enterDifferentLicense": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter a different license"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Inserisci un'altra licenza"
-          }
-        }
-      }
-    },
-    "error.remoteBlocked": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This license's activation was revoked and the grace period has ended — this file can't be opened until it's resolved."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L'attivazione di questa licenza è stata revocata e il periodo di tolleranza è terminato — questo file non può essere aperto finché il problema non viene risolto."
-          }
-        }
-      }
-    },
-    "settings.activation.header": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This Mac"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Questo Mac"
-          }
-        }
-      }
-    },
-    "settings.activation.status.notActivated": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not yet verified online"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Non ancora verificata online"
-          }
-        }
-      }
-    },
-    "settings.activation.status.checking": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verifying…"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verifica in corso…"
-          }
-        }
-      }
-    },
-    "settings.activation.status.active": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Active on this Mac (verified %@)"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Attiva su questo Mac (verificata il %@)"
-          }
-        }
-      }
-    },
-    "settings.activation.status.offlineGrace": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Active on this Mac (offline since %@, still working)"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Attiva su questo Mac (offline dal %@, funziona comunque)"
-          }
-        }
-      }
-    },
-    "settings.activation.status.offlineExpired": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Needs to reconnect to verify"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Serve riconnettersi per verificare"
-          }
-        }
-      }
-    },
-    "settings.activation.status.never": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "never"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "mai"
-          }
-        }
-      }
-    },
-    "settings.activation.status.deviceConflict": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not active on this Mac — the license seat is taken by another Mac"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Non attiva su questo Mac — il posto della licenza è occupato da un altro Mac"
-          }
-        }
-      }
-    },
-    "settings.activation.status.revokedGrace": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Revoked — access continues until %@"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Revocata — l'accesso continua fino al %@"
-          }
-        }
-      }
-    },
-    "settings.activation.status.blocked": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Revoked — new files are blocked"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Revocata — i nuovi file sono bloccati"
-          }
-        }
-      }
-    },
-    "settings.activation.deactivateButton": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deactivate this Mac"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Disattiva questo Mac"
-          }
-        }
-      }
-    },
-    "settings.activation.deactivateSuccess": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This Mac's seat was freed. You can now activate a different license here, or the same one on another Mac."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Il posto di questo Mac è stato liberato. Ora puoi attivare qui un'altra licenza, oppure la stessa su un altro Mac."
-          }
-        }
-      }
-    },
-    "settings.activation.deactivateFailure": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't reach the activation server — check your connection and try again."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Impossibile contattare il server di attivazione — controlla la connessione e riprova."
           }
         }
       }

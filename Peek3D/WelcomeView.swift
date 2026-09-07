@@ -107,29 +107,15 @@ struct WelcomeView: View {
                 // VoiceOver and would otherwise announce as an unlabeled
                 // image.
                 .accessibilityHidden(true)
-            VStack(spacing: 6) {
-                Text("Peek3D")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Color(red: 0.35, green: 0.68, blue: 1.0), .white],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
+            Text("Peek3D")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [Color(red: 0.35, green: 0.68, blue: 1.0), .white],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
-                // "Drop a 3D file. Look at it." is an invitation to do the
-                // one thing that's currently blocked — swap in a tagline
-                // that doesn't dangle a carrot the trial-exhausted state
-                // won't let the user reach. `isTrialExhausted` is declared
-                // further down in this file; Swift resolves it fine since
-                // both are members of the same type.
-                Text(
-                    isTrialExhausted ? "welcome.tagline.trialExhausted" : "welcome.tagline",
-                    comment: "Short tagline under the app name on the Welcome screen. The trial-exhausted variant must NOT invite the drag/drop action the exhausted state blocks."
                 )
-                    .font(.system(size: 13))
-                    .foregroundStyle(.white.opacity(0.45))
-            }
         }
     }
 
