@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>STL</title>
+  <!-- Faceted diamond: STL stores nothing but triangles (no color, no
+       material, the format 3D printers speak), so the glyph is two flat
+       triangular facets meeting at a ridge instead of a cube — a distinct,
+       taller/narrower silhouette from the six-sided cube family. -->
+  <path d="M16,4 L28,16 L4,16 Z" fill="#A6D4FF"/>
+  <path d="M4,16 L28,16 L16,29 Z" fill="#1E5FA8"/>
+  <path d="M16,4 L28,16 L16,29 L4,16 Z" fill="none" stroke="#1E5FA8" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M4,16 L28,16 M16,4 L16,29" fill="none" stroke="#1E5FA8" stroke-width="1"/>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>PLY</title>
+  <!-- A loose cluster of points — PLY is the format scanners and
+       photogrammetry pipelines speak, so the glyph is a point cloud rather
+       than a solid or a line. The only glyph in the set with no continuous
+       edge at all, which is the point.
+       Revised after 16px review (2026-08-13): the original nine small,
+       mostly-light-tint dots read as dust/noise, not as a cloud. Cut to six
+       dots, sized up, and weighted toward the dark ink tone so the cluster
+       carries real visual mass — comparable in footprint to stl.svg's
+       diamond — with only one light-tint dot left as a support accent.
+       Centers sit on the even-integer grid so they land on whole pixels at
+       the 16px render size (viewBox is 2 units per pixel at 16px). -->
+  <circle cx="10" cy="8"  r="3.6" fill="#1E5FA8"/>
+  <circle cx="22" cy="8"  r="3.2" fill="#59ADFF"/>
+  <circle cx="16" cy="16" r="4.2" fill="#1E5FA8"/>
+  <circle cx="6"  cy="20" r="3.4" fill="#1E5FA8"/>
+  <circle cx="24" cy="18" r="2.8" fill="#A6D4FF"/>
+  <circle cx="14" cy="26" r="3.2" fill="#1E5FA8"/>
+</svg>

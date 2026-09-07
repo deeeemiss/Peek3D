@@ -9,9 +9,17 @@ import UniformTypeIdentifiers
 /// state for a read-only viewer, so this replaces it.
 struct WelcomeView: View {
     @Environment(\.openDocument) private var openDocument
+    @EnvironmentObject private var licenseState: LicenseState
+    /// Read directly here (not just inside `RemoteActivationBanner` itself)
+    /// to decide whether to include the banner in this screen's `VStack` at
+    /// all — see `RemoteActivationStatus.bannerSeverity`'s own doc comment
+    /// for why an always-present `EmptyView()` isn't good enough in a spaced
+    /// stack like this one.
+    @EnvironmentObject private var licenseActivationService: LicenseActivationService
     @State private var recents: [URL] = []
     @State private var isTargeted = false
     @State private var errorMessage: String?
+    @State private var showLicenseSheet = false
 
     var body: some View {
         ZStack {
@@ -31,10 +39,24 @@ struct WelcomeView: View {
                     formatsRow
                     recentsSection
                     if let errorMessage {
+                        // `Color.peekError` (LicenseUITokens.swift), not
+                        // `.red.opacity(0.85)`: hand-computing the latter's
+                        // contrast against this screen's near-black
+                        // background (`Color(white: 0.04)`) came out to
+                        // ≈4.24:1 — just under WCAG AA's 4.5:1 for 12pt
+                        // text. `peekError` at full opacity computes to
+                        // ≈7.1:1 against the same background, and reusing it
+                        // keeps "red means error" consistent with
+                        // `LicenseEntrySheet`'s banner instead of a second,
+                        // independently-tuned red.
                         Text(errorMessage)
                             .font(.system(size: 12))
-                            .foregroundStyle(.red.opacity(0.85))
+                            .foregroundStyle(Color.peekError)
                     }
+                    if licenseActivationService.remoteStatus.bannerSeverity != nil {
+                        RemoteActivationBanner()
+                    }
+                    trialStatusFooter
                     footer
                 }
                 .padding(.horizontal, 48)
@@ -54,7 +76,19 @@ struct WelcomeView: View {
         .frame(minWidth: 900, minHeight: 620)
         .onAppear(perform: refreshRecents)
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
-            handleDrop(providers)
+            // Trial exhausted: a dropped file would only reach the paywall
+            // in a brand-new document window (see `TrialGateView`) after a
+            // real load attempt — the same dead end the drop zone's button
+            // avoids below. Route straight to license entry instead, and
+            // still return true so the drag doesn't show a "rejected" cursor.
+            guard !isTrialExhausted else {
+                showLicenseSheet = true
+                return true
+            }
+            return handleDrop(providers)
+        }
+        .sheet(isPresented: $showLicenseSheet) {
+            LicenseEntrySheet()
         }
     }
 
@@ -68,6 +102,11 @@ struct WelcomeView: View {
                 .frame(width: 84, height: 84)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
+                // Decorative — the "Peek3D" text right below already states
+                // the app's identity, so the logo has nothing to add for
+                // VoiceOver and would otherwise announce as an unlabeled
+                // image.
+                .accessibilityHidden(true)
             VStack(spacing: 6) {
                 Text("Peek3D")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -78,7 +117,16 @@ struct WelcomeView: View {
                             endPoint: .trailing
                         )
                     )
-                Text("welcome.tagline", comment: "Short tagline under the app name on the Welcome screen")
+                // "Drop a 3D file. Look at it." is an invitation to do the
+                // one thing that's currently blocked — swap in a tagline
+                // that doesn't dangle a carrot the trial-exhausted state
+                // won't let the user reach. `isTrialExhausted` is declared
+                // further down in this file; Swift resolves it fine since
+                // both are members of the same type.
+                Text(
+                    isTrialExhausted ? "welcome.tagline.trialExhausted" : "welcome.tagline",
+                    comment: "Short tagline under the app name on the Welcome screen. The trial-exhausted variant must NOT invite the drag/drop action the exhausted state blocks."
+                )
                     .font(.system(size: 13))
                     .foregroundStyle(.white.opacity(0.45))
             }
@@ -87,11 +135,32 @@ struct WelcomeView: View {
 
     // MARK: - Drop zone
 
+    /// True once the distinct-file trial is used up. Read-only here — the
+    /// gate itself (`LicenseState.canOpen(url:)`, enforced by `TrialGateView`
+    /// at document-open time) stays the single source of truth; this only
+    /// decides what the Welcome screen shows and where its drop zone/button
+    /// send the user, so the dead-end of loading a file into a fresh window
+    /// just to hit the paywall there is avoided.
+    private var isTrialExhausted: Bool {
+        if case .trialExhausted = licenseState.status { return true }
+        return false
+    }
+
+    @ViewBuilder
     private var dropZone: some View {
+        if isTrialExhausted {
+            exhaustedDropZone
+        } else {
+            openDropZone
+        }
+    }
+
+    private var openDropZone: some View {
         VStack(spacing: 14) {
             Image(systemName: "square.and.arrow.down.on.square")
                 .font(.system(size: 30, weight: .light))
                 .foregroundStyle(Color(red: 0.35, green: 0.68, blue: 1.0).opacity(0.85))
+                .accessibilityHidden(true)
             Text("welcome.dropHint", comment: "Instructs the user they can drag a 3D file onto the window")
                 .font(.system(size: 13))
                 .foregroundStyle(.white.opacity(0.55))
@@ -102,10 +171,57 @@ struct WelcomeView: View {
                     .padding(.vertical, 9)
             }
             .buttonStyle(.plain)
-            .focusable(false)
+            // Was `.focusable(false)`: that opted this button out of the Tab
+            // key-view loop entirely, which for a keyboard-only user (no
+            // VoiceOver, just Tab + Space/Return) made this the one action
+            // on the whole Welcome screen with no way to reach it without a
+            // mouse. Removed rather than reworked — nothing here depended on
+            // it staying unfocusable; it reads as a leftover from suppressing
+            // a focus-ring visual rather than an intentional accessibility
+            // choice, and this is the primary CTA of the non-exhausted
+            // Welcome screen (including the one a user lands back on right
+            // after activating a license from `exhaustedDropZone` below).
             .background(.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
             .foregroundStyle(.white)
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.15)))
+            .pointerCursor()
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 36)
+        .background(.white.opacity(0.03), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(.white.opacity(0.08), style: StrokeStyle(lineWidth: 1, dash: [6, 5]))
+        )
+    }
+
+    /// Same container chrome as `openDropZone`, but the copy, icon, and
+    /// action all come from the trial-exhausted register already established
+    /// by `TrialGateView` — a neutral lock (not the inviting accent blue), a
+    /// sentence naming the trial limit, and a filled CTA straight into
+    /// `LicenseEntrySheet` instead of `NSOpenPanel`.
+    private var exhaustedDropZone: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "lock.fill")
+                .font(.system(size: 30, weight: .light))
+                .foregroundStyle(.white.opacity(0.5))
+                .accessibilityHidden(true)
+            Text(
+                String(
+                    localized: "welcome.trial.exhaustedMessage",
+                    defaultValue: "You've used all your trial opens (\(LicenseRecord.trialLimit)/\(LicenseRecord.trialLimit)).",
+                    comment: "Welcome screen's exhausted-trial drop zone message. Both %lld are the same trial-limit constant, shown as an N/N ratio."
+                )
+            )
+                .font(.system(size: 13))
+                .foregroundStyle(.white.opacity(0.55))
+                .multilineTextAlignment(.center)
+            Button {
+                showLicenseSheet = true
+            } label: {
+                Text("welcome.trial.unlockButton", comment: "CTA in the Welcome screen's exhausted-trial drop zone")
+            }
+            .buttonStyle(PeekFilledButtonStyle())
             .pointerCursor()
         }
         .frame(maxWidth: .infinity)
@@ -164,6 +280,52 @@ struct WelcomeView: View {
         }
     }
 
+    // MARK: - Trial status
+
+    /// Invisible above 5 opens remaining. Quiet (11pt, white 40%) from 5
+    /// down to 4; from 3 down to 1 it escalates to 12pt amber medium-weight
+    /// with a clickable "· Sblocca Peek3D" straight into license entry —
+    /// the critical phase where the user is about to hit `TrialGateView`
+    /// for real.
+    @ViewBuilder
+    private var trialStatusFooter: some View {
+        if case .trial(let remaining) = licenseState.status, remaining <= 5 {
+            if remaining <= 3 {
+                HStack(spacing: 4) {
+                    Text(TrialCopy.remainingText(remaining))
+                    Button {
+                        showLicenseSheet = true
+                    } label: {
+                        Text("welcome.trial.unlockLink", comment: "Inline underlined link appended after the critical-phase countdown, e.g. '· Unlock Peek3D'. Leading separator is part of the localized string since some languages may punctuate differently.")
+                            .underline()
+                    }
+                    .buttonStyle(.plain)
+                    .pointerCursor()
+                    // The on-screen string leads with "· " to read as a
+                    // continuation of the countdown text next to it — sighted
+                    // punctuation, not something VoiceOver should speak as
+                    // "middle dot". A dedicated, separator-free label is what
+                    // it announces instead.
+                    .accessibilityLabel(
+                        Text(
+                            String(
+                                localized: "welcome.trial.unlockLink.accessibilityLabel",
+                                defaultValue: "Unlock Peek3D",
+                                comment: "VoiceOver label for the critical-phase unlock link, without the leading '· ' visual separator used in the on-screen text."
+                            )
+                        )
+                    )
+                }
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Color.peekAmber)
+            } else {
+                Text(TrialCopy.remainingText(remaining))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.4))
+            }
+        }
+    }
+
     private var footer: some View {
         Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")
             .font(.system(size: 10))
@@ -211,6 +373,7 @@ private struct RecentRow: View {
     let action: () -> Void
 
     @State private var isHovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Button(action: action) {
@@ -218,6 +381,7 @@ private struct RecentRow: View {
                 Image(systemName: "cube.transparent")
                     .font(.system(size: 13))
                     .foregroundStyle(.white.opacity(0.6))
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(url.lastPathComponent)
                         .font(.system(size: 12, weight: .medium))
@@ -237,7 +401,16 @@ private struct RecentRow: View {
         .pointerCursor()
         .background(isHovering ? Color.white.opacity(0.08) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
         .onHover { inside in
-            withAnimation(.easeOut(duration: 0.1)) { isHovering = inside }
+            // Reduce Motion is a contract (per this project's CLAUDE.md),
+            // not a suggestion — a 0.1s crossfade is minor, but skipping it
+            // entirely when the preference is on costs nothing and keeps
+            // every motion decision in this screen consistent rather than
+            // picking and choosing which ones "count".
+            if reduceMotion {
+                isHovering = inside
+            } else {
+                withAnimation(.easeOut(duration: 0.1)) { isHovering = inside }
+            }
         }
     }
 }

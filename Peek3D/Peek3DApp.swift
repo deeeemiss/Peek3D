@@ -168,6 +168,23 @@ extension FocusedValues {
     }
 }
 
+/// Wraps a single "Licenze open source…" menu item so `@Environment(\.openWindow)`
+/// can be read — like `FileMenuCommands` above, `.commands` itself isn't a
+/// view context. Lives in the app menu (`CommandGroup(after: .appInfo)`,
+/// right below "About Peek3D") rather than Help, since it's about this
+/// specific binary's third-party notices, not general assistance.
+private struct LicensesMenuCommand: View {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button {
+            openWindow(id: "licenses")
+        } label: {
+            Text("ossLicenses.menuItem", comment: "App-menu item that opens the open-source licenses window")
+        }
+    }
+}
+
 /// Wraps the "Scene" menu's content so `@FocusedValue` can be read — like
 /// `openWindow` above, `.commands` itself isn't a view context.
 private struct SceneCommands: View {
@@ -239,8 +256,142 @@ private struct SceneCommands: View {
 
 @main
 struct Peek3DApp: App {
+    /// Single shared instance, not one per Scene — resolved here so the
+    /// very first frame any window draws already has a stable trial/license
+    /// status instead of flashing from an initial default.
+    @StateObject private var licenseState: LicenseState
+
+    /// Single-machine enforcement — talks to Polar in the background, never
+    /// blocking anything `licenseState` already decided locally/offline.
+    /// See `LicenseActivationService`'s own doc comment for the full
+    /// design; wired to `licenseState` below via
+    /// `onLicenseKeyTextApplied`, not a compile-time dependency between the
+    /// two types.
+    @StateObject private var licenseActivationService: LicenseActivationService
 
     init() {
+        #if DEBUG
+        // Makes ONE real HTTP call through HTTPPolarLicenseAPIClient and
+        // exits when PEEK3D_POLAR_CLIENT_QUERY is set — see
+        // PolarLicenseAPIClientQuery. Checked first, before anything else,
+        // since it has no dependency on license state at all.
+        PolarLicenseAPIClientQuery.printAndExitIfRequested()
+
+        // Runs (and exits) the black-box license/trial self-test suite when
+        // PEEK3D_LICENSE_SELFTEST is set — see LicenseSelfTest. Checked
+        // first, before anything below touches the Keychain/UserDefaults
+        // state a normal launch would leave alone.
+        LicenseSelfTest.runIfRequested()
+
+        // Runs (and exits) the single-machine activation state-machine
+        // self-test when PEEK3D_ACTIVATION_SELFTEST is set — see
+        // LicenseActivationSelfTest. Same pattern as LicenseSelfTest just
+        // above: a scripted FakePolarLicenseAPIClient, zero network, no
+        // live Polar account.
+        LicenseActivationSelfTest.runIfRequested()
+
+        // Forces an arbitrary trial/license state for manual QA when
+        // PEEK3D_LICENSE_DEBUG_STATE is set — see LicenseDebugHarness for
+        // the recognised values. Structurally absent from Release builds
+        // (this whole call is behind #if DEBUG, and LicenseDebugHarness's
+        // own file is too), never an obscure-but-reachable backdoor.
+        let resolvedLicenseState = LicenseDebugHarness.makeState() ?? LicenseState()
+        _licenseState = StateObject(wrappedValue: resolvedLicenseState)
+
+        // LicenseStateQuery.printAndExitIfRequested(resolvedLicenseState) is
+        // deliberately NOT called here anymore — see where it's called
+        // further down, after the LicenseActivationService wiring, and the
+        // comment there for why.
+
+        // Read-only probe: prints MachineIdentifier.current() and exits when
+        // PEEK3D_MACHINE_ID_QUERY is set — see MachineIdentifierQuery. Checked
+        // last among the read-only probes; order between them doesn't matter,
+        // none of them touch shared state the others depend on.
+        MachineIdentifierQuery.printAndExitIfRequested()
+        #else
+        let resolvedLicenseState = LicenseState()
+        _licenseState = StateObject(wrappedValue: resolvedLicenseState)
+        #endif
+
+        #if DEBUG
+        // Forces the PERSISTED activation record for manual QA when
+        // PEEK3D_ACTIVATION_DEBUG_STATE is set — see ActivationDebugHarness.
+        // Must run before LicenseActivationService() below, since its
+        // init() reads this same persisted record synchronously.
+        // Structurally absent from Release builds.
+        ActivationDebugHarness.apply()
+        #endif
+
+        // Single-machine activation layer — see LicenseActivationService's
+        // top doc comment. Wired to resolvedLicenseState via a plain
+        // closure hook (LicenseState.onLicenseKeyTextApplied), not a
+        // constructor dependency, so neither type needs to know the other
+        // exists at compile time beyond this one line.
+        let resolvedActivationService = LicenseActivationService()
+        #if DEBUG
+        // Same test keypair PEEK3D_LICENSE_DEBUG_STATE=licensed already
+        // trusts on the LicenseState side (see LicenseDebugHarness) — without
+        // this, LicenseVerifier.verify would reject that manufactured
+        // license against this service's own (empty in production)
+        // trustedPublicKeys, and PEEK3D_LICENSE_DEBUG_STATE=licensed could
+        // never actually exercise a real /activate call for manual
+        // verification against a local fake Polar server. Harmless no-op
+        // for every other PEEK3D_LICENSE_DEBUG_STATE value (there's no
+        // license key text to check against it), and structurally absent
+        // from Release builds.
+        if let testKey = LicenseDebugHarness.testPublicKey {
+            resolvedActivationService.debugSetExtraTrustedKeys([testKey])
+        }
+        #endif
+        resolvedLicenseState.onLicenseKeyTextApplied = { [weak resolvedActivationService] text in
+            resolvedActivationService?.licenseKeyWasApplied(text)
+        }
+
+        // Opposite-direction hook — see LicenseActivationService.onBlockedStateChanged's
+        // own doc comment for why the explicit sync call below is required
+        // in addition to wiring the closure: `didSet` only fires on a CHANGE
+        // after this closure exists, so a `.blocked` state already persisted
+        // from a previous launch (resolved synchronously above, in
+        // LicenseActivationService.init()) would otherwise never reach
+        // resolvedLicenseState at all.
+        resolvedActivationService.onBlockedStateChanged = { [weak resolvedLicenseState] blocked in
+            resolvedLicenseState?.setRemoteAccessBlocked(blocked)
+        }
+        resolvedLicenseState.setRemoteAccessBlocked(resolvedActivationService.isBlocked)
+
+        #if DEBUG
+        // Read-only probe: prints the state resolved above (INCLUDING
+        // isRemotelyBlocked) and exits when PEEK3D_LICENSE_STATE_QUERY is
+        // set — see LicenseStateQuery. Moved here, after the
+        // LicenseActivationService wiring right above, rather than
+        // immediately after `resolvedLicenseState` is constructed: before
+        // this point, `isRemotelyBlocked` couldn't yet reflect a persisted
+        // `.blocked` record (see `LicenseActivationService.onBlockedStateChanged`'s
+        // own doc comment on the initial-sync ordering requirement) — a
+        // query run any earlier would silently always report `false`,
+        // regardless of what's actually on disk. Still exits well before
+        // `launchTimeCheck` below, so this probe never triggers a real
+        // network call.
+        LicenseStateQuery.printAndExitIfRequested(resolvedLicenseState)
+        #endif
+
+        _licenseActivationService = StateObject(wrappedValue: resolvedActivationService)
+
+        #if DEBUG
+        // Read-only probe: prints the PERSISTED DeviceActivationRecord and
+        // exits when PEEK3D_ACTIVATION_STATE_QUERY is set — see
+        // LicenseActivationStateQuery. Meant for a SEPARATE process launch
+        // after a normal run already made the real HTTP call; checked here
+        // (before launchTimeCheck below) purely so that separate launch
+        // exits immediately without also kicking off a network attempt of
+        // its own.
+        LicenseActivationStateQuery.printAndExitIfRequested()
+        #endif
+
+        // Background, 24-hour-gated reverify — never awaited here, never
+        // blocks app launch. See LicenseActivationService.launchTimeCheck.
+        resolvedActivationService.launchTimeCheck(licenseKeyText: resolvedLicenseState.licenseKeyText)
+
         SelfTest.runIfRequested()
     }
 
@@ -250,6 +401,8 @@ struct Peek3DApp: App {
         // this is what fills that gap — Open button, recent files, drag&drop.
         WindowGroup(id: "welcome") {
             WelcomeView()
+                .environmentObject(licenseState)
+                .environmentObject(licenseActivationService)
                 .preferredColorScheme(.dark)
                 .frame(minWidth: 900, minHeight: 620)
         }
@@ -275,21 +428,43 @@ struct Peek3DApp: App {
             // `.viewing` documents have no "New"/untitled state, so every
             // window this closure builds is for a real, already-opened file —
             // `fileURL` is non-nil in practice for every case that reaches here.
+            //
+            // This closure is the ONE point every open path funnels through
+            // — Finder double-click, Dock drop, Open Recent, and
+            // WelcomeView's own `openDocument`/`NSDocumentController` calls
+            // all end up here, never straight at `ContentView`. It's
+            // therefore where the trial gate belongs for brand-new document
+            // windows. The other path a new file can enter through — dropping
+            // a file onto an ALREADY-open document window, which never
+            // re-enters this closure — is gated separately, inside
+            // `ContentView.load(url:)`.
             if let url = file.fileURL {
-                ContentView(url: url)
+                // `TrialGateView` owns the trial-gate branch itself (not a
+                // `Group { if ... }` here) — see its own doc comment for why
+                // that's what makes an in-place license activation actually
+                // unblock this exact window instead of leaving it stuck.
+                TrialGateView(url: url)
+                    .environmentObject(licenseState)
+                    .environmentObject(licenseActivationService)
                     .preferredColorScheme(.dark)
                     .frame(minWidth: 900, minHeight: 620)
             }
         }
         .windowStyle(.hiddenTitleBar)
         .commands {
+            CommandGroup(after: .appInfo) {
+                LicensesMenuCommand()
+            }
             CommandGroup(replacing: .newItem) {
                 FileMenuCommands()
             }
-            // No text editing anywhere in this app — Undo/Redo/Cut/Copy/Paste/
-            // Select All would just sit there permanently disabled.
-            CommandGroup(replacing: .undoRedo) { }
-            CommandGroup(replacing: .pasteboard) { }
+            // These used to be replaced with nothing, on the reasoning that a
+            // read-only viewer has no text fields and the items would sit
+            // permanently disabled. That stopped being true when licensing
+            // added a key-entry field: removing the pasteboard group also
+            // removes ⌘V, so a customer who copied their key from the
+            // purchase email could not paste it — the one interaction the
+            // entire purchase depends on. Keep the standard groups.
             // Named "Scene", not "View" — macOS already injects its own
             // native "View" menu (Show Tab Bar / Show All Tabs / Full Screen,
             // from the window-tabbing feature) once any DocumentGroup app has
@@ -299,5 +474,30 @@ struct Peek3DApp: App {
                 SceneCommands()
             }
         }
+
+        // License status/entry (see SettingsView) — the third Scene this
+        // app needed: not Welcome (already dense) and not a document window
+        // (unreachable with none open). `Cmd+,` is wired up automatically
+        // by SwiftUI for any `Settings` scene.
+        Settings {
+            SettingsView()
+                .environmentObject(licenseState)
+                .environmentObject(licenseActivationService)
+        }
+
+        // Third-party license notices (see OpenSourceLicensesView), opened
+        // via the "Licenze open source…" app-menu item wired up above. Its
+        // own Scene rather than a sheet on Welcome/Settings — it needs to be
+        // reachable regardless of which window (if any) is currently key.
+        // No `.windowResizability` override here — same reasoning as the
+        // "welcome" WindowGroup above: `.contentMinSize` previously pinned
+        // a window at its minimum because its content had no growable
+        // element. `OpenSourceLicensesView`'s own `.frame(minWidth:
+        // minHeight:)` already enforces the minimum under the default mode.
+        WindowGroup(id: "licenses") {
+            OpenSourceLicensesView()
+                .preferredColorScheme(.dark)
+        }
+        .windowStyle(.hiddenTitleBar)
     }
 }

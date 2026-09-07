@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>COLLADA</title>
+  <!-- Two interlocked rings — a plain chain-link glyph, standing for
+       COLLADA's role as an interchange format that links different DCC
+       tools together. Circular silhouette, unlike anything else in the
+       set. -->
+  <circle cx="11" cy="16" r="8" fill="none" stroke="#1E5FA8" stroke-width="3"/>
+  <circle cx="21" cy="16" r="8" fill="none" stroke="#59ADFF" stroke-width="3"/>
+</svg>

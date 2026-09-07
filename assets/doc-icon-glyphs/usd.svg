@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>USD</title>
+  <!-- Three stacked, flattened layers — USD's defining feature is
+       composition: scenes built from stacked, overridable layers. Back
+       layer is outline-only (furthest/weakest), front layer is solid and
+       lightest (the active layer on top). Open stack, no boundary — see
+       usdz.svg for the closed/bound counterpart. -->
+  <path d="M4,8 L16,4 L28,8 L16,12 Z" fill="none" stroke="#1E5FA8" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M4,14 L16,10 L28,14 L16,18 Z" fill="#59ADFF" stroke="#1E5FA8" stroke-width="1" stroke-linejoin="round"/>
+  <path d="M4,20 L16,16 L28,20 L16,24 Z" fill="#A6D4FF" stroke="#1E5FA8" stroke-width="1" stroke-linejoin="round"/>
+</svg>
