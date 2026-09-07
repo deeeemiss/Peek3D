@@ -13,3 +13,4 @@ xcuserdata/
 .swiftpm/
 GLBViewer.xcodeproj/project.xcworkspace/xcuserdata/
 GLBViewer.xcodeproj/xcuserdata/
+build-dist/
