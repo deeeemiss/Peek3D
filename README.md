@@ -13,7 +13,7 @@ Free and open source.
 [![FBX](https://img.shields.io/badge/FBX-ufbx-9cf?style=flat-square)](https://github.com/ufbx/ufbx)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE.md)
 
-[Formats](#formats) · [Features](#features) · [Privacy](#privacy) · [Build](#build) · [Sandbox](#sandbox) · [Known limits](#known-limits)
+[Install](#install) · [Formats](#formats) · [Features](#features) · [Privacy](#privacy) · [Build](#build) · [Sandbox](#sandbox) · [Known limits](#known-limits)
 
 </div>
 
@@ -22,6 +22,15 @@ Free and open source.
 ![Peek3D demo](assets/demo.gif)
 
 ---
+
+## Install
+
+```sh
+brew install --cask deeeemiss/tap/peek3d
+```
+
+Or download the DMG from [Releases](https://github.com/deeeemiss/Peek3D/releases/latest).
+Signed with a Developer ID and notarized by Apple. Requires macOS 13 or later.
 
 ## Formats
 
