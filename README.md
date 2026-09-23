@@ -5,16 +5,15 @@
 **Drop a 3D file. Look at it.**
 
 A tiny, native macOS viewer — no editing, no export, no format conversion.
-Free to try on your first 10 files, then **€19.99 once** — no subscription.
+Free and open source.
 
 [![macOS](https://img.shields.io/badge/macOS-13%2B-blue?style=flat-square)]()
 [![Swift](https://img.shields.io/badge/Swift-SwiftUI%20%2B%20SceneKit-orange?style=flat-square)]()
 [![glTF](https://img.shields.io/badge/glTF-GLTFKit2-brightgreen?style=flat-square)](https://github.com/warrenm/GLTFKit2)
 [![FBX](https://img.shields.io/badge/FBX-ufbx-9cf?style=flat-square)](https://github.com/ufbx/ufbx)
-[![Price](https://img.shields.io/badge/price-%E2%82%AC19.99%20once-success?style=flat-square)](https://buy.polar.sh/polar_cl_eAHc1m1lpTGYyUnVgE9TomrotIHM76hUXRm7e1g2VRP)
-[![License](https://img.shields.io/badge/source-available%20(ELv2)-grey?style=flat-square)](LICENSE.md)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE.md)
 
-[Formats](#formats) · [Features](#features) · [Trial & pricing](#trial--pricing) · [Activation](#activation) · [Build](#build) · [Sandbox](#sandbox) · [Known limits](#known-limits)
+[Formats](#formats) · [Features](#features) · [Privacy](#privacy) · [Build](#build) · [Sandbox](#sandbox) · [Known limits](#known-limits)
 
 </div>
 
@@ -68,46 +67,10 @@ modes, and stats never need to know where a model came from.
   the per-app language set in macOS System Settings → General → Language &
   Region. More languages (incl. non-Latin scripts) planned.
 
-## Trial & pricing
+## Privacy
 
-Peek3D is free to try, then a one-time purchase — no subscription, ever.
-
-- **Free trial** — open **10 distinct files** before you need a license.
-  Reopening a file you've already opened doesn't use up a slot; only
-  genuinely new files count. Once the 10 are used, opening any *further new*
-  file is blocked until you activate a license — files you already opened
-  during the trial stay reachable forever.
-- **€19.99, once** — all future updates are included for as long as Peek3D
-  exists. You never pay again.
-- **Multi-Mac packs** — discounted 2-license and 3-license bundles are
-  available for people who use Peek3D on more than one Mac.
-- **14-day refund** — not happy? Full refund within 14 days of purchase, see
-  the [license FAQ](docs/FAQ.en.md#refunds) for how.
-
-[Buy a license](https://buy.polar.sh/polar_cl_eAHc1m1lpTGYyUnVgE9TomrotIHM76hUXRm7e1g2VRP). Purchases and payments are
-handled by [Polar.sh](https://polar.sh), Peek3D's merchant of record.
-
-## Activation
-
-- One license activates **one Mac**. A multi-license pack lets you activate
-  on that many Macs.
-- Enter your license key from **Settings ▸ Cambia licenza…** (or the "Ho già
-  una licenza" link on the trial screen) — the key is a cryptographically
-  signed string, checked entirely **offline**, so activation works with no
-  internet connection.
-- Once activated, Peek3D periodically re-verifies the license online. If it
-  can't reach the verification service (no internet, service down), the app
-  keeps working normally for **up to 30 days** since the last successful
-  check before it asks you to reconnect.
-- Replacing a Mac? Free up its seat yourself before activating on the new
-  one — see the [license FAQ](docs/FAQ.en.md) for the exact steps and what
-  to do if the old Mac is no longer available.
-- Lost your key? Use the in-app "Recover license" flow (or the same on the
-  website) with the email you purchased with, and we'll resend it.
-
-Full details, edge cases, and what data activation stores:
-[license FAQ](docs/FAQ.en.md) · [FAQ licenza (italiano)](docs/FAQ.it.md) ·
-[privacy notice](docs/PRIVACY.en.md) · [informativa privacy (italiano)](docs/PRIVACY.it.md).
+Peek3D makes no network connections and collects no data. Files you open
+are read locally and never leave your Mac.
 
 ## Build
 
@@ -142,12 +105,5 @@ app prompts for folder access and retries automatically if it's missing.
 
 ## License
 
-Peek3D's source code is available under the Elastic License 2.0 (adapted
-— see [LICENSE.md](LICENSE.md), which also lists third-party
-attributions). It's source-available, not open source: you can read,
-study, and build the code, but the license explicitly forbids removing,
-disabling, or working around the trial/license-key logic. The compiled
-app sold through [Polar](https://buy.polar.sh/polar_cl_eAHc1m1lpTGYyUnVgE9TomrotIHM76hUXRm7e1g2VRP) is a paid product —
-see [Trial & pricing](#trial--pricing) above and the
-[license FAQ](docs/FAQ.en.md) for what buying and activating a license
-actually gets you.
+[MIT](LICENSE.md). Third-party attributions are listed in the same file and
+in the app (Peek3D ▸ Open Source Licenses…).

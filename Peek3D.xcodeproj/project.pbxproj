@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		1A00000000000000000000D1 /* GLTFKit2 in Frameworks */ = {isa = PBXBuildFile; productRef = 1A00000000000000000000D2 /* GLTFKit2 */; };
-		1A00000000000000000000D4 /* PeekLicenseKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1A00000000000000000000D3 /* PeekLicenseKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -31,7 +30,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A00000000000000000000D1 /* GLTFKit2 in Frameworks */,
-				1A00000000000000000000D4 /* PeekLicenseKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,7 +73,6 @@
 			name = Peek3D;
 			packageProductDependencies = (
 				1A00000000000000000000D2 /* GLTFKit2 */,
-				1A00000000000000000000D3 /* PeekLicenseKit */,
 			);
 			productName = Peek3D;
 			productReference = 1A00000000000000000000A6 /* Peek3D.app */;
@@ -108,7 +105,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				1A00000000000000000000E1 /* XCRemoteSwiftPackageReference "GLTFKit2" */,
-				1A00000000000000000000E2 /* XCLocalSwiftPackageReference "PeekLicenseKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1A00000000000000000000A3 /* Products */;
@@ -290,22 +286,11 @@
 		};
 /* End XCRemoteSwiftPackageReference section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		1A00000000000000000000E2 /* XCLocalSwiftPackageReference "PeekLicenseKit" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = PeekLicenseKit;
-		};
-/* End XCLocalSwiftPackageReference section */
-
 /* Begin XCSwiftPackageProductDependency section */
 		1A00000000000000000000D2 /* GLTFKit2 */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 1A00000000000000000000E1 /* XCRemoteSwiftPackageReference "GLTFKit2" */;
 			productName = GLTFKit2;
-		};
-		1A00000000000000000000D3 /* PeekLicenseKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = PeekLicenseKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

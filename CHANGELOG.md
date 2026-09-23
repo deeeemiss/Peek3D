@@ -6,17 +6,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
-- Peek3D is now a paid app. A free trial covers **10 distinct file opens**
-  (reopening an already-seen file is always free); after that, opening a
-  new file requires a **one-time €19.99 license** (updates included
-  forever, no subscription), with discounted 2- and 3-license packs for
-  multiple Macs and a 14-day refund window. License keys are signed and
-  verified **offline**; the app then re-verifies online periodically and
-  tolerates up to **30 days** without a successful check before requiring
-  reconnection. One license activates one Mac, with self-service seat
-  release for hardware changes. See `docs/FAQ.en.md` / `docs/FAQ.it.md` for
-  the license FAQ and `docs/PRIVACY.en.md` / `docs/PRIVACY.it.md` for what
-  activation data is stored and why.
+- Peek3D is free and open source under the MIT license. It makes no network
+  connections and collects no data.
 
 ### Fixed
 - Welcome window wasn't actually resizable in height (`.windowResizability`
