@@ -88,7 +88,11 @@ else
   xcrun stapler staple "$DMG"
   xcrun stapler validate "$DMG"
   # Il verdetto che conta: è ciò che Gatekeeper dirà sul Mac di un cliente.
-  spctl -a -vvv -t install "$DMG" 2>&1 | tail -3
+  # Si controlla l'app dentro il DMG montato, non il DMG: `spctl -t install`
+  # su un DMG firmato e notarizzato risponde comunque "no usable signature".
+  MNT=$(hdiutil attach -nobrowse -readonly "$DMG" | tail -1 | awk -F'\t' '{print $NF}')
+  spctl -a -vvv -t exec "$MNT/Peek3D.app" 2>&1 | tail -3
+  hdiutil detach -quiet "$MNT"
 fi
 
 echo
