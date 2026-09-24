@@ -1,19 +1,21 @@
 <div align="center">
 
+<img src="assets/icon.png" width="128" alt="">
+
 # Peek3D
 
 **Drop a 3D file. Look at it.**
 
-A tiny, native macOS viewer — no editing, no export, no format conversion.
-Free and open source.
+A tiny, native macOS viewer for glTF, FBX, OBJ, USD, STL and more —
+no editing, no export, no account. Free and open source.
 
-[![macOS](https://img.shields.io/badge/macOS-13%2B-blue?style=flat-square)]()
-[![Swift](https://img.shields.io/badge/Swift-SwiftUI%20%2B%20SceneKit-orange?style=flat-square)]()
-[![glTF](https://img.shields.io/badge/glTF-GLTFKit2-brightgreen?style=flat-square)](https://github.com/warrenm/GLTFKit2)
-[![FBX](https://img.shields.io/badge/FBX-ufbx-9cf?style=flat-square)](https://github.com/ufbx/ufbx)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE.md)
+[![Homebrew](https://img.shields.io/badge/brew_install_--cask-deeeemiss%2Ftap%2Fpeek3d-FBB040?logo=homebrew&logoColor=white)](#install)
+[![Download](https://img.shields.io/github/v/release/deeeemiss/Peek3D?label=download&logo=apple&logoColor=white&color=0D96F6)](https://github.com/deeeemiss/Peek3D/releases/latest)
+[![macOS](https://img.shields.io/badge/macOS-13%2B-000000?logo=apple&logoColor=white)](#install)
+[![Notarized](https://img.shields.io/badge/notarized-Developer_ID-34C759?logo=apple&logoColor=white)](#install)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE.md)
 
-[Install](#install) · [Formats](#formats) · [Features](#features) · [Privacy](#privacy) · [Build](#build) · [Sandbox](#sandbox) · [Known limits](#known-limits)
+[Install](#install) · [Formats](#formats) · [Features](#features) · [Privacy](#privacy) · [Build](#build) · [Known limits](#known-limits)
 
 </div>
 
