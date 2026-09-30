@@ -85,14 +85,16 @@ are read locally and never leave your Mac.
 
 ## Build
 
-Requires Xcode 16+ (developed on 26.6), macOS 13+.
+Needs Xcode (free on the Mac App Store) — no Apple certificate or developer account.
 
 ```sh
-xcodebuild -scheme Peek3D -project Peek3D.xcodeproj \
-  -destination 'platform=macOS' build
+git clone https://github.com/deeeemiss/Peek3D.git
+cd Peek3D
+./scripts/run.sh
 ```
 
-Or just open `Peek3D.xcodeproj` in Xcode and hit Run.
+It builds a universal Release app into `build/` and opens it. Or open
+`Peek3D.xcodeproj` in Xcode and hit Run.
 
 ## Sandbox
 
