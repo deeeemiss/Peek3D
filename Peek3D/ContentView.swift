@@ -157,6 +157,10 @@ struct ContentView: View {
                 Spacer(minLength: 12)
                 if controller.hasAnimations {
                     TimelineControlsView(controller: controller)
+                        // Playback controls keep left-to-right even in Arabic
+                        // (Apple HIG, Right to left): they follow the direction
+                        // time moves, not the reading direction.
+                        .environment(\.layoutDirection, .leftToRight)
                         .frame(maxWidth: 460)
                         .transition(.opacity)
                 }

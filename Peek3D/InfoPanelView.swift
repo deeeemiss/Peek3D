@@ -32,7 +32,10 @@ struct InfoPanelView: View {
             Text(LocalizedStringKey(label))
                 .font(.system(size: 13))
                 .foregroundStyle(.white.opacity(0.5))
-            Text(value)
+            // Isolated as left-to-right: the Bidi algorithm otherwise reorders
+            // "25 × 79 × 155" to "155 × 79 × 25" in Arabic, and Apple's RTL
+            // guidance is to never reverse a number's parts.
+            Text("\u{2066}\(value)\u{2069}")
                 .font(.system(size: 13, weight: .semibold, design: .monospaced))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity, alignment: .trailing)
