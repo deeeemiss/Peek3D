@@ -74,9 +74,14 @@ modes, and stats never need to know where a model came from.
 - Triangles, vertices, meshes, materials, bounding-box size, file size, file name
 
 ### Localization
-- English (primary) and Italian, via a native Xcode String Catalog — follows
-  the per-app language set in macOS System Settings → General → Language &
-  Region. More languages (incl. non-Latin scripts) planned.
+- 11 languages: English (primary), Italiano, Español, Français, Deutsch,
+  Português (Brasil), Русский, العربية, 日本語, 한국어, 简体中文.
+- Follows the system language by default; pick another one in
+  Peek3D ▸ Settings ▸ General.
+
+### Settings
+- Starting shading, lighting and background for new windows
+- Grid, model info panel and animation autoplay on open
 
 ## Privacy
 

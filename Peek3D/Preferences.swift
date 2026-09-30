@@ -42,7 +42,7 @@ enum SceneBackground: String, CaseIterable, Identifiable {
 enum AppLanguage {
     /// Languages the String Catalog actually has translations for. Add a code
     /// here when a new language lands in Localizable.xcstrings.
-    static let supported = ["en", "it"]
+    static let supported = ["en", "it", "es", "fr", "de", "pt-BR", "ru", "ar", "ja", "ko", "zh-Hans"]
 
     private static let key = "AppleLanguages"
 
@@ -62,7 +62,11 @@ enum AppLanguage {
     /// The language's own name for itself ("English", "Italiano", "日本語"),
     /// so someone who can't read the current UI language can still find theirs.
     static func endonym(_ code: String) -> String {
-        Locale(identifier: code).localizedString(forLanguageCode: code)?.localizedCapitalized ?? code
+        // forIdentifier, not forLanguageCode: keeps the region/script that
+        // tells "português (Brasil)" and "中文（简体）" apart.
+        Locale(identifier: code).localizedString(forIdentifier: code).map {
+            $0.prefix(1).uppercased() + $0.dropFirst()
+        } ?? code
     }
 
     /// Relaunches the app so the new language takes effect.
