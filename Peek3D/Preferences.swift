@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 /// UserDefaults keys for the Settings window. Every value is a STARTING point
 /// read when a document window opens (see `ViewerController.init` and
@@ -52,10 +53,21 @@ enum AppLanguage {
     }
 
     static func set(_ code: String) {
+        let defaults = UserDefaults.standard
         if code.isEmpty {
-            UserDefaults.standard.removeObject(forKey: key)
+            defaults.removeObject(forKey: key)
         } else {
-            UserDefaults.standard.set([code], forKey: key)
+            defaults.set([code], forKey: key)
+        }
+        // AppKit mirrors windows, title bars and toolbars (including the
+        // Settings tab order) only when the SYSTEM language is right-to-left.
+        // For a per-app choice it needs these two switches — the same ones
+        // Xcode sets for its right-to-left test language — read at launch,
+        // hence alongside the restart the language change already requires.
+        let rtl = !code.isEmpty
+            && Locale.Language(identifier: code).characterDirection == .rightToLeft
+        for rtlKey in ["AppleTextDirection", "NSForceRightToLeftWritingDirection"] {
+            if rtl { defaults.set(true, forKey: rtlKey) } else { defaults.removeObject(forKey: rtlKey) }
         }
     }
 
@@ -67,6 +79,16 @@ enum AppLanguage {
         Locale(identifier: code).localizedString(forIdentifier: code).map {
             $0.prefix(1).uppercased() + $0.dropFirst()
         } ?? code
+    }
+
+    /// Right-to-left for Arabic (and any future RTL language). Read from the
+    /// localization the bundle actually resolved, not `Locale.current`, whose
+    /// language comes from the system region rather than the app's language.
+    /// SwiftUI doesn't derive this on its own for a per-app language choice:
+    /// with Arabic selected the whole UI stayed left-to-right.
+    static var layoutDirection: LayoutDirection {
+        let code = Bundle.main.preferredLocalizations.first ?? "en"
+        return Locale.Language(identifier: code).characterDirection == .rightToLeft ? .rightToLeft : .leftToRight
     }
 
     /// Relaunches the app so the new language takes effect.

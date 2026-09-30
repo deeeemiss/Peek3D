@@ -266,6 +266,7 @@ struct Peek3DApp: App {
         // this is what fills that gap — Open button, recent files, drag&drop.
         WindowGroup(id: "welcome") {
             WelcomeView()
+                .environment(\.layoutDirection, AppLanguage.layoutDirection)
                 .preferredColorScheme(.dark)
         }
         .windowStyle(.hiddenTitleBar)
@@ -290,6 +291,7 @@ struct Peek3DApp: App {
             // `fileURL` is non-nil in practice for every case that reaches here.
             if let url = file.fileURL {
                 ContentView(url: url)
+                    .environment(\.layoutDirection, AppLanguage.layoutDirection)
                     .preferredColorScheme(.dark)
             }
         }
@@ -316,6 +318,7 @@ struct Peek3DApp: App {
         // except UserDefaults — which is all it needs (see SettingsKey).
         Settings {
             SettingsView()
+                .environment(\.layoutDirection, AppLanguage.layoutDirection)
         }
 
         // Third-party license notices (see OpenSourceLicensesView), opened
@@ -328,6 +331,7 @@ struct Peek3DApp: App {
         // enforces the minimum.
         WindowGroup(id: "licenses") {
             OpenSourceLicensesView()
+                .environment(\.layoutDirection, AppLanguage.layoutDirection)
                 .preferredColorScheme(.dark)
         }
         .windowStyle(.hiddenTitleBar)
