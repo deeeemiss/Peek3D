@@ -311,6 +311,13 @@ struct Peek3DApp: App {
             }
         }
 
+        // ⌘, and the app-menu "Settings…" item come for free with this scene.
+        // It's a separate scene, so it shares nothing with document windows
+        // except UserDefaults — which is all it needs (see SettingsKey).
+        Settings {
+            SettingsView()
+        }
+
         // Third-party license notices (see OpenSourceLicensesView), opened
         // via the "Licenze open source…" app-menu item wired up above. Its
         // own Scene rather than a sheet on Welcome — it needs to be

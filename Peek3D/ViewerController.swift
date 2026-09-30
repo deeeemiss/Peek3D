@@ -9,16 +9,18 @@ final class ViewerController: ObservableObject {
     weak var scnView: SCNView?
 
     @Published var isWireframe = false
-    @Published var isGridVisible = false
+    @Published var isGridVisible = UserDefaults.standard.bool(forKey: SettingsKey.showGrid)
 
     /// Active lighting/environment preset. Persists across model swaps and is
     /// re-applied to each newly attached scene (see `attach` / `applyLighting`).
-    @Published private(set) var lightingPreset: LightingPreset = .standard
+    @Published private(set) var lightingPreset: LightingPreset =
+        UserDefaults.standard.string(forKey: SettingsKey.lightingPreset).flatMap(LightingPreset.init) ?? .standard
 
     /// Active shading (material) mode. Like the lighting preset it persists across
     /// model swaps and is re-applied to each newly attached scene (see `attach` /
     /// `applyShadingMode`). Orthogonal to `isWireframe` and `lightingPreset`.
-    @Published private(set) var shadingMode: ShadingMode = .standard
+    @Published private(set) var shadingMode: ShadingMode =
+        UserDefaults.standard.string(forKey: SettingsKey.shadingMode).flatMap(ShadingMode.init) ?? .standard
 
     // MARK: - Animation state (see the Animation section below)
 
@@ -79,7 +81,8 @@ final class ViewerController: ObservableObject {
         scnView.allowsCameraControl = true
         scnView.autoenablesDefaultLighting = true
         scnView.antialiasingMode = .multisampling4X
-        scnView.backgroundColor = NSColor(calibratedWhite: 0.04, alpha: 1.0)
+        scnView.backgroundColor = (UserDefaults.standard.string(forKey: SettingsKey.background)
+            .flatMap(SceneBackground.init) ?? .dark).color
         scnView.rendersContinuously = true
 
         modelNodes = scene.rootNode.childNodes
@@ -410,7 +413,9 @@ final class ViewerController: ObservableObject {
 
         guard !animations.isEmpty else { return }
 
-        activateAnimation(at: 0, autoplay: true)
+        // Absent key (never touched in Settings) means autoplay, the default.
+        let autoplay = UserDefaults.standard.object(forKey: SettingsKey.autoplay) as? Bool ?? true
+        activateAnimation(at: 0, autoplay: autoplay)
     }
 
     /// Attaches exactly one clip's player to the root and (re)starts it from the

@@ -16,7 +16,7 @@ struct ContentView: View {
     @State private var scene: SCNScene?
     @State private var stats: ModelStats?
     @State private var animations: [ModelAnimation] = []
-    @State private var showInfo = true
+    @State private var showInfo = UserDefaults.standard.object(forKey: SettingsKey.showInfo) as? Bool ?? true
     @State private var errorMessage: String?
     @State private var gizmoHoverLabel: String?
     /// Set when an FBX load found external texture references the sandbox
