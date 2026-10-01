@@ -166,9 +166,10 @@ final class ViewerController: ObservableObject {
         camera.zNear = solution.zNear
         camera.zFar = solution.zFar
 
+        let orientation = Self.lookOrientation(from: solution.position, to: solution.target)
         let apply = {
             pov.simdWorldPosition = solution.position
-            pov.look(at: SCNVector3(solution.target), up: SCNVector3(0, 1, 0), localFront: SCNVector3(0, 0, -1))
+            pov.simdWorldOrientation = orientation
         }
 
         // `allowsCameraControl`'s built-in orbit controller keeps its own
@@ -206,6 +207,22 @@ final class ViewerController: ObservableObject {
             scnView.defaultCameraController.stopInertia()
             scnView.defaultCameraController.target = SCNVector3(solution.target)
         }
+    }
+
+    /// Camera orientation looking from `eye` to `target`, built from an
+    /// explicit basis rather than `SCNNode.look(at:)`. From the default
+    /// front-facing camera, the back view is an exact 180° turn: `look(at:)`
+    /// derives that rotation from two opposite vectors, which has no defined
+    /// axis, and the camera ended up pointing nowhere — the -Z gizmo view
+    /// showed an empty screen. World up is Y; for the top/bottom views, where
+    /// Y is the viewing direction itself, -Z is used as screen-up instead.
+    static func lookOrientation(from eye: simd_float3, to target: simd_float3) -> simd_quatf {
+        let forward = simd_normalize(target - eye)
+        let worldUp: simd_float3 = abs(simd_dot(forward, [0, 1, 0])) > 0.999 ? [0, 0, -1] : [0, 1, 0]
+        let right = simd_normalize(simd_cross(forward, worldUp))
+        let up = simd_cross(right, forward)
+        // SceneKit cameras look down their local -Z axis.
+        return simd_quatf(simd_float3x3(right, up, -forward))
     }
 
     func zoom(by factor: Float) {
