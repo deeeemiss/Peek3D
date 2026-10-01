@@ -1,0 +1,43 @@
+# Publishes site/ to GitHub Pages on every push to main that touches it.
+# Each run shows up in the repo sidebar under "Deployments → github-pages".
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", "assets/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    # GitHub Pages isn't available on this private repo's plan: skip instead
+    # of failing on every push until the repo goes public.
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      # Icon and full-size screenshot (for link previews) come from the README's
+      # assets; site/ only keeps the compressed hero image.
+      - name: Assemble
+        run: |
+          mkdir -p _site/assets
+          cp site/index.html site/screenshot.webp _site/
+          cp assets/icon.png assets/screenshot.png _site/assets/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

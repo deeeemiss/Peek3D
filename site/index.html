@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peek3D — free native 3D file viewer for macOS</title>
+<meta name="description" content="Peek3D is a free, open-source native macOS viewer for 3D files: glTF/GLB, FBX, OBJ, USD/USDZ, STL, DAE, PLY. Drop a file, look at it. No account, no tracking.">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="icon" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Peek3D — drop a 3D file, look at it">
+<meta property="og:description" content="Free, open-source native macOS viewer for glTF, FBX, OBJ, USD, STL and more.">
+<meta property="og:image" content="assets/screenshot.png">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --panel: #141416;
+    --line: rgba(255,255,255,.09);
+    --text: #f2f2f4;
+    --muted: rgba(242,242,244,.62);
+    --blue: #59adff;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--blue); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 8px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  code, pre { font: 15px/1.5 ui-monospace, "SF Mono", Menlo, monospace; }
+
+  header.hero { text-align: center; padding: 88px 0 40px; }
+  .hero img.icon { width: 112px; height: 112px; filter: drop-shadow(0 10px 30px rgba(89,173,255,.25)); }
+  h1 {
+    margin: 18px 0 8px;
+    font-size: clamp(44px, 8vw, 68px);
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    background: linear-gradient(90deg, var(--blue), #fff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .tagline { font-size: clamp(20px, 3vw, 26px); font-weight: 600; margin: 0; }
+  .sub { color: var(--muted); max-width: 560px; margin: 10px auto 0; }
+  .ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 30px 0 18px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: 12px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--line); color: var(--text); background: var(--panel);
+  }
+  .btn.primary { background: var(--blue); color: #04121f; border-color: transparent; }
+  .btn:hover { filter: brightness(1.08); }
+  .brew {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 8px 8px 8px 16px; max-width: 100%;
+  }
+  .brew code { color: var(--text); white-space: nowrap; overflow-x: auto; min-width: 0; }
+  .brew code::before { content: "$ "; color: var(--muted); }
+  .copy {
+    border: 0; border-radius: 8px; padding: 6px 12px; cursor: pointer;
+    background: rgba(255,255,255,.08); color: var(--text); font: 600 13px/1 inherit;
+  }
+  .trust { color: var(--muted); font-size: 14px; margin-top: 14px; }
+
+  .shot { margin: 28px auto 0; }
+  .shot img {
+    width: 100%; height: auto; display: block;
+    border-radius: 14px; border: 1px solid var(--line);
+    box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(89,173,255,.06);
+  }
+
+  /* section.wrap, not section: .wrap's padding would otherwise win. */
+  section.wrap { padding-top: 88px; }
+  h2 { font-size: clamp(28px, 4vw, 38px); letter-spacing: -0.02em; margin: 0 0 10px; text-align: center; }
+  .lead { color: var(--muted); text-align: center; max-width: 620px; margin: 0 auto 32px; }
+
+  .formats { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; list-style: none; padding: 0; margin: 0; }
+  .formats li {
+    font: 600 14px/1 ui-monospace, "SF Mono", Menlo, monospace;
+    padding: 9px 12px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line);
+  }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px; }
+  .card { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+  .card h3 { margin: 0 0 6px; font-size: 18px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  .install { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px; }
+  .install pre {
+    margin: 10px 0 0; padding: 14px 16px; border-radius: 10px;
+    white-space: pre-wrap; overflow-wrap: anywhere;
+    background: #0d0d0f; border: 1px solid var(--line);
+  }
+
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px; margin: 0 auto 10px; max-width: 760px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { color: var(--muted); margin: 10px 0 0; }
+
+  footer { margin-top: 88px; padding: 28px 0 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; text-align: center; }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header class="hero wrap">
+    <img class="icon" src="assets/icon.png" alt="" width="112" height="112">
+    <h1>Peek3D</h1>
+    <p class="tagline">Drop a 3D file. Look at it.</p>
+    <p class="sub">A free, open-source native macOS viewer for glTF, FBX, OBJ, USD, STL and more. No editing, no export, no account — just the model, fast.</p>
+
+    <div class="ctas">
+      <a class="btn primary" href="https://github.com/deeeemiss/Peek3D/releases/latest">Download for macOS</a>
+      <a class="btn" href="https://github.com/deeeemiss/Peek3D">View on GitHub</a>
+    </div>
+    <div class="brew">
+      <code id="brew-cmd">brew install --cask deeeemiss/tap/peek3d</code>
+      <button class="copy" type="button" data-copy="brew-cmd" aria-label="Copy the Homebrew command">Copy</button>
+    </div>
+    <p class="trust">Signed and notarized by Apple · macOS 13 or later · Apple silicon and Intel · MIT licensed</p>
+
+    <div class="shot">
+      <img src="screenshot.webp" width="1600" height="905" fetchpriority="high" alt="Peek3D showing an animated low-poly fox, with the model info panel, the animation timeline and the viewer toolbar">
+    </div>
+  </header>
+
+  <section class="wrap" id="formats">
+    <h2>Opens the files you actually have</h2>
+    <p class="lead">glTF and FBX through dedicated loaders, everything else through Apple's Model I/O — all rendered natively with SceneKit.</p>
+    <ul class="formats">
+      <li>GLB</li><li>GLTF</li><li>FBX</li><li>OBJ</li><li>USDZ</li><li>USD</li><li>USDA</li><li>USDC</li><li>STL</li><li>DAE</li><li>PLY</li><li>ABC</li>
+    </ul>
+  </section>
+
+  <section class="wrap" id="features">
+    <h2>Everything you need to inspect a model</h2>
+    <p class="lead">Built for the moment you just want to see what's inside a file.</p>
+    <div class="grid">
+      <div class="card"><h3>Drag, drop, done</h3><p>Drop a file on the window or the Dock icon, double-click it in Finder, or reopen it from Recents. Orbit, pan, zoom, and fit to view.</p></div>
+      <div class="card"><h3>Shading modes</h3><p>The file's own materials, or normals, matcap, unlit and a UV checker — plus a wireframe overlay that works in every mode.</p></div>
+      <div class="card"><h3>Lighting presets</h3><p>Default, Studio, Outdoor and Dark mood, built entirely in code. Switch in one click to see how a model reads.</p></div>
+      <div class="card"><h3>Animations</h3><p>Plays skinned glTF and FBX animations with a timeline, play/pause and clip selection. Wireframe stays correct while it plays.</p></div>
+      <div class="card"><h3>Model info</h3><p>Triangles, vertices, meshes, materials, real-world size and file size, at a glance. Take a PNG screenshot of the view.</p></div>
+      <div class="card"><h3>Truly native</h3><p>SwiftUI and SceneKit, native window tabs, a real Settings window, and 11 languages including Arabic, Japanese, Korean and Chinese.</p></div>
+    </div>
+  </section>
+
+  <section class="wrap" id="privacy">
+    <h2>Your files stay on your Mac</h2>
+    <p class="lead">Peek3D makes no network connections and collects no data. It runs sandboxed and can read only the files you open. The whole source code is public.</p>
+  </section>
+
+  <section class="wrap" id="install">
+    <h2>Install</h2>
+    <p class="lead">Three ways, pick the one you like.</p>
+    <div class="install">
+      <div class="card">
+        <h3>Homebrew</h3>
+        <pre><code>brew install --cask deeeemiss/tap/peek3d</code></pre>
+      </div>
+      <div class="card">
+        <h3>Download</h3>
+        <p>Get the DMG from <a href="https://github.com/deeeemiss/Peek3D/releases/latest">GitHub Releases</a> and drag Peek3D into Applications. Signed and notarized: no Gatekeeper warnings.</p>
+      </div>
+      <div class="card">
+        <h3>Build from source</h3>
+        <pre><code>git clone https://github.com/deeeemiss/Peek3D.git
+cd Peek3D
+./scripts/run.sh</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="faq">
+    <h2>Questions</h2>
+    <details><summary>Is Peek3D really free?</summary><p>Yes. It's open source under the MIT license: no trial, no subscription, no in-app purchases.</p></details>
+    <details><summary>Can it edit or convert models?</summary><p>No, on purpose. Peek3D is a viewer — it opens files quickly and shows them accurately. For editing, use Blender, Reality Composer or your DCC tool of choice.</p></details>
+    <details><summary>Why use it instead of Quick Look?</summary><p>Quick Look covers USDZ and a few other formats. Peek3D also opens glTF/GLB and FBX, plays their animations, and adds shading modes, lighting presets, wireframe and model statistics.</p></details>
+    <details><summary>Does it collect any data?</summary><p>No. The app has no network access at all.</p></details>
+    <details><summary>Which Macs does it run on?</summary><p>Any Mac with macOS 13 Ventura or later, Apple silicon or Intel.</p></details>
+  </section>
+</main>
+
+<footer class="wrap">
+  Peek3D · MIT License · <a href="https://github.com/deeeemiss/Peek3D">GitHub</a> · <a href="https://github.com/deeeemiss/Peek3D/issues">Report an issue</a> · Made by Sebastiano Demichelis
+</footer>
+
+<script>
+  document.querySelectorAll('.copy').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var text = document.getElementById(button.dataset.copy).textContent;
+      navigator.clipboard.writeText(text).then(function () {
+        button.textContent = 'Copied';
+        setTimeout(function () { button.textContent = 'Copy'; }, 1500);
+      });
+    });
+  });
+</script>
+</body>
+</html>
