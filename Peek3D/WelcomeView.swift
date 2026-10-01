@@ -59,6 +59,13 @@ struct WelcomeView: View {
         // sizes the content can't fill — the very thing this screen shouldn't
         // do. Document windows are unaffected and stay freely resizable.
         .onAppear(perform: refreshRecents)
+        // Re-read whenever any window becomes key — which is what happens
+        // right after a document opens, wherever it was opened from (this
+        // screen, Finder, the Dock, ⌘O) — so the list never goes stale while
+        // this window stays open. Cheap: it's a read of an in-memory list.
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
+            refreshRecents()
+        }
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
             handleDrop(providers)
         }
