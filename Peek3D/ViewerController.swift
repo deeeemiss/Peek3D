@@ -152,15 +152,23 @@ final class ViewerController: ObservableObject {
         solution: (position: simd_float3, target: simd_float3, zNear: Double, zFar: Double),
         animated: Bool
     ) {
-        guard let scnView, let cameraNode, let camera = cameraNode.camera else { return }
+        // Move whatever camera is ACTUALLY on screen. The first time the user
+        // orbits/pans/zooms with the mouse, `allowsCameraControl` switches
+        // `pointOfView` to a camera node of its own, so moving `cameraNode`
+        // from then on changed nothing: the gizmo views and Fit to view looked
+        // dead after any manual orbit.
+        guard let scnView, let pov = scnView.pointOfView ?? cameraNode, let camera = pov.camera else { return }
+        // A flick-orbit keeps spinning the view on inertia; left running it
+        // drifts the camera away from the framing set below.
+        scnView.defaultCameraController.stopInertia()
 
         // Adapt clipping planes so tiny and huge models both render.
         camera.zNear = solution.zNear
         camera.zFar = solution.zFar
 
         let apply = {
-            self.cameraNode?.simdPosition = solution.position
-            self.cameraNode?.look(at: SCNVector3(solution.target))
+            pov.simdWorldPosition = solution.position
+            pov.look(at: SCNVector3(solution.target), up: SCNVector3(0, 1, 0), localFront: SCNVector3(0, 0, -1))
         }
 
         // `allowsCameraControl`'s built-in orbit controller keeps its own
@@ -179,13 +187,24 @@ final class ViewerController: ObservableObject {
             SCNTransaction.begin()
             SCNTransaction.animationDuration = 0.35
             SCNTransaction.completionBlock = { [weak scnView] in
-                DispatchQueue.main.async { scnView?.allowsCameraControl = true }
+                DispatchQueue.main.async {
+                    scnView?.allowsCameraControl = true
+                    // Re-enabling resumes any inertia the controller still
+                    // held from the last flick, which would spin the view off
+                    // the framing that just landed.
+                    scnView?.defaultCameraController.stopInertia()
+                    // Orbit around the model again, not around the pivot the
+                    // user's last manual gesture left behind.
+                    scnView?.defaultCameraController.target = SCNVector3(solution.target)
+                }
             }
             apply()
             SCNTransaction.commit()
         } else {
             apply()
             scnView.allowsCameraControl = true
+            scnView.defaultCameraController.stopInertia()
+            scnView.defaultCameraController.target = SCNVector3(solution.target)
         }
     }
 
