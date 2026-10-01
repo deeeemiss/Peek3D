@@ -57,6 +57,7 @@ struct ContentView: View {
         }
         .frame(minWidth: 900, minHeight: 620)
         .task(id: url) { load(url: url) }
+        .onAppear(perform: closeWelcomeWindows)
         // Tells the "Scene" menu (Peek3DApp.swift) this window is a viewer,
         // not the Welcome window — see `peek3dViewerFocused`. Scene-level, not
         // `.focusedValue`: that one requires an actual SwiftUI-focused control
@@ -110,6 +111,17 @@ struct ContentView: View {
     private func guardKeyWindow(_ action: () -> Void) {
         guard controller.scnView?.window?.isKeyWindow == true else { return }
         action()
+    }
+
+    /// The Welcome screen is a launcher, like Xcode's: once a document window
+    /// exists it has done its job, whichever way the file was opened (Welcome
+    /// itself, Finder, the Dock, ⌘O). `dismissWindow` would be the SwiftUI way
+    /// but needs macOS 14; the deployment target is 13, so match the window by
+    /// the identifier SwiftUI gives every instance of the "welcome" scene.
+    private func closeWelcomeWindows() {
+        for window in NSApp.windows where window.identifier?.rawValue.hasPrefix("welcome") == true {
+            window.close()
+        }
     }
 
     // MARK: - Overlays

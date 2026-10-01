@@ -255,6 +255,11 @@ private struct RecentRow: View {
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 6)
+            // A plain button only hit-tests what it draws (the icon and the
+            // two texts), so the empty part of the highlighted row ignored
+            // clicks. Making the whole padded row the hit shape matches the
+            // hover highlight exactly.
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .pointerCursor()
