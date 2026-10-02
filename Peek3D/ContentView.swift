@@ -49,12 +49,14 @@ struct ContentView: View {
                 overlays
             }
 
-            if let errorMessage {
-                errorBanner(errorMessage)
-            }
-
-            if let missingTexturePrompt {
-                missingTextureBanner(missingTexturePrompt)
+            // With a model on screen the notices sit in the top row (see
+            // `overlays`), clear of the info panel and timeline at the bottom.
+            if scene == nil {
+                VStack {
+                    Spacer()
+                    notices
+                }
+                .padding(.bottom, 40)
             }
         }
         .frame(minWidth: 900, minHeight: 620)
@@ -146,11 +148,17 @@ struct ContentView: View {
 
     @ViewBuilder
     private var overlays: some View {
-        // File badge — top-left
+        // Top row — file badge (left) and notices (center). Notices lived at
+        // the bottom center and covered the info panel on normal-width
+        // windows; up here nothing else competes for the space except the
+        // toolbar's column, which is reserved on the right.
         VStack {
-            HStack {
+            HStack(alignment: .top, spacing: 0) {
                 fileBadge
-                Spacer()
+                Spacer(minLength: 12)
+                notices
+                Spacer(minLength: 12)
+                Color.clear.frame(width: 66, height: 1) // toolbar column + its padding
             }
             Spacer()
         }
@@ -271,50 +279,54 @@ struct ContentView: View {
         .arrowCursor()
     }
 
-    private func errorBanner(_ message: String) -> some View {
-        VStack {
-            Spacer()
-            HStack(spacing: 12) {
-                Text(message)
-                    .font(.system(size: 13))
-                Button("Dismiss") { errorMessage = nil }
-                    .buttonStyle(.plain)
-                    .keyboardShortcut(.cancelAction)
+    @ViewBuilder
+    private var notices: some View {
+        VStack(spacing: 8) {
+            if let errorMessage {
+                errorBanner(errorMessage)
             }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            // Opaque colors: white on the old translucent red/orange fell
-            // under WCAG AA (4.48:1 and 2.78:1).
-            .background(Color(red: 0.72, green: 0.12, blue: 0.12), in: RoundedRectangle(cornerRadius: 10))
-            .padding(.bottom, 40)
+            if let missingTexturePrompt {
+                missingTextureBanner(missingTexturePrompt)
+            }
         }
+    }
+
+    private func errorBanner(_ message: String) -> some View {
+        HStack(spacing: 12) {
+            Text(message)
+                .font(.system(size: 13))
+            Button("Dismiss") { errorMessage = nil }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.cancelAction)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        // Opaque colors: white on the old translucent red/orange fell
+        // under WCAG AA (4.48:1 and 2.78:1).
+        .background(Color(red: 0.72, green: 0.12, blue: 0.12), in: RoundedRectangle(cornerRadius: 10))
     }
 
     private func missingTextureBanner(_ prompt: (modelURL: URL, count: Int)) -> some View {
         // One key with plural variants: languages like Russian and Arabic
         // need several forms, and Japanese/Chinese no space after the number.
         let message = String(localized: "missingTexture.count \(prompt.count)")
-        return VStack {
-            Spacer()
-            HStack(spacing: 12) {
-                Text(message)
-                    .font(.system(size: 13))
-                Button("Grant folder access") { grantFolderAccessAndRetry(modelURL: prompt.modelURL) }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(.black.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
-                Button("Dismiss") { missingTexturePrompt = nil }
-                    .buttonStyle(.plain)
-                    .keyboardShortcut(.cancelAction)
-            }
-            .foregroundStyle(.black)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(Color(red: 1.0, green: 0.68, blue: 0.2), in: RoundedRectangle(cornerRadius: 10))
-            .padding(.bottom, 40)
+        return HStack(spacing: 12) {
+            Text(message)
+                .font(.system(size: 13))
+            Button("Grant folder access") { grantFolderAccessAndRetry(modelURL: prompt.modelURL) }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(.black.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
+            Button("Dismiss") { missingTexturePrompt = nil }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.cancelAction)
         }
+        .foregroundStyle(.black)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color(red: 1.0, green: 0.68, blue: 0.2), in: RoundedRectangle(cornerRadius: 10))
     }
 
     // MARK: - Loading
