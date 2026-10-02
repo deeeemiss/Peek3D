@@ -80,6 +80,8 @@ enum GLTFValidator {
         /// Far above any real asset, low enough that `count * stride` can't
         /// overflow and a forged count can't stall the loader for minutes.
         private static let maxCount = 1 << 28
+        /// A day of animation: generous for any real clip.
+        private static let maxAnimationSeconds = 86_400.0
 
         func run() throws {
             let buffers = array("buffers")
@@ -125,10 +127,15 @@ enum GLTFValidator {
                 if texture["sampler"] != nil { _ = try ref(texture["sampler"], count: array("samplers").count, "texture sampler") }
             }
             for skin in array("skins") {
+                let joints = skin["joints"] as? [Any] ?? []
+                for joint in joints { _ = try ref(joint, count: nodes.count, "joint") }
                 if skin["inverseBindMatrices"] != nil {
-                    _ = try ref(skin["inverseBindMatrices"], count: accessors.count, "inverseBindMatrices")
+                    // GLTFKit2 asserts these are float 4×4 matrices, one per joint.
+                    let matrices = accessors[try ref(skin["inverseBindMatrices"], count: accessors.count, "inverseBindMatrices")]
+                    guard matrices["type"] as? String == "MAT4", try int(matrices["componentType"]) == 5126,
+                          try int(matrices["count"]) >= joints.count
+                    else { throw Invalid(reason: "inverseBindMatrices must be float MAT4, one per joint") }
                 }
-                for joint in skin["joints"] as? [Any] ?? [] { _ = try ref(joint, count: nodes.count, "joint") }
             }
             for node in nodes {
                 if node["mesh"] != nil { _ = try ref(node["mesh"], count: array("meshes").count, "node mesh") }
@@ -139,8 +146,17 @@ enum GLTFValidator {
             for animation in array("animations") {
                 let samplers = objects(animation["samplers"])
                 for sampler in samplers {
-                    _ = try ref(sampler["input"], count: accessors.count, "animation input")
+                    let input = accessors[try ref(sampler["input"], count: accessors.count, "animation input")]
                     _ = try ref(sampler["output"], count: accessors.count, "animation output")
+                    // Key times are float seconds. A forged `max` (e.g. 1e30)
+                    // becomes the clip length and stalls GLTFKit2 for minutes.
+                    guard input["type"] as? String == "SCALAR", try int(input["componentType"]) == 5126
+                    else { throw Invalid(reason: "animation input must be float scalars") }
+                    for bound in [input["min"], input["max"]].compactMap({ $0 as? [Any] }).joined() {
+                        guard let seconds = (bound as? NSNumber)?.doubleValue, seconds.isFinite,
+                              abs(seconds) <= Self.maxAnimationSeconds
+                        else { throw Invalid(reason: "animation time bound \(bound)") }
+                    }
                 }
                 for channel in objects(animation["channels"]) {
                     _ = try ref(channel["sampler"], count: samplers.count, "channel sampler")
