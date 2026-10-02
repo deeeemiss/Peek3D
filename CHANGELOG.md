@@ -3,7 +3,7 @@
 All notable changes to Peek3D are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
-## 1.0.1 — 2026-10-02
+## 1.1 — 2026-10-02
 
 Bug-fix release from a full debugging pass of the app.
 
@@ -28,6 +28,7 @@ Bug-fix release from a full debugging pass of the app.
   faster with a fraction of the memory.
 - Smoother playback: the timeline no longer redraws the whole window 60
   times a second.
+- Error and folder-access notices no longer cover the model info panel.
 - Smaller fixes: duplicate Fullscreen command removed, zoom limits, Welcome
   fits 900 pt screens, file type names localized in Finder.
 
