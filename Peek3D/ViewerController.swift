@@ -184,7 +184,7 @@ final class ViewerController: ObservableObject {
         // animation. Re-enable inside the transaction's completion block
         // instead, once the new transform has actually landed.
         scnView.allowsCameraControl = false
-        if animated {
+        if animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
             SCNTransaction.begin()
             SCNTransaction.animationDuration = 0.35
             SCNTransaction.completionBlock = { [weak scnView] in
@@ -233,7 +233,7 @@ final class ViewerController: ObservableObject {
 
         scnView.allowsCameraControl = false
         SCNTransaction.begin()
-        SCNTransaction.animationDuration = 0.18
+        SCNTransaction.animationDuration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : 0.18
         SCNTransaction.animationTimingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
         pov.simdWorldPosition = destination
         SCNTransaction.commit()
@@ -449,8 +449,10 @@ final class ViewerController: ObservableObject {
 
         guard !animations.isEmpty else { return }
 
-        // Absent key (never touched in Settings) means autoplay, the default.
-        let autoplay = UserDefaults.standard.object(forKey: SettingsKey.autoplay) as? Bool ?? true
+        // Absent key (never touched in Settings) means autoplay, unless the
+        // system asks for reduced motion.
+        let autoplay = UserDefaults.standard.object(forKey: SettingsKey.autoplay) as? Bool
+            ?? !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         activateAnimation(at: 0, autoplay: autoplay)
     }
 

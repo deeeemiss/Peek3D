@@ -29,7 +29,7 @@ struct TimelineControlsView: View {
             Text(durationLabel)
                 .frame(width: 44, alignment: .leading)
                 .monospacedDigit()
-                .foregroundStyle(.white.opacity(0.55))
+                .foregroundStyle(.white.opacity(0.7))
                 .accessibilityHidden(true)
 
             if controller.animations.count > 1 {
@@ -39,9 +39,7 @@ struct TimelineControlsView: View {
         .font(.system(size: 12, weight: .medium))
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
-        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 14))
-        .background(.ultraThinMaterial.opacity(0.5), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(.white.opacity(0.12)))
+        .hudPanel(cornerRadius: 14)
         .arrowCursor()
     }
 

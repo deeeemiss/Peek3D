@@ -148,12 +148,12 @@ struct WelcomeView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("welcome.formats", comment: "Section header above the row of supported file format chips")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(.white.opacity(0.6))
             FlowLayout(spacing: 6) {
                 ForEach(Self.supportedFormatLabels, id: \.self) { format in
                     Text(format.uppercased())
                         .font(.system(size: 10, weight: .medium, design: .monospaced))
-                        .foregroundStyle(.white.opacity(0.55))
+                        .foregroundStyle(.white.opacity(0.7))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 5))
@@ -168,11 +168,11 @@ struct WelcomeView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("welcome.recents", comment: "Section header above the recent-files list")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(.white.opacity(0.6))
             if recents.isEmpty {
                 Text("welcome.recents.empty", comment: "Shown in the recents section when no file has been opened yet")
                     .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.3))
+                    .foregroundStyle(.white.opacity(0.6))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 10)
             } else {
@@ -188,7 +188,7 @@ struct WelcomeView: View {
     private var footer: some View {
         Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")
             .font(.system(size: 10))
-            .foregroundStyle(.white.opacity(0.2))
+            .foregroundStyle(.white.opacity(0.6))
     }
 
     private func refreshRecents() {
@@ -247,7 +247,7 @@ private struct RecentRow: View {
                         .foregroundStyle(.white.opacity(0.9))
                     Text(url.deletingLastPathComponent().path)
                         .font(.system(size: 10))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .foregroundStyle(.white.opacity(0.6))
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }

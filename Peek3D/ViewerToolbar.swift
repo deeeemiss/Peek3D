@@ -29,9 +29,7 @@ struct ViewerToolbar: View {
             iconButton("arrow.up.left.and.arrow.down.right", label: "Fullscreen") { controller.toggleFullScreen() }
         }
         .padding(6)
-        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 14))
-        .background(.ultraThinMaterial.opacity(0.5), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(.white.opacity(0.12)))
+        .hudPanel(cornerRadius: 14)
         .arrowCursor()
     }
 

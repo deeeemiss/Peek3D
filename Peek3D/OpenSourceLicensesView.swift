@@ -397,7 +397,7 @@ struct OpenSourceLicensesView: View {
                 .padding(.bottom, 4)
             Text("ossLicenses.subtitle", comment: "Sidebar subheading of the open-source licenses window")
                 .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(.white.opacity(0.6))
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
                 .fixedSize(horizontal: false, vertical: true)
@@ -453,7 +453,7 @@ struct OpenSourceLicensesView: View {
                         )
                     Text("\(selected.license) — \(selected.holder)")
                         .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(.white.opacity(0.65))
                 }
 
                 Text(selected.text)

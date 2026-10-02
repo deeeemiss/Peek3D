@@ -22,9 +22,7 @@ struct InfoPanelView: View {
         }
         .padding(16)
         .frame(width: 260, alignment: .leading)
-        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 14))
-        .background(.ultraThinMaterial.opacity(0.5), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(.white.opacity(0.12)))
+        .hudPanel(cornerRadius: 14)
     }
 
     @ViewBuilder
@@ -32,7 +30,7 @@ struct InfoPanelView: View {
         GridRow {
             Text(LocalizedStringKey(label))
                 .font(.system(size: 13))
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(.white.opacity(0.7))
             // Isolated as left-to-right: the Bidi algorithm otherwise reorders
             // "25 × 79 × 155" to "155 × 79 × 25" in Arabic, and Apple's RTL
             // guidance is to never reverse a number's parts.

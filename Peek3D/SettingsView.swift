@@ -61,7 +61,7 @@ struct SettingsView: View {
             var frame = window.frame
             frame.size.height += delta
             frame.origin.y -= delta
-            window.setFrame(frame, display: true, animate: window.isVisible)
+            window.setFrame(frame, display: true, animate: window.isVisible && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
         }
     }
 }

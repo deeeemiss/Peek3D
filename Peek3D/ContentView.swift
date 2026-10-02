@@ -259,22 +259,27 @@ struct ContentView: View {
         .foregroundStyle(.white.opacity(0.85))
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 10))
-        .background(.ultraThinMaterial.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(.white.opacity(0.12)))
+        .hudPanel(cornerRadius: 10)
         .arrowCursor()
     }
 
     private func errorBanner(_ message: String) -> some View {
         VStack {
             Spacer()
-            Text(message)
-                .font(.system(size: 13))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(.red.opacity(0.85), in: RoundedRectangle(cornerRadius: 10))
-                .padding(.bottom, 40)
+            HStack(spacing: 12) {
+                Text(message)
+                    .font(.system(size: 13))
+                Button("Dismiss") { errorMessage = nil }
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.cancelAction)
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            // Opaque colors: white on the old translucent red/orange fell
+            // under WCAG AA (4.48:1 and 2.78:1).
+            .background(Color(red: 0.72, green: 0.12, blue: 0.12), in: RoundedRectangle(cornerRadius: 10))
+            .padding(.bottom, 40)
         }
     }
 
@@ -287,20 +292,19 @@ struct ContentView: View {
             HStack(spacing: 12) {
                 Text(message)
                     .font(.system(size: 13))
-                    .foregroundStyle(.white)
                 Button("Grant folder access") { grantFolderAccessAndRetry(modelURL: prompt.modelURL) }
                     .buttonStyle(.plain)
-                    .foregroundStyle(.white)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(.white.opacity(0.2), in: RoundedRectangle(cornerRadius: 6))
+                    .background(.black.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
                 Button("Dismiss") { missingTexturePrompt = nil }
                     .buttonStyle(.plain)
-                    .foregroundStyle(.white.opacity(0.7))
+                    .keyboardShortcut(.cancelAction)
             }
+            .foregroundStyle(.black)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(.orange.opacity(0.85), in: RoundedRectangle(cornerRadius: 10))
+            .background(Color(red: 1.0, green: 0.68, blue: 0.2), in: RoundedRectangle(cornerRadius: 10))
             .padding(.bottom, 40)
         }
     }
@@ -391,5 +395,28 @@ private struct GizmoViewActions: ViewModifier {
                 if let direction = GizmoSceneFactory.axisDirections[entry.axis] { controller.snapToAxis(direction) }
             })
         }
+    }
+}
+
+/// Dark backing shared by the overlays floating on the 3D view. Opaque
+/// enough that grey text stays readable over a white model (WCAG AA);
+/// solid with Reduce Transparency, stronger edge with Increase Contrast.
+private struct HUDPanel: ViewModifier {
+    let cornerRadius: CGFloat
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius)
+        content
+            .background(.black.opacity(reduceTransparency ? 0.95 : 0.8), in: shape)
+            .background(.ultraThinMaterial.opacity(reduceTransparency ? 0 : 0.5), in: shape)
+            .overlay(shape.stroke(.white.opacity(contrast == .increased ? 0.5 : 0.12)))
+    }
+}
+
+extension View {
+    func hudPanel(cornerRadius: CGFloat) -> some View {
+        modifier(HUDPanel(cornerRadius: cornerRadius))
     }
 }
