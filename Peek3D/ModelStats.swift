@@ -23,28 +23,22 @@ struct ModelStats {
     /// model's largest extent instead of using a fixed decimal count.
     var dimensionsFormatted: String {
         let maxExtent = Swift.max(dimensions.x, dimensions.y, dimensions.z)
-        let decimals: Int
-        switch maxExtent {
-        case ..<0.01: decimals = 4
-        case ..<1: decimals = 3
-        case ..<10: decimals = 2
-        default: decimals = 0
+        // Very large or very small models: three significant digits in
+        // scientific notation instead of "3000000…" or "0.0000".
+        let style: FloatingPointFormatStyle<Double> = switch maxExtent {
+        case 100_000...: .number.notation(.scientific).precision(.significantDigits(3))
+        case ..<0.0001 where maxExtent > 0: .number.notation(.scientific).precision(.significantDigits(3))
+        case ..<0.01: .number.precision(.fractionLength(4))
+        case ..<1: .number.precision(.fractionLength(3))
+        case ..<10: .number.precision(.fractionLength(2))
+        default: .number.precision(.fractionLength(0))
         }
-        let format = "%.\(decimals)f × %.\(decimals)f × %.\(decimals)f"
-        return String(format: format, dimensions.x, dimensions.y, dimensions.z)
+        return [dimensions.x, dimensions.y, dimensions.z]
+            .map { Double($0).formatted(style) }
+            .joined(separator: " × ")
     }
 
-    var triangleCountFormatted: String { Self.grouped(triangleCount) }
-    var vertexCountFormatted: String { Self.grouped(vertexCount) }
-
-    private static func grouped(_ value: Int) -> String {
-        groupFormatter.string(from: NSNumber(value: value)) ?? "\(value)"
-    }
-
-    private static let groupFormatter: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal
-        f.groupingSeparator = "."
-        return f
-    }()
+    // Locale's own grouping: a forced "." read as a decimal point in English.
+    var triangleCountFormatted: String { triangleCount.formatted() }
+    var vertexCountFormatted: String { vertexCount.formatted() }
 }

@@ -139,12 +139,13 @@ struct TimelineControlsView: View {
             let whole = Int(value.rounded())
             return String(format: "%d:%02d", whole / 60, whole % 60)
         }
-        return String(format: "%.1f", value)
+        return value.formatted(.number.precision(.fractionLength(1)))
     }
 
     private var durationLabel: String {
-        controller.animationDuration >= 60
-            ? timecode(controller.animationDuration)
-            : "\(timecode(controller.animationDuration))s"
+        guard controller.animationDuration < 60 else { return timecode(controller.animationDuration) }
+        // Localized seconds unit ("3,4 s", "3.4秒") instead of a hard-coded "s".
+        return Measurement(value: controller.animationDuration, unit: UnitDuration.seconds)
+            .formatted(.measurement(width: .narrow, numberFormatStyle: .number.precision(.fractionLength(1))))
     }
 }
