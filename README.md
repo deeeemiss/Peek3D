@@ -15,7 +15,7 @@ no editing, no export, no account. Free and open source.
 [![Notarized](https://img.shields.io/badge/notarized-Developer_ID-34C759?logo=apple&logoColor=white)](#install)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE.md)
 
-[Install](#install) · [Formats](#formats) · [Features](#features) · [Privacy](#privacy) · [Build](#build) · [Known limits](#known-limits)
+[Website](https://deeeemiss.github.io/Peek3D/) · [Install](#install) · [Formats](#formats) · [Features](#features) · [Privacy](#privacy) · [Build](#build) · [Known limits](#known-limits)
 
 </div>
 
