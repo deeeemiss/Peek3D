@@ -1,14 +1,16 @@
+#if DEBUG
 import Foundation
 import SceneKit
 import Metal
 import AppKit
 
-/// Headless verification hook. Set `GLBVIEWER_SELFTEST=/path/to/model` to load a
+/// Headless verification hook. Set `PEEK3D_SELFTEST=/path/to/model` to load a
 /// file through the real `ModelLoader`, print the computed stats, and exit —
 /// no window required. Used to verify the load path from the command line.
+/// Debug builds only: the shipped app has no hidden test entry points.
 enum SelfTest {
     static func runIfRequested() {
-        guard let path = ProcessInfo.processInfo.environment["GLBVIEWER_SELFTEST"] else { return }
+        guard let path = ProcessInfo.processInfo.environment["PEEK3D_SELFTEST"] else { return }
         let url = URL(fileURLWithPath: path)
         do {
             let model = try ModelLoader.loadSync(url: url)
@@ -31,7 +33,7 @@ enum SelfTest {
             }
             if !model.animations.isEmpty {
                 verifyScrubbing(url: url)
-                if let out = ProcessInfo.processInfo.environment["GLBVIEWER_SELFTEST_RENDER"] {
+                if let out = ProcessInfo.processInfo.environment["PEEK3D_SELFTEST_RENDER"] {
                     verifyAnimationVsBindPose(url: url, baseOutput: URL(fileURLWithPath: out))
                     verifyWireframeDuringPlayback(url: url, baseOutput: URL(fileURLWithPath: out))
                     verifyWireframeLiveSCNView(url: url, baseOutput: URL(fileURLWithPath: out))
@@ -39,7 +41,7 @@ enum SelfTest {
                 }
             }
 
-            if let out = ProcessInfo.processInfo.environment["GLBVIEWER_SELFTEST_RENDER"] {
+            if let out = ProcessInfo.processInfo.environment["PEEK3D_SELFTEST_RENDER"] {
                 let ok = renderOffscreen(scene: model.scene, to: URL(fileURLWithPath: out))
                 print(ok ? "render: OK -> \(out)" : "render: FAILED")
                 verifyLightingPresets(url: url, baseOutput: URL(fileURLWithPath: out))
@@ -202,7 +204,7 @@ enum SelfTest {
         scene.rootNode.addChildNode(camera)
         view.pointOfView = camera
 
-        scene.rootNode.addAnimationPlayer(player, forKey: "glbviewer.activeAnimation")
+        scene.rootNode.addAnimationPlayer(player, forKey: "peek3d.activeAnimation")
         player.play()
 
         Thread.sleep(forTimeInterval: 0.6) // let it actually play a bit, like a real user would see
@@ -572,3 +574,4 @@ enum SelfTest {
         return (try? data.write(to: url)) != nil
     }
 }
+#endif

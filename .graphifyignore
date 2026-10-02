@@ -1,8 +1,0 @@
-build/
-build-release/
-DerivedData/
-.swiftpm/
-.git/
-.claude/
-.tokensave/
-.headroom/

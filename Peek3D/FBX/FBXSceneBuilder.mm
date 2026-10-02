@@ -304,7 +304,7 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
     if (scene == NULL) {
         if (error) {
             NSString *desc = NSStringFromUfbx(uerr.description);
-            *error = [NSError errorWithDomain:@"com.seb.GLBViewer.FBX"
+            *error = [NSError errorWithDomain:@"com.seb.Peek3D.FBX"
                                          code:(NSInteger)uerr.type
                                      userInfo:@{ NSLocalizedDescriptionKey:
                                                      desc.length ? desc : @"FBX load failed" }];

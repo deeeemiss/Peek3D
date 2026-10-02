@@ -257,7 +257,9 @@ private struct SceneCommands: View {
 @main
 struct Peek3DApp: App {
     init() {
+        #if DEBUG
         SelfTest.runIfRequested()
+        #endif
     }
 
     var body: some Scene {

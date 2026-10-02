@@ -38,7 +38,7 @@ final class ViewerController: ObservableObject {
 
     /// Base name of the currently loaded model (no extension), used to name
     /// the screenshot file. Set by `ContentView` after a successful load.
-    var currentModelName = "glbviewer"
+    var currentModelName = "Peek3D"
 
     private var gridNode: SCNNode?
     private var cameraNode: SCNNode?
@@ -66,7 +66,7 @@ final class ViewerController: ObservableObject {
     /// contribution without hiding the node's geometry subtree.
     private var fileLights: [(node: SCNNode, light: SCNLight)] = []
 
-    private let activeAnimationKey = "glbviewer.activeAnimation"
+    private let activeAnimationKey = "peek3d.activeAnimation"
     private var activePlayer: SCNAnimationPlayer?
     private var playbackTimer: Timer?
     private var lastTick: CFTimeInterval = 0
