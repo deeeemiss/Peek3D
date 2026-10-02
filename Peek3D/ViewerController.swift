@@ -31,7 +31,13 @@ final class ViewerController: ObservableObject {
     @Published private(set) var isPlaying: Bool = false
     /// Playhead position, in seconds, of the active clip. Advanced by a timer in
     /// lockstep with the wall-clock player; drives the progress bar readout.
-    @Published private(set) var animationTime: TimeInterval = 0
+    /// Lives in its own object: published here, every 60 Hz tick re-rendered
+    /// every view observing the controller — the whole window.
+    let playhead = Playhead()
+    var animationTime: TimeInterval {
+        get { playhead.time }
+        set { playhead.time = newValue }
+    }
     @Published private(set) var animationDuration: TimeInterval = 0
 
     var hasAnimations: Bool { !animations.isEmpty }
@@ -581,4 +587,9 @@ final class ViewerController: ObservableObject {
     func toggleFullScreen() {
         scnView?.window?.toggleFullScreen(nil)
     }
+}
+
+/// See `ViewerController.playhead`. Only the timeline observes this.
+final class Playhead: ObservableObject {
+    @Published var time: TimeInterval = 0
 }

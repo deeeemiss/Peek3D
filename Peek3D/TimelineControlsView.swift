@@ -11,6 +11,13 @@ import SwiftUI
 /// are fully functional.
 struct TimelineControlsView: View {
     @ObservedObject var controller: ViewerController
+    /// Observed separately so the 60 Hz ticks re-render only this view.
+    @ObservedObject private var playhead: Playhead
+
+    init(controller: ViewerController) {
+        self.controller = controller
+        self.playhead = controller.playhead
+    }
 
     private let activeGreen = Color(red: 0.72, green: 0.9, blue: 0.28)
 
@@ -18,7 +25,7 @@ struct TimelineControlsView: View {
         HStack(spacing: 12) {
             playPauseButton
 
-            Text(timecode(controller.animationTime))
+            Text(timecode(playhead.time))
                 .frame(width: 38, alignment: .trailing)
                 .monospacedDigit()
                 .foregroundStyle(.white.opacity(0.85))
@@ -70,7 +77,7 @@ struct TimelineControlsView: View {
     private var progressBar: some View {
         GeometryReader { geo in
             let fraction = controller.animationDuration > 0
-                ? min(max(controller.animationTime / controller.animationDuration, 0), 1)
+                ? min(max(playhead.time / controller.animationDuration, 0), 1)
                 : 0
             ZStack(alignment: .leading) {
                 Capsule().fill(.white.opacity(0.14))
@@ -84,7 +91,7 @@ struct TimelineControlsView: View {
         // The two timecodes beside the bar are hidden; VoiceOver reads them here.
         .accessibilityElement()
         .accessibilityRepresentation {
-            ProgressView(value: controller.animationTime, total: max(controller.animationDuration, 0.001)) {
+            ProgressView(value: playhead.time, total: max(controller.animationDuration, 0.001)) {
                 Text("a11y.timeline")
             }
         }

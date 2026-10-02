@@ -362,7 +362,13 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
         }
     }
 
-    // Pass 3: attach geometry to each mesh node.
+    // Pass 3: attach geometry to each mesh node. Instances of one mesh share
+    // its geometry buffers (an SCNGeometry copy shares vertex data but has
+    // its own materials) and materials are built once per FBX material:
+    // rebuilding both per instance made 200 instances of a 20k-triangle mesh
+    // take 247 MB and decode the same textures 200 times.
+    NSMutableDictionary<NSString *, NSArray *> *geometryCache = [NSMutableDictionary dictionary];
+    NSMapTable<NSValue *, SCNMaterial *> *materialCache = [NSMapTable strongToStrongObjectsMapTable];
     for (size_t ni = 0; ni < scene->nodes.count; ni++) {
         ufbx_node *node = scene->nodes.data[ni];
         if (node == NULL || node->mesh == NULL) continue;
@@ -378,6 +384,10 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
         const bool uvNeedsMirrorCompensation = MirrorsChirality(&node->geometry_to_world);
 
         const size_t groupCount = mesh->materials.count > 0 ? mesh->materials.count : 1;
+        NSString *meshKey = [NSString stringWithFormat:@"%p-%d", (void *)mesh, (int)uvNeedsMirrorCompensation];
+        NSArray *meshGeometries = geometryCache[meshKey];
+        if (meshGeometries == nil) {
+        NSMutableArray *built = [NSMutableArray arrayWithCapacity:groupCount];
         std::vector<GroupBuffers> groups(groupCount);
 
         const bool hasNormals = mesh->vertex_normal.exists;
@@ -423,7 +433,7 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
         for (size_t gi = 0; gi < groupCount; gi++) {
             GroupBuffers &g = groups[gi];
             const NSInteger vertexCount = (NSInteger)(g.positions.size() / 3);
-            if (vertexCount == 0) continue;
+            if (vertexCount == 0) { [built addObject:[NSNull null]]; continue; }
 
             NSMutableArray<SCNGeometrySource *> *sources = [NSMutableArray array];
 
@@ -475,13 +485,27 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
                                              primitiveCount:vertexCount / 3
                                               bytesPerIndex:sizeof(uint32_t)];
 
-            SCNGeometry *geometry = [SCNGeometry geometryWithSources:sources elements:@[element]];
+            [built addObject:[SCNGeometry geometryWithSources:sources elements:@[element]]];
+        }
+        meshGeometries = built;
+        geometryCache[meshKey] = built;
+        }
+
+        for (size_t gi = 0; gi < meshGeometries.count; gi++) {
+            if (meshGeometries[gi] == [NSNull null]) continue;
+            SCNGeometry *geometry = [meshGeometries[gi] copy];
 
             // Per-instance material at this group index (falls back to the mesh's).
             ufbx_material *umat = NULL;
             if (gi < node->materials.count) umat = node->materials.data[gi];
             else if (gi < mesh->materials.count) umat = mesh->materials.data[gi];
-            geometry.firstMaterial = MaterialFromUfbx(umat, unreadableExternalURLs);
+            NSValue *materialKey = [NSValue valueWithPointer:umat];
+            SCNMaterial *material = [materialCache objectForKey:materialKey];
+            if (material == nil) {
+                material = MaterialFromUfbx(umat, unreadableExternalURLs);
+                [materialCache setObject:material forKey:materialKey];
+            }
+            geometry.firstMaterial = material;
 
             // The geometry sits under the mesh node offset by `geometry_to_node`
             // (the non-inherited geometry transform). Combined with the mesh
