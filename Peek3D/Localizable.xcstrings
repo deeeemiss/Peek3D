@@ -258,71 +258,6 @@
         }
       }
     },
-    "Could not load": {
-      "comment": "error.loadFailedPrefix",
-      "localizations": {
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Impossibile caricare"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudo cargar"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Impossible de charger"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Laden fehlgeschlagen"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Não foi possível carregar"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "読み込めませんでした"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无法载入"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "불러올 수 없음"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Не удалось загрузить"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تعذّر التحميل"
-          }
-        }
-      }
-    },
     "Dark mood": {
       "localizations": {
         "it": {
@@ -5396,6 +5331,148 @@
           "stringUnit": {
             "state": "translated",
             "value": "الشفرة المصدرية على GitHub"
+          }
+        }
+      }
+    },
+    "error.gltfInvalid": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This glTF file is damaged or uses an invalid structure, so it can't be opened."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questo file glTF è danneggiato o ha una struttura non valida, quindi non può essere aperto."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este archivo glTF está dañado o tiene una estructura no válida, así que no se puede abrir."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce fichier glTF est endommagé ou sa structure n’est pas valide : impossible de l’ouvrir."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese glTF-Datei ist beschädigt oder ungültig aufgebaut und kann nicht geöffnet werden."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este arquivo glTF está danificado ou tem uma estrutura inválida, por isso não pode ser aberto."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Этот файл glTF повреждён или имеет недопустимую структуру, поэтому его нельзя открыть."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملف glTF هذا تالف أو بنيته غير صالحة، لذا لا يمكن فتحه."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この glTF ファイルは破損しているか構造が無効なため、開けません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 glTF 파일은 손상되었거나 구조가 올바르지 않아 열 수 없습니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此 glTF 文件已损坏或结构无效，无法打开。"
+          }
+        }
+      }
+    },
+    "error.noGeometry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This file can't be read or contains no 3D model to show."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questo file non si può leggere o non contiene un modello 3D da mostrare."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este archivo no se puede leer o no contiene ningún modelo 3D que mostrar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce fichier est illisible ou ne contient aucun modèle 3D à afficher."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Datei ist nicht lesbar oder enthält kein 3D-Modell zum Anzeigen."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este arquivo não pode ser lido ou não contém nenhum modelo 3D para mostrar."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Этот файл не удаётся прочитать, или в нём нет 3D-модели для показа."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّرت قراءة هذا الملف أو أنه لا يحتوي على نموذج ثلاثي الأبعاد لعرضه."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このファイルは読み込めないか、表示できる 3D モデルが含まれていません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 파일을 읽을 수 없거나 표시할 3D 모델이 없습니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取此文件，或其中没有可显示的 3D 模型。"
           }
         }
       }

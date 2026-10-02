@@ -7,13 +7,17 @@ import simd
 import GLTFKit2
 
 enum ModelLoadError: LocalizedError {
-    case loadFailed(String)
+    /// The file loaded without an error but holds nothing to draw. Model I/O
+    /// in particular reports success for empty, unreadable or non-3D files
+    /// (it only logs to the console), which left a blank window and a
+    /// "0 triangles" info panel with no explanation.
+    case noGeometry
 
     var errorDescription: String? {
         switch self {
-        case .loadFailed(let name):
-            let prefix = String(localized: "error.loadFailedPrefix", defaultValue: "Could not load")
-            return "\(prefix) \(name)."
+        case .noGeometry:
+            return String(localized: "error.noGeometry",
+                          defaultValue: "This file can't be read or contains no 3D model to show.")
         }
     }
 }
@@ -72,6 +76,9 @@ enum ModelLoader {
             // Throwing bridge of +assetWithURL:options:error:. Draco/KTX2
             // compressed assets need extra plugins (not wired in v1) and will
             // surface as a thrown error here rather than a silent failure.
+            // GLTFKit2 crashes (instead of throwing) on structurally broken
+            // files: reject those first with a normal error.
+            try GLTFValidator.validate(url: url)
             let asset = try GLTFAsset(url: url, options: [:])
             // The `SCNScene(gltfAsset:)` convenience routes through this same
             // source but keeps only `defaultScene` and drops the animations;
@@ -101,6 +108,8 @@ enum ModelLoader {
             scene = SCNScene(mdlAsset: mdlAsset)
         }
 
+        guard hasDrawableGeometry(scene) else { throw ModelLoadError.noGeometry }
+
         let stats = computeStats(scene: scene, url: url)
         return LoadedModel(scene: scene, stats: stats, animations: animations,
                             missingExternalTextureURLs: missingExternalTextureURLs)
@@ -116,6 +125,19 @@ enum ModelLoader {
                 DispatchQueue.main.async { completion(.failure(error)) }
             }
         }
+    }
+
+    /// True if any node carries a geometry with at least one primitive —
+    /// triangles, lines or points (a point-cloud PLY is a valid model).
+    private static func hasDrawableGeometry(_ scene: SCNScene) -> Bool {
+        var found = false
+        scene.rootNode.enumerateHierarchy { node, stop in
+            if node.geometry?.elements.contains(where: { $0.primitiveCount > 0 }) == true {
+                found = true
+                stop.pointee = true
+            }
+        }
+        return found
     }
 
     // MARK: - Statistics
