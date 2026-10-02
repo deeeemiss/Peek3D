@@ -233,9 +233,14 @@ final class ViewerController: ObservableObject {
 
     func zoom(by factor: Float) {
         guard let scnView, let pov = scnView.pointOfView else { return }
-        // Move along the camera's forward axis; scale step by model size.
-        let step = (currentBounds?.radius ?? 1) * factor
-        let destination = pov.simdWorldPosition + pov.simdWorldFront * step
+        scnView.defaultCameraController.stopInertia()
+        // Move along the camera's forward axis; scale step by model size,
+        // without passing through the model or drifting off to infinity.
+        let radius = currentBounds?.radius ?? 1
+        let center = currentBounds?.center ?? .zero
+        let distance = simd_distance(pov.simdWorldPosition, center)
+        let newDistance = min(max(distance - radius * factor, radius * 0.1), radius * 100)
+        let destination = pov.simdWorldPosition + pov.simdWorldFront * (distance - newDistance)
 
         scnView.allowsCameraControl = false
         SCNTransaction.begin()

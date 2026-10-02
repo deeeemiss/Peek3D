@@ -21,7 +21,9 @@ struct WelcomeView: View {
         // finite to pin the window to, leaving it full-screen. Same family of
         // bug as the overlay-sizing rule in CLAUDE.md: a ZStack takes the
         // union of its children.
-        VStack(spacing: 30) {
+        // Spacing kept tight: with five recents the window has to fit a
+        // 900 pt screen above the Dock.
+        VStack(spacing: 22) {
                     header
                     dropZone
                     formatsRow
@@ -41,7 +43,7 @@ struct WelcomeView: View {
                     footer
                 }
         .padding(.horizontal, 48)
-        .padding(.vertical, 40)
+        .padding(.vertical, 28)
         .frame(width: 560)
         .background(Color(white: 0.04).ignoresSafeArea())
         .overlay(
@@ -130,7 +132,7 @@ struct WelcomeView: View {
             .pointerCursor()
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 36)
+        .padding(.vertical, 28)
         .background(.white.opacity(0.03), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)

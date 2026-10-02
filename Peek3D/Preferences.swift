@@ -95,8 +95,15 @@ enum AppLanguage {
     static func relaunch() {
         let config = NSWorkspace.OpenConfiguration()
         config.createsNewApplicationInstance = true
-        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: config) { _, _ in
-            DispatchQueue.main.async { NSApp.terminate(nil) }
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: config) { app, error in
+            DispatchQueue.main.async {
+                // Quitting without a new instance would just close the app.
+                if let error, app == nil {
+                    NSAlert(error: error).runModal()
+                } else {
+                    NSApp.terminate(nil)
+                }
+            }
         }
     }
 }

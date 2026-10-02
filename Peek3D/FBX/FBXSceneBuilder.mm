@@ -151,6 +151,20 @@ struct GroupBuffers {
     std::vector<float> uvs;       // uv per corner
 };
 
+/// The first `count` vectors of `values` as a tightly packed float source.
+static SCNGeometrySource *FloatSource(const std::vector<float> &values, size_t count, NSInteger components,
+                                      SCNGeometrySourceSemantic semantic) {
+    NSData *data = [NSData dataWithBytes:values.data() length:count * components * sizeof(float)];
+    return [SCNGeometrySource geometrySourceWithData:data
+                                            semantic:semantic
+                                         vectorCount:(NSInteger)count
+                                     floatComponents:YES
+                                 componentsPerVector:components
+                                   bytesPerComponent:sizeof(float)
+                                          dataOffset:0
+                                          dataStride:components * sizeof(float)];
+}
+
 @implementation FBXAnimationClip
 - (instancetype)initWithName:(NSString *)name player:(SCNAnimationPlayer *)player {
     if ((self = [super init])) {
@@ -398,117 +412,110 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
 
         const size_t groupCount = mesh->materials.count > 0 ? mesh->materials.count : 1;
         NSString *meshKey = [NSString stringWithFormat:@"%p-%d", (void *)mesh, (int)uvNeedsMirrorCompensation];
-        NSArray *meshGeometries = geometryCache[meshKey];
-        if (meshGeometries == nil) {
-        NSMutableArray *built = [NSMutableArray arrayWithCapacity:groupCount];
-        std::vector<GroupBuffers> groups(groupCount);
+        // @[geometry, material group index per element], or @[] for a mesh
+        // with nothing to draw.
+        NSArray *cached = geometryCache[meshKey];
+        if (cached == nil) {
+            std::vector<GroupBuffers> groups(groupCount);
 
-        const bool hasNormals = mesh->vertex_normal.exists;
-        const bool hasUV = mesh->vertex_uv.exists;
+            const bool hasNormals = mesh->vertex_normal.exists;
+            const bool hasUV = mesh->vertex_uv.exists;
 
-        // Scratch buffer big enough to triangulate any single face in this mesh.
-        std::vector<uint32_t> triIndices(mesh->max_face_triangles * 3);
+            // Scratch buffer big enough to triangulate any single face in this mesh.
+            std::vector<uint32_t> triIndices(mesh->max_face_triangles * 3);
 
-        for (size_t fi = 0; fi < mesh->num_faces; fi++) {
-            ufbx_face face = mesh->faces.data[fi];
-            if (face.num_indices < 3) continue;
+            for (size_t fi = 0; fi < mesh->num_faces; fi++) {
+                ufbx_face face = mesh->faces.data[fi];
+                if (face.num_indices < 3) continue;
 
-            uint32_t groupIdx = 0;
-            if (mesh->face_material.count > 0) {
-                groupIdx = mesh->face_material.data[fi];
-                if (groupIdx >= groupCount) groupIdx = 0;
-            }
-            GroupBuffers &g = groups[groupIdx];
-
-            uint32_t numTris = ufbx_triangulate_face(triIndices.data(), triIndices.size(), mesh, face);
-            for (uint32_t t = 0; t < numTris * 3; t++) {
-                uint32_t ix = triIndices[t];
-                ufbx_vec3 p = ufbx_get_vertex_vec3(&mesh->vertex_position, ix);
-                g.positions.push_back((float)p.x);
-                g.positions.push_back((float)p.y);
-                g.positions.push_back((float)p.z);
-
-                if (hasNormals) {
-                    ufbx_vec3 n = ufbx_get_vertex_vec3(&mesh->vertex_normal, ix);
-                    g.normals.push_back((float)n.x);
-                    g.normals.push_back((float)n.y);
-                    g.normals.push_back((float)n.z);
+                uint32_t groupIdx = 0;
+                if (mesh->face_material.count > 0) {
+                    groupIdx = mesh->face_material.data[fi];
+                    if (groupIdx >= groupCount) groupIdx = 0;
                 }
-                if (hasUV) {
-                    ufbx_vec2 uv = ufbx_get_vertex_vec2(&mesh->vertex_uv, ix);
-                    // FBX UV origin is bottom-left; SceneKit samples top-left.
-                    g.uvs.push_back(uvNeedsMirrorCompensation ? (float)(1.0 - uv.x) : (float)uv.x);
-                    g.uvs.push_back((float)(1.0 - uv.y));
+                GroupBuffers &g = groups[groupIdx];
+
+                uint32_t numTris = ufbx_triangulate_face(triIndices.data(), triIndices.size(), mesh, face);
+                for (uint32_t t = 0; t < numTris * 3; t++) {
+                    uint32_t ix = triIndices[t];
+                    ufbx_vec3 p = ufbx_get_vertex_vec3(&mesh->vertex_position, ix);
+                    g.positions.push_back((float)p.x);
+                    g.positions.push_back((float)p.y);
+                    g.positions.push_back((float)p.z);
+
+                    if (hasNormals) {
+                        ufbx_vec3 n = ufbx_get_vertex_vec3(&mesh->vertex_normal, ix);
+                        g.normals.push_back((float)n.x);
+                        g.normals.push_back((float)n.y);
+                        g.normals.push_back((float)n.z);
+                    }
+                    if (hasUV) {
+                        ufbx_vec2 uv = ufbx_get_vertex_vec2(&mesh->vertex_uv, ix);
+                        // FBX UV origin is bottom-left; SceneKit samples top-left.
+                        g.uvs.push_back(uvNeedsMirrorCompensation ? (float)(1.0 - uv.x) : (float)uv.x);
+                        g.uvs.push_back((float)(1.0 - uv.y));
+                    }
                 }
             }
-        }
 
-        for (size_t gi = 0; gi < groupCount; gi++) {
-            GroupBuffers &g = groups[gi];
-            const NSInteger vertexCount = (NSInteger)(g.positions.size() / 3);
-            if (vertexCount == 0) { [built addObject:[NSNull null]]; continue; }
+            // One geometry per mesh, one element per material group, over a
+            // single vertex buffer with duplicate corners merged: counting
+            // per-corner vertices tripled the vertex count, and a node per
+            // group counted one mesh per material.
+            GroupBuffers all;
+            std::vector<std::pair<size_t, size_t>> ranges; // first corner, corner count
+            NSMutableArray<NSNumber *> *usedGroups = [NSMutableArray array];
+            for (size_t gi = 0; gi < groupCount; gi++) {
+                GroupBuffers &g = groups[gi];
+                if (g.positions.empty()) continue;
+                ranges.push_back({all.positions.size() / 3, g.positions.size() / 3});
+                all.positions.insert(all.positions.end(), g.positions.begin(), g.positions.end());
+                all.normals.insert(all.normals.end(), g.normals.begin(), g.normals.end());
+                all.uvs.insert(all.uvs.end(), g.uvs.begin(), g.uvs.end());
+                [usedGroups addObject:@(gi)];
+            }
+            const size_t corners = all.positions.size() / 3;
+            if (corners == 0) {
+                geometryCache[meshKey] = @[];
+                continue;
+            }
+
+            std::vector<uint32_t> indices(corners);
+            std::vector<ufbx_vertex_stream> streams = { { all.positions.data(), corners, 3 * sizeof(float) } };
+            if (hasNormals) streams.push_back({ all.normals.data(), corners, 3 * sizeof(float) });
+            if (hasUV) streams.push_back({ all.uvs.data(), corners, 2 * sizeof(float) });
+            ufbx_error indexError;
+            size_t vertexCount = ufbx_generate_indices(streams.data(), streams.size(), indices.data(), corners, NULL, &indexError);
+            if (vertexCount == 0) {
+                // Dedup failed (allocation): keep every corner as its own vertex.
+                vertexCount = corners;
+                for (size_t i = 0; i < corners; i++) indices[i] = (uint32_t)i;
+            }
 
             NSMutableArray<SCNGeometrySource *> *sources = [NSMutableArray array];
+            [sources addObject:FloatSource(all.positions, vertexCount, 3, SCNGeometrySourceSemanticVertex)];
+            if (hasNormals) [sources addObject:FloatSource(all.normals, vertexCount, 3, SCNGeometrySourceSemanticNormal)];
+            if (hasUV) [sources addObject:FloatSource(all.uvs, vertexCount, 2, SCNGeometrySourceSemanticTexcoord)];
 
-            NSData *posData = [NSData dataWithBytes:g.positions.data()
-                                            length:g.positions.size() * sizeof(float)];
-            [sources addObject:[SCNGeometrySource geometrySourceWithData:posData
-                                                               semantic:SCNGeometrySourceSemanticVertex
-                                                            vectorCount:vertexCount
-                                                        floatComponents:YES
-                                                    componentsPerVector:3
-                                                      bytesPerComponent:sizeof(float)
-                                                             dataOffset:0
-                                                             dataStride:3 * sizeof(float)]];
-
-            if (!g.normals.empty()) {
-                NSData *nData = [NSData dataWithBytes:g.normals.data()
-                                              length:g.normals.size() * sizeof(float)];
-                [sources addObject:[SCNGeometrySource geometrySourceWithData:nData
-                                                                   semantic:SCNGeometrySourceSemanticNormal
-                                                                vectorCount:vertexCount
-                                                            floatComponents:YES
-                                                        componentsPerVector:3
-                                                          bytesPerComponent:sizeof(float)
-                                                                 dataOffset:0
-                                                                 dataStride:3 * sizeof(float)]];
+            NSMutableArray<SCNGeometryElement *> *elements = [NSMutableArray array];
+            for (const auto &range : ranges) {
+                NSData *idxData = [NSData dataWithBytes:indices.data() + range.first
+                                                length:range.second * sizeof(uint32_t)];
+                [elements addObject:[SCNGeometryElement geometryElementWithData:idxData
+                                                                  primitiveType:SCNGeometryPrimitiveTypeTriangles
+                                                                 primitiveCount:(NSInteger)(range.second / 3)
+                                                                  bytesPerIndex:sizeof(uint32_t)]];
             }
-            if (!g.uvs.empty()) {
-                NSData *uvData = [NSData dataWithBytes:g.uvs.data()
-                                               length:g.uvs.size() * sizeof(float)];
-                [sources addObject:[SCNGeometrySource geometrySourceWithData:uvData
-                                                                   semantic:SCNGeometrySourceSemanticTexcoord
-                                                                vectorCount:vertexCount
-                                                            floatComponents:YES
-                                                        componentsPerVector:2
-                                                          bytesPerComponent:sizeof(float)
-                                                                 dataOffset:0
-                                                                 dataStride:2 * sizeof(float)]];
-            }
-
-            // Vertices are already expanded per triangle corner, so the index
-            // buffer is simply 0,1,2,...
-            std::vector<uint32_t> indices((size_t)vertexCount);
-            for (uint32_t i = 0; i < (uint32_t)vertexCount; i++) indices[i] = i;
-            NSData *idxData = [NSData dataWithBytes:indices.data()
-                                            length:indices.size() * sizeof(uint32_t)];
-            SCNGeometryElement *element =
-                [SCNGeometryElement geometryElementWithData:idxData
-                                              primitiveType:SCNGeometryPrimitiveTypeTriangles
-                                             primitiveCount:vertexCount / 3
-                                              bytesPerIndex:sizeof(uint32_t)];
-
-            [built addObject:[SCNGeometry geometryWithSources:sources elements:@[element]]];
+            cached = @[ [SCNGeometry geometryWithSources:sources elements:elements], usedGroups ];
+            geometryCache[meshKey] = cached;
         }
-        meshGeometries = built;
-        geometryCache[meshKey] = built;
-        }
+        if (cached.count == 0) continue;
 
-        for (size_t gi = 0; gi < meshGeometries.count; gi++) {
-            if (meshGeometries[gi] == [NSNull null]) continue;
-            SCNGeometry *geometry = [meshGeometries[gi] copy];
-
-            // Per-instance material at this group index (falls back to the mesh's).
+        // Per-instance materials (each falls back to the mesh's).
+        SCNGeometry *geometry = [cached[0] copy];
+        NSMutableArray<SCNMaterial *> *materials = [NSMutableArray array];
+        for (NSNumber *group in cached[1]) {
+            const size_t gi = group.unsignedIntegerValue;
             ufbx_material *umat = NULL;
             if (gi < node->materials.count) umat = node->materials.data[gi];
             else if (gi < mesh->materials.count) umat = mesh->materials.data[gi];
@@ -518,18 +525,19 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
                 material = MaterialFromUfbx(umat, unreadableExternalURLs);
                 [materialCache setObject:material forKey:materialKey];
             }
-            geometry.firstMaterial = material;
-
-            // The geometry sits under the mesh node offset by `geometry_to_node`
-            // (the non-inherited geometry transform). Combined with the mesh
-            // node's world transform this reproduces `geometry_to_world` exactly,
-            // and — unlike baking `geometry_to_world` straight onto the mesh node
-            // — it leaves the mesh node free to carry the animated local
-            // transform.
-            SCNNode *groupNode = [SCNNode nodeWithGeometry:geometry];
-            groupNode.transform = SCNMatrixFromUfbx(&node->geometry_to_node);
-            [meshNode addChildNode:groupNode];
+            [materials addObject:material];
         }
+        geometry.materials = materials;
+
+        // The geometry sits under the mesh node offset by `geometry_to_node`
+        // (the non-inherited geometry transform). Combined with the mesh
+        // node's world transform this reproduces `geometry_to_world` exactly,
+        // and — unlike baking `geometry_to_world` straight onto the mesh node
+        // — it leaves the mesh node free to carry the animated local
+        // transform.
+        SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
+        geometryNode.transform = SCNMatrixFromUfbx(&node->geometry_to_node);
+        [meshNode addChildNode:geometryNode];
     }
 
     // Bake each anim stack into a playable clip. Stacks that key no node

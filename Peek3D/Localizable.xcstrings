@@ -134,7 +134,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Soffusa"
+            "value": "Atmosfera scura"
           }
         },
         "es": {
@@ -164,7 +164,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ダーク"
+            "value": "ダークムード"
           }
         },
         "zh-Hans": {
@@ -1641,7 +1641,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Materiale"
+            "value": "Ombreggiatura"
           }
         },
         "es": {
@@ -1711,7 +1711,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tamaño"
+            "value": "Dimensiones"
           }
         },
         "fr": {
@@ -1833,7 +1833,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vista dall'alto"
+            "value": "Vista dall’alto"
           }
         },
         "es": {
@@ -1961,19 +1961,19 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "UV checker"
+            "value": "Griglia UV"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "UV checker"
+            "value": "Cuadrícula UV"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "UV checker"
+            "value": "Damier UV"
           }
         },
         "de": {
@@ -1985,7 +1985,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "UV checker"
+            "value": "Grade UV"
           }
         },
         "ja": {
@@ -2488,7 +2488,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Third-party components included in this binary."
+            "value": "Third-party components included in this app."
           }
         },
         "it": {
@@ -3275,7 +3275,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lingua dell'app"
+            "value": "Lingua dell’app"
           }
         },
         "es": {
@@ -3417,7 +3417,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "“Lingua di sistema” segue l'ordine scelto in Impostazioni di Sistema ▸ Generali ▸ Lingua e Regione."
+            "value": "“Lingua di sistema” segue l’ordine scelto in Impostazioni di Sistema ▸ Generali ▸ Lingua e Regione."
           }
         },
         "es": {
@@ -3843,7 +3843,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "All'apertura di un file"
+            "value": "All’apertura di un file"
           }
         },
         "es": {
@@ -4731,7 +4731,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "رسم متحرك %lld"
+            "value": "الرسوم المتحركة %lld"
           }
         },
         "ja": {
@@ -5662,7 +5662,7 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "الرسم المتحرك"
+            "value": "الرسوم المتحركة"
           }
         },
         "ja": {

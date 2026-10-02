@@ -9,7 +9,6 @@ extension Notification.Name {
     static let peek3dToggleGrid = Notification.Name("peek3d.toggleGrid")
     static let peek3dToggleInfo = Notification.Name("peek3d.toggleInfo")
     static let peek3dTakeScreenshot = Notification.Name("peek3d.takeScreenshot")
-    static let peek3dToggleFullScreen = Notification.Name("peek3d.toggleFullScreen")
     /// `userInfo["mode"]` carries `ShadingMode.rawValue`.
     static let peek3dSetShadingMode = Notification.Name("peek3d.setShadingMode")
     /// `userInfo["preset"]` carries `LightingPreset.rawValue`.
@@ -282,10 +281,6 @@ private struct SceneCommands: View {
                 Label("Screenshot", systemImage: "camera")
             }
             .keyboardShortcut("s", modifiers: [.command, .shift])
-            Button { NotificationCenter.default.post(name: .peek3dToggleFullScreen, object: nil) } label: {
-                Label("Fullscreen", systemImage: "arrow.up.left.and.arrow.down.right")
-            }
-            .keyboardShortcut("f", modifiers: [.command, .control])
         }
         .disabled(isViewerFocused != true)
     }

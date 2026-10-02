@@ -59,6 +59,13 @@ struct ContentView: View {
         }
         .frame(minWidth: 900, minHeight: 620)
         .task(id: url) { load(url: url) }
+        // A failed replacement leaves the previous model on screen: the error
+        // is a notice then, not a state, so it goes away on its own.
+        .task(id: errorMessage) {
+            guard errorMessage != nil, scene != nil else { return }
+            try? await Task.sleep(for: .seconds(8))
+            errorMessage = nil
+        }
         .onAppear(perform: closeWelcomeWindows)
         // Tells the "Scene" menu (Peek3DApp.swift) this window is a viewer,
         // not the Welcome window — see `peek3dViewerFocused`. Scene-level, not
@@ -66,7 +73,9 @@ struct ContentView: View {
         // (`@FocusState`) somewhere in this hierarchy, which nothing here has;
         // `.focusedSceneValue` only needs this window to be key, which is what
         // "menu applies to the frontmost viewer" actually means.
-        .focusedSceneValue(\.peek3dViewerFocused, true)
+        // Only once a model is on screen: before that (loading, failed) the
+        // Scene menu's commands have nothing to act on.
+        .focusedSceneValue(\.peek3dViewerFocused, scene != nil)
         // Same rationale as above: lets the "Scene" menu's Shading/Lighting
         // submenus show a checkmark + live icon for whichever mode/preset is
         // active on the frontmost viewer, mirroring `ViewerToolbar`'s own
@@ -97,7 +106,6 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .peek3dToggleGrid)) { _ in guardKeyWindow { controller.toggleGrid() } }
         .onReceive(NotificationCenter.default.publisher(for: .peek3dToggleInfo)) { _ in guardKeyWindow { showInfo.toggle() } }
         .onReceive(NotificationCenter.default.publisher(for: .peek3dTakeScreenshot)) { _ in guardKeyWindow { controller.takeScreenshot() } }
-        .onReceive(NotificationCenter.default.publisher(for: .peek3dToggleFullScreen)) { _ in guardKeyWindow { controller.toggleFullScreen() } }
         .onReceive(NotificationCenter.default.publisher(for: .peek3dSetShadingMode)) { note in
             guard let raw = note.userInfo?["mode"] as? String, let mode = ShadingMode(rawValue: raw) else { return }
             guardKeyWindow { controller.setShadingMode(mode) }
