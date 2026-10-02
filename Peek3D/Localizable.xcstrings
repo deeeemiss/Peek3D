@@ -4969,13 +4969,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld external texture not loaded (folder permissions)."
+                  "value": "%lld external file can't be read (folder permissions)."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld external textures not loaded (folder permissions)."
+                  "value": "%lld external files can't be read (folder permissions)."
                 }
               }
             }
@@ -4987,13 +4987,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld texture esterna non caricata (permessi della cartella)."
+                  "value": "%lld file esterno non leggibile (permessi della cartella)."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld texture esterne non caricate (permessi della cartella)."
+                  "value": "%lld file esterni non leggibili (permessi della cartella)."
                 }
               }
             }
@@ -5005,13 +5005,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld textura externa no cargada (permisos de la carpeta)."
+                  "value": "%lld archivo externo no se puede leer (permisos de la carpeta)."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld texturas externas no cargadas (permisos de la carpeta)."
+                  "value": "%lld archivos externos no se pueden leer (permisos de la carpeta)."
                 }
               }
             }
@@ -5023,13 +5023,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld texture externe non chargée (autorisations du dossier)."
+                  "value": "%lld fichier externe illisible (autorisations du dossier)."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld textures externes non chargées (autorisations du dossier)."
+                  "value": "%lld fichiers externes illisibles (autorisations du dossier)."
                 }
               }
             }
@@ -5041,13 +5041,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld externe Textur nicht geladen (Ordnerberechtigungen)."
+                  "value": "%lld externe Datei nicht lesbar (Ordnerberechtigungen)."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld externe Texturen nicht geladen (Ordnerberechtigungen)."
+                  "value": "%lld externe Dateien nicht lesbar (Ordnerberechtigungen)."
                 }
               }
             }
@@ -5059,13 +5059,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld textura externa não carregada (permissões da pasta)."
+                  "value": "%lld arquivo externo não pode ser lido (permissões da pasta)."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld texturas externas não carregadas (permissões da pasta)."
+                  "value": "%lld arquivos externos não podem ser lidos (permissões da pasta)."
                 }
               }
             }
@@ -5077,25 +5077,25 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Не загружена %lld внешняя текстура (нет доступа к папке)."
+                  "value": "Не удаётся прочитать %lld внешний файл (нет доступа к папке)."
                 }
               },
               "few": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Не загружены %lld внешние текстуры (нет доступа к папке)."
+                  "value": "Не удаётся прочитать %lld внешних файла (нет доступа к папке)."
                 }
               },
               "many": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Не загружено %lld внешних текстур (нет доступа к папке)."
+                  "value": "Не удаётся прочитать %lld внешних файлов (нет доступа к папке)."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Не загружено %lld внешних текстур (нет доступа к папке)."
+                  "value": "Не удаётся прочитать %lld внешних файлов (нет доступа к папке)."
                 }
               }
             }
@@ -5107,37 +5107,37 @@
               "zero": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "لم يتم تحميل أي خامة خارجية (أذونات المجلد)."
+                  "value": "لا توجد ملفات خارجية غير مقروءة."
                 }
               },
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "تعذّر تحميل خامة خارجية واحدة (أذونات المجلد)."
+                  "value": "تعذّرت قراءة ملف خارجي واحد (أذونات المجلد)."
                 }
               },
               "two": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "تعذّر تحميل خامتين خارجيتين (أذونات المجلد)."
+                  "value": "تعذّرت قراءة ملفين خارجيين (أذونات المجلد)."
                 }
               },
               "few": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "تعذّر تحميل %lld خامات خارجية (أذونات المجلد)."
+                  "value": "تعذّرت قراءة %lld ملفات خارجية (أذونات المجلد)."
                 }
               },
               "many": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "تعذّر تحميل %lld خامة خارجية (أذونات المجلد)."
+                  "value": "تعذّرت قراءة %lld ملفًا خارجيًا (أذونات المجلد)."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "تعذّر تحميل %lld خامة خارجية (أذونات المجلد)."
+                  "value": "تعذّرت قراءة %lld ملف خارجي (أذونات المجلد)."
                 }
               }
             }
@@ -5149,7 +5149,7 @@
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "外部テクスチャ%lld個を読み込めませんでした（フォルダの権限）。"
+                  "value": "外部ファイル%lld個を読み込めません（フォルダの権限）。"
                 }
               }
             }
@@ -5161,7 +5161,7 @@
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "외부 텍스처 %lld개를 불러오지 못했습니다(폴더 권한)."
+                  "value": "외부 파일 %lld개를 읽을 수 없습니다(폴더 권한)."
                 }
               }
             }
@@ -5173,7 +5173,7 @@
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld 个外部纹理未能载入（文件夹权限）。"
+                  "value": "%lld 个外部文件无法读取（文件夹权限）。"
                 }
               }
             }

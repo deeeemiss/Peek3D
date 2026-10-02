@@ -314,6 +314,8 @@ struct ContentView: View {
                 if !model.missingExternalTextureURLs.isEmpty {
                     self.missingTexturePrompt = (url, model.missingExternalTextureURLs.count)
                 }
+            case .failure(ModelLoadError.needsFolderAccess(let urls)):
+                self.missingTexturePrompt = (url, urls.count)
             case .failure(let error):
                 self.errorMessage = Self.userMessage(for: error)
             }
@@ -344,7 +346,9 @@ struct ContentView: View {
         panel.allowsMultipleSelection = false
         panel.directoryURL = modelURL.deletingLastPathComponent()
         guard panel.runModal() == .OK, let folderURL = panel.url else { return }
-        guard folderURL.startAccessingSecurityScopedResource() else { return }
+        // A URL fresh from the panel is already readable for this session;
+        // this can return false and still work, so it mustn't block the reload.
+        _ = folderURL.startAccessingSecurityScopedResource()
         missingTexturePrompt = nil
         load(url: modelURL)
     }

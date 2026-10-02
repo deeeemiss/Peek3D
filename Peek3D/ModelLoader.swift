@@ -12,12 +12,18 @@ enum ModelLoadError: LocalizedError {
     /// (it only logs to the console), which left a blank window and a
     /// "0 triangles" info panel with no explanation.
     case noGeometry
+    /// A .gltf whose geometry lives in sibling .bin files the App Sandbox
+    /// won't let us read: nothing can be drawn until the user grants the
+    /// folder, so the UI offers that instead of an error.
+    case needsFolderAccess([URL])
 
     var errorDescription: String? {
         switch self {
         case .noGeometry:
             return String(localized: "error.noGeometry",
                           defaultValue: "This file can't be read or contains no 3D model to show.")
+        case .needsFolderAccess(let urls):
+            return String(localized: "missingTexture.count \(urls.count)")
         }
     }
 }
@@ -38,7 +44,7 @@ struct LoadedModel {
     let scene: SCNScene
     let stats: ModelStats
     let animations: [ModelAnimation]
-    /// Non-empty only for FBX models that reference external texture files
+    /// External files (textures, .mtl) the model references that exist but
     /// the App Sandbox didn't grant access to (the model file itself was
     /// picked/dropped, but sibling files weren't). The UI can offer to grant
     /// access to the model's folder and reload.
@@ -69,10 +75,13 @@ enum ModelLoader {
         let ext = url.pathExtension.lowercased()
         let scene: SCNScene
         var animations: [ModelAnimation] = []
-        var missingExternalTextureURLs: [URL] = []
+
+        var missingExternalTextureURLs = unreadableReferences(of: url)
 
         switch ext {
         case "glb", "gltf":
+            let buffers = missingExternalTextureURLs.filter { $0.pathExtension.lowercased() == "bin" }
+            if !buffers.isEmpty { throw ModelLoadError.needsFolderAccess(missingExternalTextureURLs) }
             // Throwing bridge of +assetWithURL:options:error:. Draco/KTX2
             // compressed assets need extra plugins (not wired in v1) and will
             // surface as a thrown error here rather than a silent failure.
@@ -101,7 +110,7 @@ enum ModelLoader {
             animations = result.animations.map {
                 ModelAnimation(name: $0.name, player: $0.player)
             }
-            missingExternalTextureURLs = result.unreadableExternalTextureURLs
+            missingExternalTextureURLs += result.unreadableExternalTextureURLs
         default:
             let mdlAsset = MDLAsset(url: url)
             mdlAsset.loadTextures()
@@ -125,6 +134,57 @@ enum ModelLoader {
                 DispatchQueue.main.async { completion(.failure(error)) }
             }
         }
+    }
+
+    /// Sibling files a .gltf or .obj points to that exist but can't be read
+    /// (sandbox). Files that simply don't exist aren't listed: granting the
+    /// folder wouldn't bring them back. FBX reports its own from the bridge.
+    // ponytail: DAE/USD sibling textures not scanned; add if users hit it.
+    static func unreadableReferences(of url: URL) -> [URL] {
+        let base = url.deletingLastPathComponent()
+        var names: [String] = []
+        switch url.pathExtension.lowercased() {
+        case "gltf":
+            guard let data = try? Data(contentsOf: url),
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [] }
+            for key in ["buffers", "images"] {
+                for item in json[key] as? [[String: Any]] ?? [] {
+                    if let uri = item["uri"] as? String, !uri.hasPrefix("data:") {
+                        names.append(uri.removingPercentEncoding ?? uri)
+                    }
+                }
+            }
+        case "obj":
+            guard let text = try? String(contentsOf: url, encoding: .utf8) else { return [] }
+            for mtl in objStatements(text, prefixes: ["mtllib"]) {
+                names.append(mtl)
+                guard let mtlText = try? String(contentsOf: base.appendingPathComponent(mtl), encoding: .utf8) else { continue }
+                // Texture map options ("-bm 1 file.png") come first: the file is the last token.
+                names += objStatements(mtlText, prefixes: ["map_", "bump", "disp", "decal", "norm"])
+                    .compactMap { $0.split(separator: " ").last.map(String.init) }
+            }
+        default:
+            return []
+        }
+        var seen = Set<URL>()
+        return names.map { base.appendingPathComponent($0).standardizedFileURL }
+            .filter { seen.insert($0).inserted && isUnreadable($0) }
+    }
+
+    private static func objStatements(_ text: String, prefixes: [String]) -> [String] {
+        text.split(whereSeparator: \.isNewline).compactMap { line in
+            let line = line.trimmingCharacters(in: .whitespaces)
+            guard let keyword = line.split(separator: " ").first,
+                  prefixes.contains(where: { keyword.lowercased().hasPrefix($0) }) else { return nil }
+            let rest = line.dropFirst(keyword.count).trimmingCharacters(in: .whitespaces)
+            return rest.isEmpty ? nil : rest
+        }
+    }
+
+    /// The sandbox answers EPERM even for paths that don't exist, so the
+    /// read error can't tell the two apart; `stat` (allowed) can.
+    private static func isUnreadable(_ url: URL) -> Bool {
+        FileManager.default.fileExists(atPath: url.path) && (try? FileHandle(forReadingFrom: url).close()) == nil
     }
 
     /// True if any node carries a geometry with at least one primitive —

@@ -94,7 +94,12 @@ static NSImage *ImageForTexture(const ufbx_texture *tex, NSMutableArray<NSURL *>
             NSImage *img = [[NSImage alloc] initWithData:data];
             if (img) return img;
         }
-        [unreadableExternalURLs addObject:[NSURL fileURLWithPath:path]];
+        // A file that doesn't exist isn't a permissions problem: granting the
+        // folder wouldn't fix it, so don't offer that. The sandbox reports
+        // EPERM for missing paths too, so ask `stat`, which it allows.
+        if ([NSFileManager.defaultManager fileExistsAtPath:path]) {
+            [unreadableExternalURLs addObject:[NSURL fileURLWithPath:path]];
+        }
     }
     return nil;
 }
