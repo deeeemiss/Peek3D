@@ -126,7 +126,10 @@ enum ModelLoader {
 
     /// Async wrapper used by the UI: loads off-main, delivers on main.
     static func load(url: URL, completion: @escaping (Result<LoadedModel, Error>) -> Void) {
-        DispatchQueue.global(qos: .userInitiated).async {
+        // Own thread, not a GCD queue: SceneKit walks the node tree
+        // recursively (bounds, enumerateHierarchy), and a file nesting a few
+        // thousand nodes overflowed GCD's 512 KB stack.
+        let thread = Thread {
             do {
                 let result = try loadSync(url: url)
                 DispatchQueue.main.async { completion(.success(result)) }
@@ -134,6 +137,9 @@ enum ModelLoader {
                 DispatchQueue.main.async { completion(.failure(error)) }
             }
         }
+        thread.stackSize = 256 << 20
+        thread.qualityOfService = .userInitiated
+        thread.start()
     }
 
     /// Sibling files a .gltf or .obj points to that exist but can't be read

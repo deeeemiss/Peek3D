@@ -82,6 +82,7 @@ enum GLTFValidator {
         private static let maxCount = 1 << 28
         /// A day of animation: generous for any real clip.
         private static let maxAnimationSeconds = 86_400.0
+        private static let maxNodeDepth = 4000
 
         func run() throws {
             let buffers = array("buffers")
@@ -142,6 +143,17 @@ enum GLTFValidator {
                 if node["skin"] != nil { _ = try ref(node["skin"], count: array("skins").count, "node skin") }
                 if node["camera"] != nil { _ = try ref(node["camera"], count: array("cameras").count, "node camera") }
                 for child in node["children"] as? [Any] ?? [] { _ = try ref(child, count: nodes.count, "child") }
+            }
+            // SceneKit updates world transforms recursively on a thread of its
+            // own and overflows its stack somewhere past 5000 levels.
+            var depth = [Int](repeating: 0, count: nodes.count)
+            var stack = Array(nodes.indices)
+            while let index = stack.popLast() {
+                for case let child as Int in nodes[index]["children"] as? [Any] ?? [] where depth[child] <= depth[index] {
+                    depth[child] = depth[index] + 1
+                    guard depth[child] <= Self.maxNodeDepth else { throw Invalid(reason: "node hierarchy deeper than \(Self.maxNodeDepth) levels") }
+                    stack.append(child)
+                }
             }
             for animation in array("animations") {
                 let samplers = objects(animation["samplers"])

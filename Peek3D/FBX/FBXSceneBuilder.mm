@@ -317,6 +317,19 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
         return nil;
     }
 
+    // SceneKit updates world transforms recursively on a thread of its own
+    // and overflows its stack somewhere past 5000 levels: refuse up front.
+    for (size_t ni = 0; ni < scene->nodes.count; ni++) {
+        if (scene->nodes.data[ni]->node_depth > 4000) {
+            ufbx_free_scene(scene);
+            if (error) {
+                *error = [NSError errorWithDomain:@"com.seb.Peek3D.FBX" code:-2
+                                         userInfo:@{ NSLocalizedDescriptionKey: @"Node hierarchy deeper than 4000 levels" }];
+            }
+            return nil;
+        }
+    }
+
     SCNScene *scnScene = [SCNScene scene];
     NSMutableArray<NSURL *> *unreadableExternalURLs = [NSMutableArray array];
 
