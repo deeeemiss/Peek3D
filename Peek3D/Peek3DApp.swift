@@ -34,13 +34,28 @@ private enum WindowTabbing {
     /// the call and polls briefly — the window isn't necessarily on screen
     /// the instant the call returns.
     static func afterNewWindow(before: Set<NSWindow>, attempt: Int = 0, place: @escaping (NSWindow) -> Void) {
-        if let newWindow = NSApp.windows.first(where: { !before.contains($0) }) {
+        if let newWindow = NSApp.windows.first(where: { !before.contains($0) && canHostTabs($0) }) {
             place(newWindow)
         } else if attempt < 20 {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 afterNewWindow(before: before, attempt: attempt + 1, place: place)
             }
         }
+    }
+
+    /// Only Welcome and document windows take part in tabbing. Settings and
+    /// the licenses window are windows too, and ⌘T from Settings used to
+    /// tab a Welcome screen into it.
+    static func canHostTabs(_ window: NSWindow) -> Bool {
+        window.identifier?.rawValue.hasPrefix("welcome") == true
+            || NSDocumentController.shared.document(for: window) != nil
+    }
+
+    /// The window a "Panel" command joins: the key window if it's a viewer
+    /// or Welcome, otherwise the main one (Settings is key but never main
+    /// for this purpose). `nil` opens a standalone window instead.
+    static var tabTarget: NSWindow? {
+        [NSApp.keyWindow, NSApp.mainWindow].compactMap { $0 }.first(where: canHostTabs)
     }
 
     static func detachFromTabGroup(_ window: NSWindow) {
@@ -97,7 +112,7 @@ private struct FileMenuCommands: View {
 
     private func newWindow(asPanel: Bool) {
         let before = Set(NSApp.windows)
-        let keyBefore = NSApp.keyWindow
+        let keyBefore = WindowTabbing.tabTarget
         openWindow(id: "welcome")
         WindowTabbing.afterNewWindow(before: before) { newWindow in
             if asPanel, let keyBefore {
@@ -119,7 +134,7 @@ private struct FileMenuCommands: View {
 
     private func open(url: URL, asPanel: Bool) {
         let before = Set(NSApp.windows)
-        let keyBefore = NSApp.keyWindow
+        let keyBefore = WindowTabbing.tabTarget
         // AppKit directly, not `@Environment(\.openDocument)` — combining
         // that action with a replaced `.newItem` command group crashed
         // `DocumentGroup`'s internal document-controller setup at launch.
