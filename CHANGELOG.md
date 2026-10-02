@@ -3,6 +3,34 @@
 All notable changes to Peek3D are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## 1.0.1 — 2026-10-02
+
+Bug-fix release from a full debugging pass of the app.
+
+### Fixed
+- Malformed glTF/GLB files (broken buffers, accessors, skins, animation
+  ranges) could crash or hang the app; they now show an error. Empty or
+  non-3D files say so instead of showing a blank window.
+- Absurdly deep node hierarchies no longer crash the app.
+- External files: a .gltf with a separate .bin, or an .obj with its .mtl
+  and textures, now offers "Grant folder access" like FBX did; textures
+  that don't exist are no longer blamed on folder permissions.
+- Untranslated messages, plurals (Russian, Arabic…), numbers, sizes and
+  durations now follow the app language and region.
+- VoiceOver: labeled toolbar, viewport, gizmo and timeline; load results
+  and banners are announced. The six gizmo views are in Scene ▸ Views
+  (⌃⌘1…6); ⌘+ / ⌘− zoom.
+- Readable overlays and banners over light models (WCAG AA), Esc closes
+  banners; Reduce Motion, Reduce Transparency and Increase Contrast are
+  honored.
+- ⌘T from Settings no longer tabs a Welcome screen into Settings.
+- FBX: correct vertex and mesh counts; instanced meshes load several times
+  faster with a fraction of the memory.
+- Smoother playback: the timeline no longer redraws the whole window 60
+  times a second.
+- Smaller fixes: duplicate Fullscreen command removed, zoom limits, Welcome
+  fits 900 pt screens, file type names localized in Finder.
+
 ## 1.0 — 2026-10-02 (first public release)
 
 ### Added

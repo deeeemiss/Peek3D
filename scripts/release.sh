@@ -17,7 +17,8 @@ IDENTITY="Developer ID Application: Sebastiano Demichelis (3E4CBEZXCG)"
 PROFILE="peek3d"
 BUILD_DIR="build-dist"
 APP="$BUILD_DIR/Peek3D.app"
-VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Peek3D/Info.plist 2>/dev/null || echo "1.0")
+# Info.plist has no version of its own: it comes from MARKETING_VERSION.
+VERSION=$(sed -n "s/.*MARKETING_VERSION = \(.*\);/\1/p" Peek3D.xcodeproj/project.pbxproj | head -1)
 DMG="$BUILD_DIR/Peek3D-$VERSION.dmg"
 
 echo "==> Build di archivio (Release, firmata Developer ID)"
