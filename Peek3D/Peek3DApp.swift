@@ -14,6 +14,10 @@ extension Notification.Name {
     static let peek3dSetShadingMode = Notification.Name("peek3d.setShadingMode")
     /// `userInfo["preset"]` carries `LightingPreset.rawValue`.
     static let peek3dSetLightingPreset = Notification.Name("peek3d.setLightingPreset")
+    /// `userInfo["axis"]` carries a `GizmoSceneFactory.axisDirections` key.
+    static let peek3dSnapToAxis = Notification.Name("peek3d.snapToAxis")
+    /// `userInfo["delta"]` carries the zoom step (`Double`).
+    static let peek3dZoom = Notification.Name("peek3d.zoom")
 }
 
 /// "Window" vs "Panel" (this app's word for a native macOS window tab) is a
@@ -198,6 +202,24 @@ private struct SceneCommands: View {
                 Label("Fit to view", systemImage: "viewfinder")
             }
             .keyboardShortcut("0", modifiers: .command)
+            Button { NotificationCenter.default.post(name: .peek3dZoom, object: nil, userInfo: ["delta": 0.25]) } label: {
+                Label("Zoom in", systemImage: "plus.magnifyingglass")
+            }
+            .keyboardShortcut("+", modifiers: .command)
+            Button { NotificationCenter.default.post(name: .peek3dZoom, object: nil, userInfo: ["delta": -0.25]) } label: {
+                Label("Zoom out", systemImage: "minus.magnifyingglass")
+            }
+            .keyboardShortcut("-", modifiers: .command)
+            Menu {
+                ForEach(Array(GizmoSceneFactory.views.enumerated()), id: \.offset) { index, view in
+                    Button(LocalizedStringKey(view.label)) {
+                        NotificationCenter.default.post(name: .peek3dSnapToAxis, object: nil, userInfo: ["axis": view.axis])
+                    }
+                    .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: [.command, .control])
+                }
+            } label: {
+                Label("Views", systemImage: "cube")
+            }
             Divider()
             Button { NotificationCenter.default.post(name: .peek3dToggleWireframe, object: nil) } label: {
                 Label("Wireframe", systemImage: "triangle")

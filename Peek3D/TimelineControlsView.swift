@@ -22,6 +22,7 @@ struct TimelineControlsView: View {
                 .frame(width: 38, alignment: .trailing)
                 .monospacedDigit()
                 .foregroundStyle(.white.opacity(0.85))
+                .accessibilityHidden(true)
 
             progressBar
 
@@ -29,6 +30,7 @@ struct TimelineControlsView: View {
                 .frame(width: 44, alignment: .leading)
                 .monospacedDigit()
                 .foregroundStyle(.white.opacity(0.55))
+                .accessibilityHidden(true)
 
             if controller.animations.count > 1 {
                 animationMenu
@@ -61,6 +63,7 @@ struct TimelineControlsView: View {
         .buttonStyle(.plain)
         .pointerCursor()
         .help(controller.isPlaying ? "Pause" : "Play")
+        .accessibilityLabel(Text(controller.isPlaying ? "Pause" : "Play"))
     }
 
     // MARK: - Progress
@@ -80,6 +83,13 @@ struct TimelineControlsView: View {
         }
         .frame(height: 4)
         .frame(minWidth: 150)
+        // The two timecodes beside the bar are hidden; VoiceOver reads them here.
+        .accessibilityElement()
+        .accessibilityRepresentation {
+            ProgressView(value: controller.animationTime, total: max(controller.animationDuration, 0.001)) {
+                Text("a11y.timeline")
+            }
+        }
     }
 
     // MARK: - Animation selector
@@ -116,6 +126,8 @@ struct TimelineControlsView: View {
         .fixedSize()
         .pointerCursor()
         .help("Choose animation")
+        .accessibilityLabel(Text("Choose animation"))
+        .accessibilityValue(Text(controller.animationName(at: controller.currentAnimationIndex)))
     }
 
     // MARK: - Formatting

@@ -41,6 +41,8 @@ struct ContentView: View {
 
             if let scene {
                 SceneContainerView(scene: scene, animations: animations, controller: controller)
+                    .accessibilityElement()
+                    .accessibilityLabel(Text("3D viewport"))
                     .ignoresSafeArea()
                     .grabCursor()
 
@@ -99,6 +101,14 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .peek3dSetShadingMode)) { note in
             guard let raw = note.userInfo?["mode"] as? String, let mode = ShadingMode(rawValue: raw) else { return }
             guardKeyWindow { controller.setShadingMode(mode) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .peek3dSnapToAxis)) { note in
+            guard let axis = note.userInfo?["axis"] as? String, let direction = GizmoSceneFactory.axisDirections[axis] else { return }
+            guardKeyWindow { controller.snapToAxis(direction) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .peek3dZoom)) { note in
+            guard let delta = note.userInfo?["delta"] as? Double else { return }
+            guardKeyWindow { controller.zoom(by: Float(delta)) }
         }
         .onReceive(NotificationCenter.default.publisher(for: .peek3dSetLightingPreset)) { note in
             guard let raw = note.userInfo?["preset"] as? String, let preset = LightingPreset(rawValue: raw) else { return }
@@ -211,6 +221,9 @@ struct ContentView: View {
                     withAnimation(.easeOut(duration: 0.15)) { gizmoHoverLabel = label }
                 }
                 .frame(width: 96, height: 96)
+                .accessibilityElement()
+                .accessibilityLabel(Text("Axis gizmo"))
+                .modifier(GizmoViewActions(controller: controller))
                 // Cursor is set per-dot inside AxisGizmoView's own mouse
                 // handling (pointing hand only over an actual axis dot,
                 // arrow otherwise) — a blanket `.pointerCursor()` here would
@@ -239,6 +252,7 @@ struct ContentView: View {
         HStack(spacing: 7) {
             Image(systemName: "cube.transparent")
                 .font(.system(size: 12))
+                .accessibilityHidden(true)
             Text(stats?.fileName ?? "")
                 .font(.system(size: 13, weight: .medium))
         }
@@ -311,15 +325,26 @@ struct ContentView: View {
                 self.scene = model.scene
                 self.stats = model.stats
                 controller.currentModelName = (model.stats.fileName as NSString).deletingPathExtension
+                Self.announce(String(localized: "a11y.loaded \(model.stats.fileName)"))
                 if !model.missingExternalTextureURLs.isEmpty {
                     self.missingTexturePrompt = (url, model.missingExternalTextureURLs.count)
+                    Self.announce(String(localized: "missingTexture.count \(model.missingExternalTextureURLs.count)"))
                 }
             case .failure(ModelLoadError.needsFolderAccess(let urls)):
                 self.missingTexturePrompt = (url, urls.count)
+                Self.announce(String(localized: "missingTexture.count \(urls.count)"))
             case .failure(let error):
                 self.errorMessage = Self.userMessage(for: error)
+                Self.announce(self.errorMessage ?? "")
             }
         }
+    }
+
+    /// Banners and load results appear without focus moving, so VoiceOver
+    /// wouldn't notice them on its own.
+    private static func announce(_ text: String) {
+        NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
+                             userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.high.rawValue])
     }
 
     /// Peek3D's own load errors are already localized, user-facing sentences.
@@ -351,5 +376,20 @@ struct ContentView: View {
         _ = folderURL.startAccessingSecurityScopedResource()
         missingTexturePrompt = nil
         load(url: modelURL)
+    }
+}
+
+/// The gizmo's dots are only reachable with a mouse; VoiceOver gets the six
+/// views as named actions on the gizmo element instead.
+private struct GizmoViewActions: ViewModifier {
+    let controller: ViewerController
+
+    func body(content: Content) -> some View {
+        // Reversed: each wrap lands in front of the previous one in the list.
+        GizmoSceneFactory.views.reversed().reduce(AnyView(content)) { view, entry in
+            AnyView(view.accessibilityAction(named: Text(LocalizedStringKey(entry.label))) {
+                if let direction = GizmoSceneFactory.axisDirections[entry.axis] { controller.snapToAxis(direction) }
+            })
+        }
     }
 }

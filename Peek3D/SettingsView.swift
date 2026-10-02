@@ -89,7 +89,7 @@ private struct GeneralSettings: View {
     var body: some View {
         SettingsSection(String(localized: "settings.language", defaultValue: "Language"), showsDivider: false) {
             LabeledContent(String(localized: "settings.language.label", defaultValue: "App language")) {
-                Picker("", selection: $language) {
+                Picker(String(localized: "settings.language.label", defaultValue: "App language"), selection: $language) {
                     Text("settings.language.system").tag("")
                     Divider()
                     ForEach(AppLanguage.supported, id: \.self) { code in
@@ -152,7 +152,7 @@ private struct ViewerSettings: View {
     ) -> some View {
         GridRow {
             Text(LocalizedStringKey(title))
-            Picker("", selection: selection) {
+            Picker(LocalizedStringKey(title), selection: selection) {
                 ForEach(options) { Text($0[keyPath: label]).tag($0) }
             }
             .labelsHidden()
@@ -212,7 +212,7 @@ private struct SettingsSection<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title).font(.headline)
+            Text(title).font(.headline).accessibilityAddTraits(.isHeader)
             content
             if showsDivider {
                 Divider().padding(.top, 2)

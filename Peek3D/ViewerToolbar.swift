@@ -64,6 +64,8 @@ private struct ToolbarIconButton: View {
                 .background(backgroundColor, in: RoundedRectangle(cornerRadius: 9))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(Text(LocalizedStringKey(label)))
+        .accessibilityAddTraits(active ? .isSelected : [])
         .pointerCursor()
         .onHover { inside in
             withAnimation(.easeOut(duration: 0.15)) { isHovering = inside }
@@ -238,7 +240,11 @@ private struct ShadingMenuButton: View {
                 }
             }
         } label: {
-            Image(systemName: controller.shadingMode.iconName)
+            // The NSMenu-backed Menu reads its accessibility description from
+            // the NSImage, which is otherwise the symbol's name ("Light bulb").
+            Image(nsImage: NSImage(systemSymbolName: controller.shadingMode.iconName,
+                                   accessibilityDescription: String(localized: "Shading")) ?? NSImage())
+                .renderingMode(.template)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(active ? .black : .white.opacity(0.85))
         }
@@ -258,6 +264,8 @@ private struct ShadingMenuButton: View {
             if inside { NSCursor.pointingHand.set() }
         })
         .sidebarTooltip("Shading")
+        .accessibilityLabel(Text("Shading"))
+        .accessibilityValue(Text(controller.shadingMode.displayName))
     }
 
     private var backgroundColor: Color {
@@ -283,7 +291,11 @@ private struct LightingMenuButton: View {
                 controller.setLightingPreset(preset)
             }
         } label: {
-            Image(systemName: controller.lightingPreset.iconName)
+            // The NSMenu-backed Menu reads its accessibility description from
+            // the NSImage, which is otherwise the symbol's name ("Light bulb").
+            Image(nsImage: NSImage(systemSymbolName: controller.lightingPreset.iconName,
+                                   accessibilityDescription: String(localized: "Lighting")) ?? NSImage())
+                .renderingMode(.template)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(active ? .black : .white.opacity(0.85))
         }
@@ -298,6 +310,8 @@ private struct LightingMenuButton: View {
             if inside { NSCursor.pointingHand.set() }
         })
         .sidebarTooltip("Lighting")
+        .accessibilityLabel(Text("Lighting"))
+        .accessibilityValue(Text(controller.lightingPreset.displayName))
     }
 
     private var backgroundColor: Color {

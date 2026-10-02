@@ -8,6 +8,7 @@ struct InfoPanelView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Model info")
                 .font(.system(size: 15, weight: .semibold))
+                .accessibilityAddTraits(.isHeader)
                 .foregroundStyle(.white)
 
             Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 20, verticalSpacing: 8) {
