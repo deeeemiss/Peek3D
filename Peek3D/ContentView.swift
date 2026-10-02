@@ -265,9 +265,9 @@ struct ContentView: View {
     }
 
     private func missingTextureBanner(_ prompt: (modelURL: URL, count: Int)) -> some View {
-        let message = prompt.count == 1
-            ? String(localized: "missingTexture.singular", defaultValue: "1 external texture not loaded (folder permissions).")
-            : "\(prompt.count) " + String(localized: "missingTexture.pluralSuffix", defaultValue: "external textures not loaded (folder permissions).")
+        // One key with plural variants: languages like Russian and Arabic
+        // need several forms, and Japanese/Chinese no space after the number.
+        let message = String(localized: "missingTexture.count \(prompt.count)")
         return VStack {
             Spacer()
             HStack(spacing: 12) {
@@ -315,10 +315,22 @@ struct ContentView: View {
                     self.missingTexturePrompt = (url, model.missingExternalTextureURLs.count)
                 }
             case .failure(let error):
-                let prefix = String(localized: "error.loadPrefix", defaultValue: "Error loading:")
-                self.errorMessage = "\(prefix) \(error.localizedDescription)"
+                self.errorMessage = Self.userMessage(for: error)
             }
         }
+    }
+
+    /// Peek3D's own load errors are already localized, user-facing sentences.
+    /// Errors from GLTFKit2 and ufbx are English technical text ("The asset
+    /// contains invalid JSON data."), so those get a localized generic
+    /// message instead, with the detail kept in the log for diagnosis.
+    private static func userMessage(for error: Error) -> String {
+        if error is GLTFValidator.Invalid || error is ModelLoadError {
+            return error.localizedDescription
+        }
+        NSLog("Peek3D: load failed: %@", String(describing: error))
+        return String(localized: "error.openFailed",
+                      defaultValue: "This file couldn't be opened. It may be damaged or use a feature Peek3D doesn't support yet.")
     }
 
     /// Lets the user grant read access to the model's containing folder (the
@@ -326,9 +338,7 @@ struct ContentView: View {
     /// external textures resolve. The granted access lasts for this app session.
     private func grantFolderAccessAndRetry(modelURL: URL) {
         let panel = NSOpenPanel()
-        let prefix = String(localized: "folderAccess.prefix", defaultValue: "Select the folder that contains")
-        let suffix = String(localized: "folderAccess.suffix", defaultValue: "to enable its external textures.")
-        panel.message = "\(prefix) \"\(modelURL.lastPathComponent)\" \(suffix)"
+        panel.message = String(localized: "folderAccess.message \(modelURL.lastPathComponent)")
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false

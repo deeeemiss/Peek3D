@@ -512,8 +512,7 @@ final class ViewerController: ObservableObject {
         guard animations.indices.contains(index) else { return "" }
         let raw = animations[index].name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard raw.isEmpty else { return raw }
-        let fallback = String(localized: "clip.fallback", defaultValue: "Animation")
-        return "\(fallback) \(index + 1)"
+        return String(localized: "clip.fallback \(index + 1)")
     }
 
     private func resumePlayback() {

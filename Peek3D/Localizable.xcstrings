@@ -1,135 +1,6 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "1 external texture not loaded (folder permissions).": {
-      "localizations": {
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 texture esterna non caricata (permessi cartella)."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 textura externa no cargada (permisos de carpeta)."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 texture externe non chargée (autorisations du dossier)."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 externe Textur nicht geladen (Ordnerberechtigungen)."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 textura externa não carregada (permissões da pasta)."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 個の外部テクスチャを読み込めませんでした（フォルダの権限）。"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 个外部纹理未载入（文件夹权限）。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "외부 텍스처 1개를 불러오지 못했습니다(폴더 권한)."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 внешняя текстура не загружена (нет доступа к папке)."
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تعذّر تحميل خامة خارجية واحدة (أذونات المجلد)."
-          }
-        }
-      }
-    },
-    "Animation": {
-      "comment": "clip.fallback",
-      "localizations": {
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Animazione"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Animación"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Animation"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Animation"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Animação"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アニメーション"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "动画"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "애니메이션"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Анимация"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الحركة"
-          }
-        }
-      }
-    },
     "Choose a file…": {
       "localizations": {
         "it": {
@@ -382,135 +253,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "تجاهل"
-          }
-        }
-      }
-    },
-    "Drag a 3D model here": {
-      "localizations": {
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trascina un modello 3D qui"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Arrastra un modelo 3D aquí"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Faites glisser un modèle 3D ici"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "3D-Modell hierher ziehen"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Arraste um modelo 3D para cá"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ここに3Dモデルをドラッグ"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "将 3D 模型拖到这里"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "여기로 3D 모델을 드래그하세요"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Перетащите сюда 3D-модель"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اسحب نموذجًا ثلاثي الأبعاد إلى هنا"
-          }
-        }
-      }
-    },
-    "Error loading:": {
-      "comment": "error.loadPrefix",
-      "localizations": {
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Errore nel caricamento:"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Error al cargar:"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erreur de chargement :"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fehler beim Laden:"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erro ao carregar:"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "読み込みエラー:"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "载入出错："
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "불러오기 오류:"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ошибка загрузки:"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "خطأ في التحميل:"
           }
         }
       }
@@ -1567,70 +1309,6 @@
         }
       }
     },
-    "Open…": {
-      "localizations": {
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apri…"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Abrir…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ouvrir…"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Öffnen …"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Abrir…"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "開く…"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开…"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "열기…"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Открыть…"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "فتح…"
-          }
-        }
-      }
-    },
     "Outdoor": {
       "localizations": {
         "it": {
@@ -1954,71 +1632,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "لقطة شاشة"
-          }
-        }
-      }
-    },
-    "Select the folder that contains": {
-      "comment": "folderAccess.prefix",
-      "localizations": {
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seleziona la cartella che contiene"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Selecciona la carpeta que contiene"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sélectionnez le dossier qui contient"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wähle den Ordner mit"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Selecione a pasta que contém"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "外部テクスチャを有効にするには、"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选择包含"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "외부 텍스처를 사용하려면"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Выберите папку, содержащую"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اختر المجلد الذي يحتوي على"
           }
         }
       }
@@ -2791,213 +2404,6 @@
         }
       }
     },
-    "dropzone.chooseShort": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choose…"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elegir…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choisir…"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Auswählen …"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Escolher…"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "選択…"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选择…"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "선택…"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Выбрать…"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اختر…"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Scegli…"
-          }
-        }
-      }
-    },
-    "external textures not loaded (folder permissions).": {
-      "comment": "missingTexture.pluralSuffix",
-      "localizations": {
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "texture esterne non caricate (permessi cartella)."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "texturas externas no cargadas (permisos de carpeta)."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "textures externes non chargées (autorisations du dossier)."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "externe Texturen nicht geladen (Ordnerberechtigungen)."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "texturas externas não carregadas (permissões da pasta)."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "個の外部テクスチャを読み込めませんでした（フォルダの権限）。"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "个外部纹理未载入（文件夹权限）。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "개의 외부 텍스처를 불러오지 못했습니다(폴더 권한)."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "шт. внешних текстур не загружено (нет доступа к папке)."
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "خامات خارجية لم يتم تحميلها (أذونات المجلد)."
-          }
-        }
-      }
-    },
-    "folderAccess.grantShort": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Grant access"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conceder acceso"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Autoriser"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zugriff erlauben"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Permitir acesso"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アクセスを許可"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "授予权限"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "접근 허용"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Разрешить доступ"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "منح الوصول"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Concedi accesso"
-          }
-        }
-      }
-    },
     "lighting.default": {
       "extractionState": "manual",
       "localizations": {
@@ -3349,142 +2755,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "افتراضي"
-          }
-        }
-      }
-    },
-    "stats.trianglesShort": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "tris"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "tri."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "tri."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dr."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "tri."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "三角形"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "三角形"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "삼각형"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "треуг."
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مثلث"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "tri"
-          }
-        }
-      }
-    },
-    "to enable its external textures.": {
-      "comment": "folderAccess.suffix",
-      "localizations": {
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "per abilitarne le texture esterne."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "para activar sus texturas externas."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "pour activer ses textures externes."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "aus, um seine externen Texturen zu aktivieren."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "para ativar suas texturas externas."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "を含むフォルダを選択してください。"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "的文件夹以启用其外部纹理。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "이(가) 들어 있는 폴더를 선택하세요."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "— чтобы включить её внешние текстуры."
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "لتفعيل الخامات الخارجية الخاصة به."
           }
         }
       }
@@ -5473,6 +4743,440 @@
           "stringUnit": {
             "state": "translated",
             "value": "无法读取此文件，或其中没有可显示的 3D 模型。"
+          }
+        }
+      }
+    },
+    "clip.fallback %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Animation %lld"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Animazione %lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Animación %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Animation %lld"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Animation %lld"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Animação %lld"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Анимация %lld"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رسم متحرك %lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アニメーション %lld"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "애니메이션 %lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "动画 %lld"
+          }
+        }
+      }
+    },
+    "folderAccess.message %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select the folder that contains “%@” to enable its external textures."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleziona la cartella che contiene «%@» per abilitarne le texture esterne."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecciona la carpeta que contiene «%@» para activar sus texturas externas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez le dossier qui contient « %@ » pour activer ses textures externes."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle den Ordner mit „%@“ aus, um seine externen Texturen zu aktivieren."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecione a pasta que contém “%@” para ativar as texturas externas."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выберите папку с файлом «%@», чтобы включить его внешние текстуры."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اختر المجلد الذي يحتوي على «%@» لتفعيل الخامات الخارجية."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外部テクスチャを有効にするには、「%@」を含むフォルダを選択してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "외부 텍스처를 사용하려면 “%@” 파일이 들어 있는 폴더를 선택하세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择包含“%@”的文件夹以启用其外部纹理。"
+          }
+        }
+      }
+    },
+    "error.openFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This file couldn't be opened. It may be damaged or use a feature Peek3D doesn't support yet."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile aprire questo file. Potrebbe essere danneggiato o usare una funzione che Peek3D non supporta ancora."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo abrir este archivo. Puede estar dañado o usar una función que Peek3D aún no admite."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’ouvrir ce fichier. Il est peut-être endommagé ou utilise une fonction que Peek3D ne prend pas encore en charge."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Datei konnte nicht geöffnet werden. Sie ist eventuell beschädigt oder nutzt eine Funktion, die Peek3D noch nicht unterstützt."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível abrir este arquivo. Ele pode estar danificado ou usar um recurso que o Peek3D ainda não suporta."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось открыть этот файл. Возможно, он повреждён или использует функцию, которую Peek3D пока не поддерживает."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر فتح هذا الملف. ربما يكون تالفًا أو يستخدم ميزة لا يدعمها Peek3D بعد."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このファイルを開けませんでした。破損しているか、Peek3D がまだ対応していない機能を使っている可能性があります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 파일을 열 수 없습니다. 손상되었거나 Peek3D가 아직 지원하지 않는 기능을 사용하는 파일일 수 있습니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法打开此文件。它可能已损坏，或使用了 Peek3D 尚不支持的功能。"
+          }
+        }
+      }
+    },
+    "missingTexture.count %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld external texture not loaded (folder permissions)."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld external textures not loaded (folder permissions)."
+                }
+              }
+            }
+          }
+        },
+        "it": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld texture esterna non caricata (permessi della cartella)."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld texture esterne non caricate (permessi della cartella)."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld textura externa no cargada (permisos de la carpeta)."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld texturas externas no cargadas (permisos de la carpeta)."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld texture externe non chargée (autorisations du dossier)."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld textures externes non chargées (autorisations du dossier)."
+                }
+              }
+            }
+          }
+        },
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld externe Textur nicht geladen (Ordnerberechtigungen)."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld externe Texturen nicht geladen (Ordnerberechtigungen)."
+                }
+              }
+            }
+          }
+        },
+        "pt-BR": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld textura externa não carregada (permissões da pasta)."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld texturas externas não carregadas (permissões da pasta)."
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Не загружена %lld внешняя текстура (нет доступа к папке)."
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Не загружены %lld внешние текстуры (нет доступа к папке)."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Не загружено %lld внешних текстур (нет доступа к папке)."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Не загружено %lld внешних текстур (нет доступа к папке)."
+                }
+              }
+            }
+          }
+        },
+        "ar": {
+          "variations": {
+            "plural": {
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "لم يتم تحميل أي خامة خارجية (أذونات المجلد)."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "تعذّر تحميل خامة خارجية واحدة (أذونات المجلد)."
+                }
+              },
+              "two": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "تعذّر تحميل خامتين خارجيتين (أذونات المجلد)."
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "تعذّر تحميل %lld خامات خارجية (أذونات المجلد)."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "تعذّر تحميل %lld خامة خارجية (أذونات المجلد)."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "تعذّر تحميل %lld خامة خارجية (أذونات المجلد)."
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "外部テクスチャ%lld個を読み込めませんでした（フォルダの権限）。"
+                }
+              }
+            }
+          }
+        },
+        "ko": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "외부 텍스처 %lld개를 불러오지 못했습니다(폴더 권한)."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld 个外部纹理未能载入（文件夹权限）。"
+                }
+              }
+            }
           }
         }
       }
