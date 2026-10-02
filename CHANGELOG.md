@@ -3,7 +3,7 @@
 All notable changes to Peek3D are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## 1.0 — 2026-10-02 (first public release)
 
 ### Added
 - Peek3D is free and open source under the MIT license. It makes no network
@@ -33,7 +33,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   Open Recent, Finder "Open With", and Dock drop; added a custom Welcome
   window since a read-only viewer has no "untitled document" state.
 
-## 1.0 — first native build
+## 0.9 — first native build (private)
 
 ### Added
 - Native macOS viewer (SwiftUI + SceneKit) for `.glb`/`.gltf` via GLTFKit2,

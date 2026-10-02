@@ -124,4 +124,6 @@ app prompts for folder access and retries automatically if it's missing.
 ## License
 
 [MIT](LICENSE.md). Third-party attributions are listed in the same file and
-in the app (Peek3D ▸ Open Source Licenses…).
+in the app (Peek3D ▸ Open Source Licenses…). The fox in the screenshot and
+demo is the glTF sample "Fox" (CC BY 4.0, PixelMannen / @tomkranis); test
+model credits are in [testmodels/README.md](testmodels/README.md).

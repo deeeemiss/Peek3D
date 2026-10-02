@@ -101,12 +101,36 @@
     background: #0d0d0f; border: 1px solid var(--line);
   }
 
-  details { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px; margin: 0 auto 10px; max-width: 760px; }
-  summary { cursor: pointer; font-weight: 600; }
-  details p { color: var(--muted); margin: 10px 0 0; }
+  .faq { max-width: 760px; margin: 0 auto; }
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; margin: 0 0 10px; transition: border-color .2s; }
+  details[open]:not(.closing) { border-color: rgba(89,173,255,.35); }
+  summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    padding: 18px 22px; cursor: pointer; font-weight: 600; list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary:hover { color: #fff; }
+  .chevron { flex: none; width: 18px; height: 18px; color: var(--muted); transition: transform .26s cubic-bezier(.2,.8,.2,1), color .2s; }
+  details[open]:not(.closing) .chevron { transform: rotate(180deg); color: var(--blue); }
+  .answer { overflow: hidden; }
+  .answer p { color: var(--muted); margin: 0; padding: 0 22px 20px; }
+  @media (prefers-reduced-motion: reduce) { .chevron, details { transition: none; } }
 
-  footer { margin-top: 88px; padding: 28px 0 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; text-align: center; }
-  footer a { color: var(--muted); }
+  footer.site { margin-top: 104px; border-top: 1px solid var(--line); background: linear-gradient(#0a0a0b, #0d0e11); }
+  .foot-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 40px; padding: 56px 0 40px; }
+  .foot-brand { display: flex; gap: 14px; align-items: flex-start; }
+  .foot-brand img { width: 48px; height: 48px; }
+  .foot-brand strong { display: block; font-size: 20px; letter-spacing: -0.01em; }
+  .foot-brand p { margin: 4px 0 0; color: var(--muted); font-size: 15px; max-width: 320px; }
+  .foot-col h3 { margin: 0 0 14px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .foot-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .foot-col a { color: var(--text); text-decoration: none; font-size: 15px; }
+  .foot-col a:hover { color: var(--blue); }
+  .foot-bottom {
+    display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between;
+    padding: 20px 0 36px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px;
+  }
+  @media (max-width: 720px) { .foot-grid { grid-template-columns: 1fr 1fr; } .foot-brand-col { grid-column: 1 / -1; } }
 </style>
 </head>
 <body>
@@ -181,19 +205,91 @@ cd Peek3D
 
   <section class="wrap" id="faq">
     <h2>Questions</h2>
-    <details><summary>Is Peek3D really free?</summary><p>Yes. It's open source under the MIT license: no trial, no subscription, no in-app purchases.</p></details>
-    <details><summary>Can it edit or convert models?</summary><p>No, on purpose. Peek3D is a viewer — it opens files quickly and shows them accurately. For editing, use Blender, Reality Composer or your DCC tool of choice.</p></details>
-    <details><summary>Why use it instead of Quick Look?</summary><p>Quick Look covers USDZ and a few other formats. Peek3D also opens glTF/GLB and FBX, plays their animations, and adds shading modes, lighting presets, wireframe and model statistics.</p></details>
-    <details><summary>Does it collect any data?</summary><p>No. The app has no network access at all.</p></details>
-    <details><summary>Which Macs does it run on?</summary><p>Any Mac with macOS 13 Ventura or later, Apple silicon or Intel.</p></details>
+    <div class="faq">
+      <details><summary><span>Is Peek3D really free?</span><svg class="chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5l5 5 5-5"/></svg></summary><div class="answer"><p>Yes. It's open source under the MIT license: no trial, no subscription, no in-app purchases.</p></div></details>
+      <details><summary><span>Can it edit or convert models?</span><svg class="chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5l5 5 5-5"/></svg></summary><div class="answer"><p>No, on purpose. Peek3D is a viewer — it opens files quickly and shows them accurately. For editing, use Blender, Reality Composer or your DCC tool of choice.</p></div></details>
+      <details><summary><span>Why use it instead of Quick Look?</span><svg class="chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5l5 5 5-5"/></svg></summary><div class="answer"><p>Quick Look covers USDZ and a few other formats. Peek3D also opens glTF/GLB and FBX, plays their animations, and adds shading modes, lighting presets, wireframe and model statistics.</p></div></details>
+      <details><summary><span>Does it collect any data?</span><svg class="chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5l5 5 5-5"/></svg></summary><div class="answer"><p>No. The app has no network access at all.</p></div></details>
+      <details><summary><span>Which Macs does it run on?</span><svg class="chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5l5 5 5-5"/></svg></summary><div class="answer"><p>Any Mac with macOS 13 Ventura or later, Apple silicon or Intel.</p></div></details>
+    </div>
   </section>
 </main>
 
-<footer class="wrap">
-  Peek3D · MIT License · <a href="https://github.com/deeeemiss/Peek3D">GitHub</a> · <a href="https://github.com/deeeemiss/Peek3D/issues">Report an issue</a> · Made by Sebastiano Demichelis
+<footer class="site">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand-col">
+        <div class="foot-brand">
+          <img src="assets/icon.png" alt="" width="48" height="48">
+          <div>
+            <strong>Peek3D</strong>
+            <p>A fast, native 3D file viewer for macOS. Free and open source, with no tracking.</p>
+          </div>
+        </div>
+      </div>
+      <nav class="foot-col" aria-label="Get Peek3D">
+        <h3>Get Peek3D</h3>
+        <ul>
+          <li><a href="https://github.com/deeeemiss/Peek3D/releases/latest">Download</a></li>
+          <li><a href="#install">Homebrew</a></li>
+          <li><a href="https://github.com/deeeemiss/Peek3D/blob/main/CHANGELOG.md">Release notes</a></li>
+          <li><a href="https://github.com/deeeemiss/Peek3D#build">Build from source</a></li>
+        </ul>
+      </nav>
+      <nav class="foot-col" aria-label="Project">
+        <h3>Project</h3>
+        <ul>
+          <li><a href="https://github.com/deeeemiss/Peek3D">Source on GitHub</a></li>
+          <li><a href="https://github.com/deeeemiss/Peek3D/issues">Report an issue</a></li>
+          <li><a href="https://github.com/deeeemiss/Peek3D/blob/main/CONTRIBUTING.md">Contributing</a></li>
+          <li><a href="https://github.com/deeeemiss/Peek3D/blob/main/LICENSE.md">MIT License</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Sebastiano Demichelis</span>
+      <span>Made with SwiftUI and SceneKit · Fox model CC BY 4.0, PixelMannen</span>
+    </div>
+  </div>
 </footer>
 
 <script>
+  // FAQ: one answer open at a time, with an animated height. <details> stays
+  // the source of truth so it keeps working without JavaScript.
+  (function () {
+    var items = Array.prototype.slice.call(document.querySelectorAll('.faq details'));
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    function setOpen(item, open) {
+      var answer = item.querySelector('.answer');
+      if (reduce.matches || !answer.animate) { item.open = open; return; }
+      if (open) {
+        item.classList.remove('closing');
+        item.open = true;
+        answer.animate(
+          [{ height: '0px', opacity: 0 }, { height: answer.scrollHeight + 'px', opacity: 1 }],
+          { duration: 280, easing: 'cubic-bezier(.2,.8,.2,1)' }
+        );
+      } else {
+        item.classList.add('closing');
+        var anim = answer.animate(
+          [{ height: answer.scrollHeight + 'px', opacity: 1 }, { height: '0px', opacity: 0 }],
+          { duration: 220, easing: 'cubic-bezier(.4,0,1,1)' }
+        );
+        anim.onfinish = function () { item.open = false; item.classList.remove('closing'); };
+      }
+    }
+    items.forEach(function (item) {
+      item.querySelector('summary').addEventListener('click', function (event) {
+        event.preventDefault();
+        var opening = !item.open || item.classList.contains('closing');
+        items.forEach(function (other) {
+          if (other !== item && other.open && !other.classList.contains('closing')) setOpen(other, false);
+        });
+        setOpen(item, opening);
+      });
+    });
+  })();
+
   document.querySelectorAll('.copy').forEach(function (button) {
     button.addEventListener('click', function () {
       var text = document.getElementById(button.dataset.copy).textContent;

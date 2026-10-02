@@ -16,3 +16,8 @@ GLBViewer.xcodeproj/xcuserdata/
 build-dist/
 INTENTO.md
 STATO.md
+
+# Note interne, solo in locale
+PROMPT.md
+reference-ui.png
+docs/TODO-fbx-support.md
