@@ -13,34 +13,17 @@ struct ContentView: View {
     let url: URL
 
     @StateObject private var controller = ViewerController()
-    @State private var scene: SCNScene?
-    @State private var stats: ModelStats?
-    @State private var animations: [ModelAnimation] = []
+    @StateObject private var session = ModelSession()
     @State private var showInfo = UserDefaults.standard.object(forKey: SettingsKey.showInfo) as? Bool ?? true
-    @State private var errorMessage: String?
     @State private var gizmoHoverLabel: String?
-    /// Set when an FBX load found external texture references the sandbox
-    /// wouldn't let it read — the model itself still loaded fine. Offers a
-    /// folder-access prompt + reload instead of silently showing a textureless
-    /// model.
-    @State private var missingTexturePrompt: (modelURL: URL, count: Int)?
-    /// Bumped on every `load(url:)` call and captured by that call's
-    /// completion handler. `ModelLoader.load` runs off-main and offers no
-    /// ordering guarantee — if the user drops a second file while the first
-    /// is still decoding, the two completions can land in either order. Without
-    /// this guard, a slow first load finishing AFTER a fast second load would
-    /// silently overwrite the newer model/stats with the stale one. Only the
-    /// completion whose token still matches the latest `loadGeneration` is
-    /// allowed to apply its result.
-    @State private var loadGeneration = 0
 
 
-    var body: some View {
+    private var window: some View {
         ZStack {
             Color(white: 0.04).ignoresSafeArea()
 
-            if let scene {
-                SceneContainerView(scene: scene, animations: animations, controller: controller)
+            if let scene = session.scene {
+                SceneContainerView(scene: scene, animations: session.animations, controller: controller)
                     .accessibilityElement()
                     .accessibilityLabel(Text("3D viewport"))
                     .ignoresSafeArea()
@@ -51,7 +34,7 @@ struct ContentView: View {
 
             // With a model on screen the notices sit in the top row (see
             // `overlays`), clear of the info panel and timeline at the bottom.
-            if scene == nil {
+            if session.scene == nil {
                 VStack {
                     Spacer()
                     notices
@@ -61,12 +44,15 @@ struct ContentView: View {
         }
         .frame(minWidth: 900, minHeight: 620)
         .task(id: url) { load(url: url) }
+        .onChange(of: session.stats?.fileName) { name in
+            controller.currentModelName = ((name ?? "Peek3D") as NSString).deletingPathExtension
+        }
         // A failed replacement leaves the previous model on screen: the error
         // is a notice then, not a state, so it goes away on its own.
-        .task(id: errorMessage) {
-            guard errorMessage != nil, scene != nil else { return }
+        .task(id: session.errorMessage) {
+            guard session.errorMessage != nil, session.scene != nil else { return }
             try? await Task.sleep(for: .seconds(8))
-            errorMessage = nil
+            session.errorMessage = nil
         }
         .onAppear(perform: closeWelcomeWindows)
         // Tells the "Scene" menu (Peek3DApp.swift) this window is a viewer,
@@ -77,7 +63,7 @@ struct ContentView: View {
         // "menu applies to the frontmost viewer" actually means.
         // Only once a model is on screen: before that (loading, failed) the
         // Scene menu's commands have nothing to act on.
-        .focusedSceneValue(\.peek3dViewerFocused, scene != nil)
+        .focusedSceneValue(\.peek3dViewerFocused, session.scene != nil)
         // Same rationale as above: lets the "Scene" menu's Shading/Lighting
         // submenus show a checkmark + live icon for whichever mode/preset is
         // active on the frontmost viewer, mirroring `ViewerToolbar`'s own
@@ -95,6 +81,11 @@ struct ContentView: View {
             }
             return true
         }
+    }
+
+    // Split from `body` only so the compiler can type-check the long chains.
+    var body: some View {
+        window
         // Menu-bar commands (Peek3DApp.swift) post to `NotificationCenter.default`,
         // which every open document window's `ContentView` subscribes to — with
         // several windows open, an unguarded handler here would apply the
@@ -186,7 +177,7 @@ struct ContentView: View {
         VStack {
             Spacer()
             HStack(alignment: .bottom, spacing: 16) {
-                if showInfo, let stats {
+                if showInfo, let stats = session.stats {
                     InfoPanelView(stats: stats)
                         .arrowCursor()
                         .transition(.opacity)
@@ -269,7 +260,7 @@ struct ContentView: View {
             Image(systemName: "cube.transparent")
                 .font(.system(size: 12))
                 .accessibilityHidden(true)
-            Text(stats?.fileName ?? "")
+            Text(session.stats?.fileName ?? "")
                 .font(.system(size: 13, weight: .medium))
         }
         .foregroundStyle(.white.opacity(0.85))
@@ -282,11 +273,11 @@ struct ContentView: View {
     @ViewBuilder
     private var notices: some View {
         VStack(spacing: 8) {
-            if let errorMessage {
+            if let errorMessage = session.errorMessage {
                 errorBanner(errorMessage)
             }
-            if let missingTexturePrompt {
-                missingTextureBanner(missingTexturePrompt)
+            if let prompt = session.missingTexturePrompt {
+                missingTextureBanner(prompt)
             }
         }
     }
@@ -295,7 +286,7 @@ struct ContentView: View {
         HStack(spacing: 12) {
             Text(message)
                 .font(.system(size: 13))
-            Button("Dismiss") { errorMessage = nil }
+            Button("Dismiss") { session.errorMessage = nil }
                 .buttonStyle(.plain)
                 .keyboardShortcut(.cancelAction)
         }
@@ -319,7 +310,7 @@ struct ContentView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .background(.black.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
-            Button("Dismiss") { missingTexturePrompt = nil }
+            Button("Dismiss") { session.missingTexturePrompt = nil }
                 .buttonStyle(.plain)
                 .keyboardShortcut(.cancelAction)
         }
@@ -332,56 +323,7 @@ struct ContentView: View {
     // MARK: - Loading
 
     private func load(url: URL) {
-        errorMessage = nil
-        missingTexturePrompt = nil
-        loadGeneration += 1
-        let generation = loadGeneration
-        ModelLoader.load(url: url) { result in
-            // A newer load (e.g. a second file dropped before this one
-            // finished decoding) has already started or completed — discard
-            // this stale result instead of clobbering the newer state.
-            guard generation == self.loadGeneration else { return }
-            switch result {
-            case .success(let model):
-                // Set animations before the scene so the new list is in place
-                // by the time `SceneContainerView` re-attaches on the scene swap.
-                self.animations = model.animations
-                self.scene = model.scene
-                self.stats = model.stats
-                controller.currentModelName = (model.stats.fileName as NSString).deletingPathExtension
-                Self.announce(String(localized: "a11y.loaded \(model.stats.fileName)"))
-                if !model.missingExternalTextureURLs.isEmpty {
-                    self.missingTexturePrompt = (url, model.missingExternalTextureURLs.count)
-                    Self.announce(String(localized: "missingTexture.count \(model.missingExternalTextureURLs.count)"))
-                }
-            case .failure(ModelLoadError.needsFolderAccess(let urls)):
-                self.missingTexturePrompt = (url, urls.count)
-                Self.announce(String(localized: "missingTexture.count \(urls.count)"))
-            case .failure(let error):
-                self.errorMessage = Self.userMessage(for: error)
-                Self.announce(self.errorMessage ?? "")
-            }
-        }
-    }
-
-    /// Banners and load results appear without focus moving, so VoiceOver
-    /// wouldn't notice them on its own.
-    private static func announce(_ text: String) {
-        NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
-                             userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.high.rawValue])
-    }
-
-    /// Peek3D's own load errors are already localized, user-facing sentences.
-    /// Errors from GLTFKit2 and ufbx are English technical text ("The asset
-    /// contains invalid JSON data."), so those get a localized generic
-    /// message instead, with the detail kept in the log for diagnosis.
-    private static func userMessage(for error: Error) -> String {
-        if error is GLTFValidator.Invalid || error is ModelLoadError {
-            return error.localizedDescription
-        }
-        NSLog("Peek3D: load failed: %@", String(describing: error))
-        return String(localized: "error.openFailed",
-                      defaultValue: "This file couldn't be opened. It may be damaged or use a feature Peek3D doesn't support yet.")
+        session.load(url: url)
     }
 
     /// Lets the user grant read access to the model's containing folder (the
@@ -398,7 +340,7 @@ struct ContentView: View {
         // A URL fresh from the panel is already readable for this session;
         // this can return false and still work, so it mustn't block the reload.
         _ = folderURL.startAccessingSecurityScopedResource()
-        missingTexturePrompt = nil
+        session.missingTexturePrompt = nil
         load(url: modelURL)
     }
 }

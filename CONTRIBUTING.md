@@ -37,6 +37,10 @@ scope.
 - One change per pull request, with a short description of what and why.
 - Build with `./scripts/run.sh` and try the change on a few real files
   (`testmodels/` has some) before opening the PR.
+- Run `python3 scripts/test.py`: it checks that valid files open, broken ones
+  fail with an error instead of crashing, a window recovers after a bad file,
+  and fuzzes the glTF loader. The same check runs on every pull request. If
+  you fix a file that used to crash, add it to `tests/fixtures/invalid/`.
 - Match the surrounding code: SwiftUI + SceneKit, `simd` types over
   `SCNVector3`, comments that explain *why*.
 - User-facing text goes through the String Catalog

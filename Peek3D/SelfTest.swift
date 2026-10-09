@@ -10,6 +10,9 @@ import AppKit
 /// Debug builds only: the shipped app has no hidden test entry points.
 enum SelfTest {
     static func runIfRequested() {
+        if let sequence = ProcessInfo.processInfo.environment["PEEK3D_SELFTEST_SEQUENCE"] {
+            runSequence(sequence, rapid: ProcessInfo.processInfo.environment["PEEK3D_SELFTEST_RAPID"] == "1")
+        }
         guard let path = ProcessInfo.processInfo.environment["PEEK3D_SELFTEST"] else { return }
         let url = URL(fileURLWithPath: path)
         do {
@@ -54,6 +57,35 @@ enum SelfTest {
             fflush(stdout)
             exit(1)
         }
+    }
+
+    /// Opens `|`-separated files one after another in one `ModelSession`, the
+    /// same object a viewer window uses, then prints what it ends up showing:
+    /// which file, its triangle count (to tell two models apart) and the
+    /// error, if any. `rapid` issues every load at once, like quick repeated
+    /// drops; otherwise each load finishes before the next starts.
+    private static func runSequence(_ spec: String, rapid: Bool) {
+        let session = ModelSession()
+        let deadline = Date().addingTimeInterval(30)
+        func settle() {
+            // Loads complete on the main queue, which only drains while the
+            // run loop turns — and this runs before the app's own loop starts.
+            while session.isLoading {
+                guard Date() < deadline else { print("SEQUENCE_TIMEOUT"); fflush(stdout); exit(2) }
+                RunLoop.main.run(until: Date().addingTimeInterval(0.02))
+            }
+        }
+        for path in spec.split(separator: "|") {
+            session.load(url: URL(fileURLWithPath: String(path)))
+            if !rapid { settle() }
+        }
+        settle()
+        print("SEQUENCE_DONE")
+        print("shown: \(session.stats?.fileName ?? "none")")
+        print("triangles: \(session.stats?.triangleCount ?? 0)")
+        print("error: \(session.errorMessage ?? "none")")
+        fflush(stdout)
+        exit(0)
     }
 
     /// Ground-truth check for the scrubbing mechanism, using RENDERED PIXELS
