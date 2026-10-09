@@ -27,7 +27,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # Icon and full-size screenshot (for link previews) come from the README's
       # assets; site/ only keeps the compressed hero image.
       - name: Assemble
