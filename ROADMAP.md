@@ -15,7 +15,7 @@ Il visualizzatore 3D nativo di riferimento su macOS: apre al volo glTF, FBX, OBJ
 | 6 | 1.1: correzioni, accessibilità, undici lingue | ✅ fatto |
 | 7 | Farsi conoscere nelle community macOS e open source | 🔄 in corso |
 | 8 | Traduzioni riviste da madrelingua | ⬜ da fare |
-| 9 | Draco e KTX2, skinning FBX, scorrimento della timeline | ⬜ da fare (da confermare) |
+| 9 | Draco e KTX2, skinning FBX, scorrimento della timeline | ⬜ da fare |
 
 ## Fuori ambito
 - Modifica ed esportazione dei modelli: Peek3D si limita a mostrarli.
