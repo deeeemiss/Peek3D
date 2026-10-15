@@ -3,6 +3,13 @@
 All notable changes to Peek3D are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## Unreleased
+
+### Added
+- Animation timeline: drag (or click) the bar to jump to any instant, for
+  glTF and FBX. Playing resumes from where you left it. Keyboard: focus the
+  bar and use ← →; VoiceOver: swipe up/down, the position is spoken in seconds.
+
 ## 1.1 — 2026-10-02
 
 Bug-fix release from a full debugging pass of the app.

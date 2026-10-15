@@ -74,6 +74,11 @@ final class ViewerController: ObservableObject {
 
     private let activeAnimationKey = "peek3d.activeAnimation"
     private var activePlayer: SCNAnimationPlayer?
+    /// Pristine copy of the active clip's animation; every seek builds a new
+    /// player from a copy of this (see the Animation section).
+    private var activeBaseAnimation: SCNAnimation?
+    /// True between the start and end of a slider drag.
+    private(set) var isScrubbing = false
     private var playbackTimer: Timer?
     private var lastTick: CFTimeInterval = 0
 
@@ -424,24 +429,28 @@ final class ViewerController: ObservableObject {
 
     // MARK: - Animation
     //
-    // Playback mechanism: WALL-CLOCK (`SCNAnimationPlayer.play()` / `.paused`).
+    // Playback + seeking: ONE FRESH PLAYER PER SEEK (`installPlayer(at:running:)`).
     //
-    // This was chosen empirically, not by preference. GLTFKit2 builds each clip
-    // as a `CAAnimationGroup` whose child keyframe animations carry
-    // `repeatDuration = FLT_MAX`. That structure ignores the two scene-time
-    // scrubbing paths SceneKit normally offers:
-    //   • `SCNAnimation.usesSceneTimeBase = true` + `SCNView.sceneTime`  → no motion
-    //   • `speed = 0` + `SCNAnimation.timeOffset`  (the CA freeze trick)   → no motion
-    // Both were verified STATIC against real rendered pixels (Fox, BoxAnimated)
-    // via the `SelfTest` harness in Peek3DApp.swift; only wall-clock produced
-    // distinct frames. See that harness for the reproducible evidence.
+    // GLTFKit2 and the FBX bridge both bake a clip as a `CAAnimationGroup` with
+    // `repeatDuration = FLT_MAX`, wrapped in an `SCNAnimationPlayer`. Two earlier
+    // scrubbing attempts looked dead against real pixels:
+    //   • `SCNView.sceneTime` with `usesSceneTimeBase`  → no motion
+    //   • `timeOffset` on a frozen player              → no motion
+    // The cause was that BOTH attempts mutated `player.animation`, which returns
+    // a COPY: the write never reached the live player, so nothing could move.
+    // What does work (verified against rendered pixels on Fox, BoxAnimated and an
+    // FBX clip, see `SelfTest.verifyScrub`): copy the pristine `SCNAnimation`,
+    // set `timeOffset` on the COPY, and wrap that in a NEW `SCNAnimationPlayer`.
+    //   • `speed = 0` freezes it on exactly the pose at `timeOffset`;
+    //   • `speed = 1` plays on from there, looping through the baked
+    //     `repeatDuration`, so play-after-scrub resumes from the scrubbed point.
+    // A player `paused = true` right after creation does NOT show the offset
+    // pose (it renders the bind pose), so "frozen" is always `speed = 0`.
     //
-    // Consequence: there is no public API to jump a wall-clock player to an
-    // arbitrary time, so precise drag-to-seek is not offered. Play / pause /
-    // select are rock-solid; the timeline degrades to a *synchronized progress
-    // readout*: a 1/60s timer advances `animationTime` off the same real clock
-    // the (non-paused, looping) player runs on, so the bar tracks the model.
-    // glTF clips only touch model nodes (never our separate camera node), so
+    // Pause is a seek too: it re-installs a frozen player at the tracked
+    // playhead, so the pose and the readout are the same instant by construction.
+    // The 1/60s timer only mirrors the wall-clock player into `animationTime`.
+    // glTF/FBX clips only touch model nodes (never our camera node), so
     // playback never fights `allowsCameraControl`.
 
     /// Wires up the clips for a freshly attached scene and, if any exist,
@@ -452,11 +461,13 @@ final class ViewerController: ObservableObject {
         stopTimer()
         scene.rootNode.removeAnimation(forKey: activeAnimationKey)
         activePlayer = nil
+        activeBaseAnimation = nil
         self.animations = animations
         currentAnimationIndex = 0
         animationTime = 0
         animationDuration = 0
         isPlaying = false
+        isScrubbing = false
 
         guard !animations.isEmpty else { return }
 
@@ -467,33 +478,69 @@ final class ViewerController: ObservableObject {
         activateAnimation(at: 0, autoplay: autoplay)
     }
 
-    /// Attaches exactly one clip's player to the root and (re)starts it from the
-    /// beginning. Only one is ever attached: a skinned model's clips (e.g. Fox's
-    /// Survey/Walk/Run) share one skeleton via absolute keyPaths, so leaving
-    /// several attached would make them fight over the same nodes.
+    /// Makes one clip the active one and starts it from the beginning. Only one
+    /// is ever attached: a skinned model's clips (e.g. Fox's Survey/Walk/Run)
+    /// share one skeleton via absolute keyPaths, so leaving several attached
+    /// would make them fight over the same nodes.
     private func activateAnimation(at index: Int, autoplay: Bool) {
-        guard animations.indices.contains(index),
-              let scene = scnView?.scene else { return }
+        guard animations.indices.contains(index), scnView?.scene != nil else { return }
+
+        // Pristine template: every player is built from a copy of it.
+        let base = animations[index].player.animation
+        activeBaseAnimation = base
+        currentAnimationIndex = index
+        animationDuration = base.duration
+        animationTime = 0
+        isScrubbing = false
+
+        installPlayer(at: 0, running: autoplay)
+        isPlaying = autoplay
+        if autoplay { startTimer() } else { stopTimer() }
+    }
+
+    /// Replaces the active player with a fresh one positioned at `time`
+    /// (wrapped into the clip), either playing on from there or frozen on it.
+    private func installPlayer(at time: TimeInterval, running: Bool) {
+        guard let scene = scnView?.scene,
+              let base = activeBaseAnimation,
+              let animation = base.copy() as? SCNAnimation else { return }
+
+        let duration = max(base.duration, 0.001)
+        var t = time.truncatingRemainder(dividingBy: duration)
+        if t < 0 { t += duration }
+        animation.timeOffset = t
 
         scene.rootNode.removeAnimation(forKey: activeAnimationKey)
-
-        let player = animations[index].player
-        player.stop() // rewind to t = 0 in case this clip ran before
+        let player = SCNAnimationPlayer(animation: animation)
         scene.rootNode.addAnimationPlayer(player, forKey: activeAnimationKey)
         player.play()
+        if !running { player.speed = 0 } // frozen on the pose at `timeOffset`
         activePlayer = player
+    }
 
-        currentAnimationIndex = index
-        animationDuration = player.animation.duration
-        animationTime = 0
+    /// Jumps the playhead to `time` seconds (clamped to the clip). Keeps playing
+    /// if it was playing; a paused timeline stays paused on the new pose.
+    func seek(to time: TimeInterval) {
+        guard hasAnimations, animationDuration > 0 else { return }
+        let t = min(max(time, 0), animationDuration)
+        animationTime = t
+        let running = isPlaying && !isScrubbing
+        installPlayer(at: t, running: running)
+        if running { lastTick = CACurrentMediaTime() }
+    }
 
-        if autoplay {
-            resumePlayback()
-        } else {
-            // Freeze on frame 0 without leaving the timeline "playing".
-            player.paused = true
-            isPlaying = false
+    /// Starts/ends a scrub gesture (a slider drag). While scrubbing the model is
+    /// frozen on whatever the thumb points at and the readout timer is idle;
+    /// on release a playing timeline resumes from the release point.
+    func setScrubbing(_ scrubbing: Bool) {
+        guard hasAnimations, scrubbing != isScrubbing else { return }
+        isScrubbing = scrubbing
+        if scrubbing {
             stopTimer()
+            installPlayer(at: animationTime, running: false)
+        } else if isPlaying {
+            installPlayer(at: animationTime, running: true)
+            startTimer()
         }
     }
 
@@ -503,9 +550,10 @@ final class ViewerController: ObservableObject {
     }
 
     func pause() {
-        activePlayer?.paused = true
+        guard hasAnimations else { return }
         isPlaying = false
         stopTimer()
+        installPlayer(at: animationTime, running: false)
     }
 
     func togglePlayback() {
@@ -529,8 +577,11 @@ final class ViewerController: ObservableObject {
     }
 
     private func resumePlayback() {
-        activePlayer?.paused = false
         isPlaying = true
+        // Dragging: the release will start the player from the thumb position.
+        guard !isScrubbing else { return }
+        // A scrub may have moved the playhead; always restart from it.
+        installPlayer(at: animationTime, running: true)
         startTimer()
     }
 
