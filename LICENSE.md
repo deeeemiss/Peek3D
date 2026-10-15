@@ -25,7 +25,8 @@ SOFTWARE.
 Peek3D bundles or depends on the following open-source software. All are
 permissively licensed and compatible with the MIT license above. This list
 reflects what is actually compiled into the distributed binary (verified
-with `nm`/`strings` on `GLTFKit2.framework` in a Release build), not just
+with `nm`/`strings` on `GLTFKit2.framework` and the Peek3D executable in a
+Release build), not just
 what Peek3D's own Swift code calls directly — attribution obligations for
 MIT/Apache-2.0/BSD-3-Clause are triggered by distribution, regardless of
 which code paths this app exercises at runtime. Full texts (not summaries)
@@ -48,14 +49,18 @@ are also shown in-app under **Peek3D ▸ Licenze open source…**.
     Inc. and affiliates — BSD 3-Clause License. Vendored inside libktx for
     KTX2 Zstd supercompression; its full compressor/decompressor is
     present in the shipped binary.
-  - **Draco is *not* included here.** GLTFKit2 recognizes the
+  - **Draco is *not* part of GLTFKit2.** It recognizes the
     `KHR_draco_mesh_compression` glTF extension and exposes a
-    `dracoDecompressorClassName` hook so a host app can register an
-    external decoder class — but no actual Draco decoder code is compiled
-    into `GLTFKit2.framework` (confirmed: zero `draco::` symbols in the
-    binary), and Peek3D never registers one. No Draco code is distributed,
-    so no Draco attribution applies. Re-check this if GLTFKit2 or Peek3D
-    ever start bundling a real Draco decoder.
+    `dracoDecompressorClassName` hook, but ships no decoder (zero `draco::`
+    symbols in `GLTFKit2.framework`). Peek3D supplies its own, below.
+- **[Draco](https://github.com/google/draco)** — Copyright 2016 The Draco
+  Authors (Google Inc. and other contributors) — Apache License 2.0.
+  Decodes `KHR_draco_mesh_compression` geometry in `.glb`/`.gltf`. Linked
+  statically into the Peek3D executable from the
+  [DracoSwift](https://github.com/warrenm/DracoSwift) package (Warren Moore,
+  Apache 2.0, pinned to 1.5.7), a prebuilt Draco 1.5.7 decoder; the glue that
+  plugs it into GLTFKit2 is `Peek3D/Draco/Peek3DDracoDecompressor.mm`. Draco
+  ships no NOTICE file.
 - **[ufbx](https://github.com/ufbx/ufbx)** by Samuli Raivio — MIT / Unlicense
   (dual-licensed, vendored under `Peek3D/ThirdParty/ufbx`). Loads `.fbx`.
 

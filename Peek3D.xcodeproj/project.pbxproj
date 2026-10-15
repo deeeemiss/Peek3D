@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1A00000000000000000000D1 /* GLTFKit2 in Frameworks */ = {isa = PBXBuildFile; productRef = 1A00000000000000000000D2 /* GLTFKit2 */; };
+		1A00000000000000000000D3 /* DracoSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1A00000000000000000000D4 /* DracoSwift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -30,6 +31,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A00000000000000000000D1 /* GLTFKit2 in Frameworks */,
+				1A00000000000000000000D3 /* DracoSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -73,6 +75,7 @@
 			name = Peek3D;
 			packageProductDependencies = (
 				1A00000000000000000000D2 /* GLTFKit2 */,
+				1A00000000000000000000D4 /* DracoSwift */,
 			);
 			productName = Peek3D;
 			productReference = 1A00000000000000000000A6 /* Peek3D.app */;
@@ -114,6 +117,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				1A00000000000000000000E1 /* XCRemoteSwiftPackageReference "GLTFKit2" */,
+				1A00000000000000000000E2 /* XCRemoteSwiftPackageReference "DracoSwift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1A00000000000000000000A3 /* Products */;
@@ -293,6 +297,14 @@
 				minimumVersion = 0.5.15;
 			};
 		};
+		1A00000000000000000000E2 /* XCRemoteSwiftPackageReference "DracoSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/warrenm/DracoSwift";
+			requirement = {
+				kind = exactVersion;
+				version = 1.5.7;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -300,6 +312,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1A00000000000000000000E1 /* XCRemoteSwiftPackageReference "GLTFKit2" */;
 			productName = GLTFKit2;
+		};
+		1A00000000000000000000D4 /* DracoSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1A00000000000000000000E2 /* XCRemoteSwiftPackageReference "DracoSwift" */;
+			productName = DracoSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -3,6 +3,18 @@
 All notable changes to Peek3D are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## Unreleased
+
+### Added
+- glTF files with Draco-compressed geometry (`KHR_draco_mesh_compression`)
+  now open; a damaged Draco stream shows an error instead of crashing.
+- KTX2/BasisU textures (`KHR_texture_basisu`) are covered by the test suite:
+  they were already decoded by GLTFKit2 and now have fixtures that prove it.
+
+### Fixed
+- A `KHR_texture_basisu` texture naming a missing image crashed the app
+  instead of showing an error.
+
 ## 1.1 — 2026-10-02
 
 Bug-fix release from a full debugging pass of the app.
