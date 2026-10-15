@@ -28,14 +28,18 @@ enum SelfTest {
                          stats.dimensions.x, stats.dimensions.y, stats.dimensions.z))
             print("fileSize: \(stats.fileSizeBytes) bytes (\(stats.fileSizeFormatted))")
 
-            // Animation report + empirical scene-time scrubbing check.
+            // Animation report (+ the opt-in scrub check below).
             print("animations: \(model.animations.count)")
             for (i, anim) in model.animations.enumerated() {
                 let name = anim.name.isEmpty ? "<unnamed>" : anim.name
                 print(String(format: "  [%d] '%@' duration=%.4fs", i, name, anim.player.animation.duration))
             }
             if !model.animations.isEmpty {
-                verifyScrubbing(url: url)
+                if ProcessInfo.processInfo.environment["PEEK3D_SELFTEST_SCRUB"] == "1", !verifyScrub(url: url) {
+                    print("SELFTEST_FAIL: scrub")
+                    fflush(stdout)
+                    exit(1)
+                }
                 if let out = ProcessInfo.processInfo.environment["PEEK3D_SELFTEST_RENDER"] {
                     verifyAnimationVsBindPose(url: url, baseOutput: URL(fileURLWithPath: out))
                     verifyWireframeDuringPlayback(url: url, baseOutput: URL(fileURLWithPath: out))
@@ -101,35 +105,6 @@ enum SelfTest {
         exit(0)
     }
 
-    /// Ground-truth check for the scrubbing mechanism, using RENDERED PIXELS
-    /// (not `node.presentation`, which an offscreen `SCNRenderer` never writes
-    /// back — that gave an earlier false "static"). Renders real frames at
-    /// several times under BOTH candidate mechanisms and hashes the raw bitmap:
-    /// if the frame bytes change with time, that mechanism actually animates.
-    private static func verifyScrubbing(url: URL) {
-        for (label, sceneTimeBase) in [("SCNRenderer scene-time", true), ("SCNRenderer wall-clock", false)] {
-            report(label, renderHashes(url: url, sceneTimeBase: sceneTimeBase))
-        }
-        // Decisive test: the app renders through a real SCNView, so measure
-        // whether SCNView.sceneTime actually drives the animation via the same
-        // snapshot() path the app's screenshot feature uses.
-        report("SCNView scene-time", renderHashesSceneView(url: url))
-        // Candidate scrubber: freeze the wall-clock player (speed = 0) and pick
-        // the frame with the animation's timeOffset — the classic CA freeze trick.
-        report("SCNView timeOffset", renderHashesTimeOffset(url: url))
-        // Candidate scrubber: bypass the player, add the SCNAnimation directly
-        // with scene-time base, and drive SCNView.sceneTime.
-        report("SCNView addAnimation+sceneTime", renderHashesAddAnimation(url: url))
-
-        // Diagnostic: does mutating player.animation stick, or is it a copy?
-        if let model = try? ModelLoader.loadSync(url: url), let a = model.animations.first {
-            a.player.animation.usesSceneTimeBase = true
-            a.player.animation.timeOffset = 1.0
-            print("DIAG: after-set usesSceneTimeBase=\(a.player.animation.usesSceneTimeBase) "
-                  + "timeOffset=\(a.player.animation.timeOffset) (false/0 => .animation is a copy)")
-        }
-    }
-
     /// Ground-truth for the FBX node-transform animation path: attaches the
     /// wall-clock player and takes two sequential frames off ONE renderer — at
     /// t=0 (the clip's start pose == the node's rest/bind transform for these
@@ -140,8 +115,8 @@ enum SelfTest {
     ///
     /// The two snapshots MUST come sequentially from the same renderer (t=0
     /// first): a lone `snapshot(atTime: 0.5*d)` on a just-played wall-clock
-    /// player renders the start pose instead — the same ordering `renderHashes`
-    /// relies on. Loader-agnostic (goes through `ModelLoader`), but it's the FBX
+    /// player renders the start pose instead — the same ordering the scrub
+    /// check relies on. Loader-agnostic (goes through `ModelLoader`), but it's the FBX
     /// clips this was added to cover.
     private static func verifyAnimationVsBindPose(url: URL, baseOutput: URL) {
         guard let device = MTLCreateSystemDefaultDevice() else {
@@ -492,124 +467,116 @@ enum SelfTest {
         }
     }
 
-    private static func report(_ label: String, _ hashes: [UInt64]?) {
-        guard let hashes else { print("VERIFY[\(label)]: no animation / no Metal"); return }
-        let distinct = Set(hashes).count
-        let hexes = hashes.map { String($0, radix: 16) }.joined(separator: ", ")
-        print("VERIFY[\(label)]: frames=\(hexes) distinct=\(distinct) -> "
-              + (distinct > 1 ? "MOVES" : "STATIC"))
+    /// Mean absolute per-byte difference between two snapshots, 0...1.
+    private static func pixelDifference(_ a: NSImage, _ b: NSImage) -> Double {
+        func bytes(_ image: NSImage) -> (UnsafeMutablePointer<UInt8>, Int)? {
+            guard let tiff = image.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+                  let pixels = rep.bitmapData else { return nil }
+            return (pixels, rep.bytesPerRow * rep.pixelsHigh)
+        }
+        guard let (pa, na) = bytes(a), let (pb, nb) = bytes(b), na == nb, na > 0 else { return 1 }
+        var sum = 0
+        for i in 0..<na { sum += abs(Int(pa[i]) - Int(pb[i])) }
+        return Double(sum) / Double(na * 255)
     }
 
-    /// Scene-time scrubbing through a real `SCNView` (not `SCNRenderer`) — the
-    /// exact render path the app uses. This is the authoritative check.
-    private static func renderHashesSceneView(url: URL) -> [UInt64]? {
-        guard let model = try? ModelLoader.loadSync(url: url),
-              let anim = model.animations.first else { return nil }
-        let scene = model.scene
-        let player = anim.player
-        let duration = player.animation.duration
-        guard duration > 0 else { return nil }
-
-        player.animation.usesSceneTimeBase = true
-        scene.rootNode.addAnimationPlayer(player, forKey: "verify")
-
-        let view = SCNView(frame: NSRect(x: 0, y: 0, width: 160, height: 160))
-        view.scene = scene
-        let camera = CameraFit.makeFittedCamera(for: scene)
-        scene.rootNode.addChildNode(camera)
-        view.pointOfView = camera
-
-        return [0.0, duration * 0.5, duration * 0.9].map { t in
-            view.sceneTime = t
-            return pixelHash(view.snapshot())
+    /// DEM-69 ground truth: drives the REAL `ViewerController` (the object the
+    /// timeline slider talks to) on a live, continuously rendering `SCNView`, and
+    /// judges seeking by RENDERED PIXELS.
+    ///   • two different scrub times must give clearly different frames;
+    ///   • the same scrub time visited twice must give (nearly) the same frame;
+    ///   • while paused the frame must not drift;
+    ///   • play after a scrub must continue from the scrubbed time, not from 0.
+    /// Run with `PEEK3D_SELFTEST_SCRUB=1`; returns false (and prints why) on failure.
+    private static func verifyScrub(url: URL) -> Bool {
+        guard let model = try? ModelLoader.loadSync(url: url), !model.animations.isEmpty else {
+            print("SCRUB: no animation"); return false
         }
-    }
+        let controller = ViewerController()
+        let view = SCNView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
+        // An SCNView that is not in an on-screen window has no display link, so
+        // its wall-clock animations never advance between snapshots; give it one.
+        _ = NSApplication.shared
+        let window = NSWindow(contentRect: NSRect(x: 40, y: 40, width: 200, height: 200),
+                              styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = view
+        window.orderFrontRegardless()
+        controller.attach(scnView: view, scene: model.scene, animations: model.animations)
+        let d = controller.animationDuration
+        guard d > 0 else { print("SCRUB: zero duration"); return false }
 
-    /// Wall-clock scrubber candidate: freeze playback (`speed = 0`) and select
-    /// the displayed frame purely with `SCNAnimation.timeOffset`, rendered
-    /// through a real `SCNView`.
-    private static func renderHashesTimeOffset(url: URL) -> [UInt64]? {
-        guard let model = try? ModelLoader.loadSync(url: url),
-              let anim = model.animations.first else { return nil }
-        let scene = model.scene
-        let player = anim.player
-        let duration = player.animation.duration
-        guard duration > 0 else { return nil }
-
-        scene.rootNode.addAnimationPlayer(player, forKey: "verify")
-        player.play()
-        player.speed = 0 // freeze; timeOffset now selects the phase
-
-        let view = SCNView(frame: NSRect(x: 0, y: 0, width: 160, height: 160))
-        view.scene = scene
-        let camera = CameraFit.makeFittedCamera(for: scene)
-        scene.rootNode.addChildNode(camera)
-        view.pointOfView = camera
-
-        return [0.0, duration * 0.5, duration * 0.9].map { t in
-            player.animation.timeOffset = t
-            return pixelHash(view.snapshot())
+        /// Spins the run loop (timers + continuous rendering) instead of blocking it.
+        func spin(_ seconds: TimeInterval) { RunLoop.main.run(until: Date().addingTimeInterval(seconds)) }
+        controller.pause()
+        spin(0.1)
+        func frame(at fraction: Double) -> NSImage {
+            controller.seek(to: d * fraction)
+            spin(0.12)
+            return view.snapshot()
         }
-    }
 
-    /// Scene-time scrubber that bypasses the SCNAnimationPlayer entirely: it
-    /// adds the raw SCNAnimation (scene-time base) to the node and drives
-    /// SCNView.sceneTime.
-    private static func renderHashesAddAnimation(url: URL) -> [UInt64]? {
-        guard let model = try? ModelLoader.loadSync(url: url),
-              let anim = model.animations.first else { return nil }
-        let scene = model.scene
-        let scnAnimation = anim.player.animation
-        let duration = scnAnimation.duration
-        guard duration > 0 else { return nil }
+        let early = 0.25, late = 0.9
+        let a1 = frame(at: early)
+        let b1 = frame(at: late)
+        let a2 = frame(at: early)
+        let b2 = frame(at: late)
+        let different = pixelDifference(a1, b1)
+        let sameA = pixelDifference(a1, a2)
+        let sameB = pixelDifference(b1, b2)
+        let notBlank = !isBlank(a1) && !isBlank(b1)
 
-        scnAnimation.usesSceneTimeBase = true
-        scene.rootNode.addAnimation(scnAnimation, forKey: "verify")
+        // Paused frames must not drift.
+        let held1 = view.snapshot()
+        spin(0.3)
+        let held2 = view.snapshot()
+        let drift = pixelDifference(held1, held2)
 
-        let view = SCNView(frame: NSRect(x: 0, y: 0, width: 160, height: 160))
-        view.scene = scene
-        let camera = CameraFit.makeFittedCamera(for: scene)
-        scene.rootNode.addChildNode(camera)
-        view.pointOfView = camera
-
-        return [0.0, duration * 0.5, duration * 0.9].map { t in
-            view.sceneTime = t
-            return pixelHash(view.snapshot())
+        // Play after a scrub: must continue from the scrubbed point. The frame
+        // grabbed while playing must match the frozen frame at the tracked
+        // playhead at least as well as ANY other time on a 20-step scan (a plain
+        // "closer to start than to zero" test is fooled by looping/periodic clips).
+        let start = 0.6
+        _ = frame(at: start)
+        controller.play()
+        spin(0.3)
+        let playing = view.snapshot()
+        let t = controller.animationTime
+        let advanced = t > d * start + 0.15 && t < d * start + 0.7
+        controller.pause()
+        spin(0.12)
+        let pausedSnap = view.snapshot()
+        controller.seek(to: t)
+        spin(0.12)
+        let atTracked = pixelDifference(playing, view.snapshot())
+        var best = Double.greatestFiniteMagnitude
+        var bestIndex = 0
+        for i in 0..<20 {
+            controller.seek(to: d * Double(i) / 20)
+            spin(0.1)
+            let diff = pixelDifference(playing, view.snapshot())
+            if diff < best { best = diff; bestIndex = i }
         }
-    }
+        let resumedFromScrub = atTracked <= best + 0.01
+        // Pausing re-freezes at the tracked playhead: no jump bigger than the
+        // genuine difference between the two scrub poses.
+        let pauseJump = pixelDifference(pausedSnap, playing)
+        let pauseHolds = pauseJump < different
 
-    /// Loads a fresh copy of the model, attaches its first clip under the given
-    /// mechanism, and returns a pixel hash of an offscreen frame at 0%, 50% and
-    /// 90% of the clip duration.
-    private static func renderHashes(url: URL, sceneTimeBase: Bool) -> [UInt64]? {
-        guard let model = try? ModelLoader.loadSync(url: url),
-              let anim = model.animations.first,
-              let device = MTLCreateSystemDefaultDevice() else { return nil }
+        // Scrubbing under wireframe (CLAUDE.md: skinned meshes must survive it):
+        // the model must still be there, and still move with the playhead.
+        controller.toggleWireframe()
+        let wire1 = frame(at: early)
+        let wire2 = frame(at: late)
+        let wireframeOK = !isBlank(wire1) && !isBlank(wire2) && pixelDifference(wire1, wire2) > 0.0005
 
-        let scene = model.scene
-        let player = anim.player
-        let duration = player.animation.duration
-        guard duration > 0 else { return nil }
-
-        player.animation.usesSceneTimeBase = sceneTimeBase
-        scene.rootNode.addAnimationPlayer(player, forKey: "verify")
-        if !sceneTimeBase { player.play() } // wall-clock needs an explicit start
-
-        let renderer = SCNRenderer(device: device, options: nil)
-        renderer.scene = scene
-        renderer.autoenablesDefaultLighting = true
-        let camera = CameraFit.makeFittedCamera(for: scene)
-        scene.rootNode.addChildNode(camera)
-        renderer.pointOfView = camera
-
-        let size = CGSize(width: 160, height: 160)
-        return [0.0, duration * 0.5, duration * 0.9].map { t in
-            if sceneTimeBase { renderer.sceneTime = t }
-            // `atTime` drives system-time (wall-clock) animations; harmless for
-            // the scene-time case where sceneTime is already pinned to t.
-            let image = renderer.snapshot(atTime: t, with: size, antialiasingMode: .none)
-            return pixelHash(image)
-        }
+        let eps = 0.0005, minDiff = 0.002
+        let ok = notBlank && different > minDiff && sameA < eps && sameB < eps
+            && drift < eps && advanced && resumedFromScrub && pauseHolds && wireframeOK
+        print(String(format: "SCRUB[%@]: different=%.5f sameA=%.5f sameB=%.5f drift=%.5f t_after_play=%.3f/%.3f "
+                     + "atTracked=%.5f bestScan=%.5f@%d pauseJump=%.5f blank=%@ wireframe=%@ -> %@",
+                     url.lastPathComponent, different, sameA, sameB, drift, t, d,
+                     atTracked, best, bestIndex, pauseJump, "\(!notBlank)", "\(wireframeOK)", ok ? "PASS" : "FAIL"))
+        return ok
     }
 
     /// FNV-1a hash over a snapshot's raw RGBA bytes. Identical poses hash

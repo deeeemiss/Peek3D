@@ -66,7 +66,7 @@ modes, and stats never need to know where a model came from.
 - **Default** / **Studio** / **Outdoor** / **Dark mood** presets
 
 ### Animation
-- Timeline with play / pause and clip selection for animated `.glb`/`.gltf`
+- Timeline with play / pause, drag-to-seek and clip selection for animated `.glb`/`.gltf`
   (skinned) and `.fbx` (node-transform) models
 - Wireframe stays correct while an animation plays
 
@@ -119,10 +119,6 @@ app prompts for folder access and retries automatically if it's missing.
   quaternion skinning falls back to linear), blend-shape in-between shapes
   are ignored (only each channel's final shape is used), and the camera fit
   uses the bind pose, so a strongly deforming model can leave the frame.
-- Timeline drag-to-seek isn't offered (for either format): both loaders bake
-  clips as looping `CAAnimationGroup`s on a wall-clock player, which has no
-  API for jumping to an arbitrary time. Play / pause / clip selection work
-  fully; the bar is a synchronized progress readout, not a scrubber.
 
 ## License
 

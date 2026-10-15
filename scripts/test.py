@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Loader regression tests for Peek3D. Runs the Debug app's self-test hooks.
 
-    scripts/test.py                  build, then fixtures + FBX deformation + recovery + 150 fuzz cases per GLB
+    scripts/test.py                  build, then fixtures + FBX deformation + recovery + scrub + 150 fuzz cases per GLB
     scripts/test.py --fuzz all       every mutation (thousands of runs, minutes)
     scripts/test.py --fuzz 0         no fuzzing
     scripts/test.py --app PATH       test an already built app (e.g. an old commit)
@@ -9,6 +9,10 @@
 Fixtures have explicit expectations and are the actual test:
   testmodels/*, tests/fixtures/valid/*   must load
   tests/fixtures/invalid/*               must fail with a clean error
+Scrub drives the real ViewerController on animated models (glTF and FBX) and
+judges timeline seeking by rendered pixels: different times give different
+frames, the same time gives the same frame, play resumes from the scrub point.
+It opens a small borderless window per model (a display link is needed).
 Fuzzing mutates the numbers in each valid GLB's JSON. A mutated file may
 really be invalid, so a rejection is just a statistic; only a crash or a
 hang fails the run. Failing mutations are saved in build/test/failures/.
@@ -113,6 +117,20 @@ def check_recovery(app, pool):
     return failures
 
 
+def check_scrub(app):
+    """Timeline seeking, judged by pixels (SelfTest.verifyScrub). One at a time:
+    each run opens a window and the verdict depends on real frame timing."""
+    cases = [ROOT / "testmodels" / n for n in ("Fox.glb", "BoxAnimated.glb", "cube_animated.fbx")]
+    failures = []
+    for f in cases:
+        got, out = run(app, {"PEEK3D_SELFTEST": str(f), "PEEK3D_SELFTEST_SCRUB": "1"})
+        verdict = next((l for l in out.splitlines() if l.startswith("SCRUB[")), "")
+        if got != "loaded" or "PASS" not in verdict:
+            failures.append(f"scrub {f.name}: {got}\n    " + (verdict or out.strip()[-400:]))
+    print(f"scrub: {len(cases)} animated models, {len(failures)} wrong")
+    return failures
+
+
 # -- Fuzzing ---------------------------------------------------------------
 
 SECTIONS = ["accessors", "bufferViews", "buffers", "nodes", "meshes", "skins", "animations",
@@ -194,6 +212,7 @@ def main():
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
         failures = check_fixtures(app, pool) + check_deformation(app, pool) + check_recovery(app, pool)
+        failures += check_scrub(app)
         if args.fuzz != "0":
             failures += fuzz(app, pool, args.fuzz)
 
