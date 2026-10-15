@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Loader regression tests for Peek3D. Runs the Debug app's self-test hooks.
 
-    scripts/test.py                  build, then fixtures + recovery + 150 fuzz cases per GLB
+    scripts/test.py                  build, then fixtures + FBX deformation + recovery + 150 fuzz cases per GLB
     scripts/test.py --fuzz all       every mutation (thousands of runs, minutes)
     scripts/test.py --fuzz 0         no fuzzing
     scripts/test.py --app PATH       test an already built app (e.g. an old commit)
@@ -62,6 +62,26 @@ def check_fixtures(app, pool):
         if got != want:
             failures.append(f"{f.relative_to(ROOT)}: expected {want}, got {got}\n    " + out.strip().replace("\n", "\n    "))
     print(f"fixtures: {len(valid)} valid, {len(invalid)} invalid, {len(failures)} wrong")
+    return failures
+
+
+def check_deformation(app, pool):
+    """Skinned / blend-shape FBX fixtures must visibly deform, not just load.
+
+    The app's own self-test renders them (bind pose vs mid-clip vs a control
+    with the deformer removed) and compares pixels; see verifyDeformation in
+    SelfTest.swift. The PNGs it writes land in build/test/deform/."""
+    fixtures = [FIXTURES / "valid" / "skinned_bend.fbx", FIXTURES / "valid" / "morph_cube.fbx"]
+    out_dir = BUILD / "deform"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    results = pool.map(lambda f: run(app, {"PEEK3D_SELFTEST": str(f),
+                                           "PEEK3D_SELFTEST_DEFORM": str(out_dir / (f.stem + ".png"))}), fixtures)
+    failures = []
+    for f, (got, out) in zip(fixtures, results):
+        if got != "loaded" or "DEFORM_OK" not in out:
+            failures.append(f"deformation {f.relative_to(ROOT)}: {got}\n    "
+                            + "\n    ".join(l for l in out.splitlines() if "DEFORM" in l or "SELFTEST" in l))
+    print(f"deformation: {len(fixtures)} fixtures, {len(failures)} wrong")
     return failures
 
 
@@ -173,7 +193,7 @@ def main():
     app = args.app or build()
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
-        failures = check_fixtures(app, pool) + check_recovery(app, pool)
+        failures = check_fixtures(app, pool) + check_deformation(app, pool) + check_recovery(app, pool)
         if args.fuzz != "0":
             failures += fuzz(app, pool, args.fuzz)
 

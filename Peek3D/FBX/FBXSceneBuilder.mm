@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <cmath>
 
 #include "ufbx.h"
 
@@ -149,7 +150,20 @@ struct GroupBuffers {
     std::vector<float> positions; // xyz per corner
     std::vector<float> normals;   // xyz per corner
     std::vector<float> uvs;       // uv per corner
+    // Skinning (only filled for a skinned mesh): the `kMaxBoneInfluences`
+    // heaviest bone influences of each corner, weights renormalised to sum 1.
+    std::vector<float> boneWeights;    // kMaxBoneInfluences floats per corner
+    std::vector<uint16_t> boneIndices; // kMaxBoneInfluences indices into the cluster list per corner
+    // Blend shapes (only filled for a morphed mesh): one entry per morph
+    // target, holding that target's position / normal OFFSET for each corner.
+    std::vector<std::vector<float>> morphPositions;
+    std::vector<std::vector<float>> morphNormals;
 };
+
+/// SceneKit's skinner takes a fixed number of influences per vertex; 4 is what
+/// glTF and every real-time pipeline use. The heaviest 4 are kept and
+/// renormalised (ufbx already sorts a vertex's weights by decreasing weight).
+static const size_t kMaxBoneInfluences = 4;
 
 /// The first `count` vectors of `values` as a tightly packed float source.
 static SCNGeometrySource *FloatSource(const std::vector<float> &values, size_t count, NSInteger components,
@@ -253,7 +267,8 @@ static CAKeyframeAnimation *QuatChannel(NSString *keyPath, ufbx_baked_quat_list 
 /// dependence on whether the node's rest/bind transform happens to equal the
 /// clip's value at t=0.
 static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack,
-                                       NSArray<NSString *> *nodeNames) {
+                                       NSArray<NSString *> *nodeNames,
+                                       NSDictionary<NSNumber *, NSArray<NSArray *> *> *morphTargets) {
     ufbx_error berr;
     memset(&berr, 0, sizeof(berr));
     ufbx_baked_anim *bake = ufbx_bake_anim(scene, stack->anim, NULL, &berr);
@@ -277,6 +292,37 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
         if (bn->scale_keys.count > 0)
             [channels addObject:Vec3Channel([root stringByAppendingString:@".scale"],
                                             bn->scale_keys, begin, duration)];
+    }
+
+    // Blend-shape weights: ufbx bakes a blend channel's weight as the
+    // "DeformPercent" property (0..100) of the channel element. Each target the
+    // channel feeds (one per mesh instance) gets a `morpher.weights[i]` channel,
+    // the same key path GLTFKit2 uses for glTF weight animation.
+    for (size_t i = 0; i < bake->elements.count; i++) {
+        ufbx_baked_element *be = &bake->elements.data[i];
+        NSArray<NSArray *> *targets = morphTargets[@(be->element_id)];
+        if (targets == nil) continue;
+        for (size_t pi = 0; pi < be->props.count; pi++) {
+            ufbx_baked_prop *bp = &be->props.data[pi];
+            if (bp->keys.count == 0 || ![NSStringFromUfbx(bp->name) isEqualToString:@"DeformPercent"]) continue;
+            for (NSArray *target in targets) {
+                NSString *keyPath = [NSString stringWithFormat:@"/%@.morpher.weights[%d]", target[0], [target[1] intValue]];
+                CAKeyframeAnimation *anim = [CAKeyframeAnimation animationWithKeyPath:keyPath];
+                NSMutableArray *values = [NSMutableArray arrayWithCapacity:bp->keys.count];
+                NSMutableArray *times = [NSMutableArray arrayWithCapacity:bp->keys.count];
+                for (size_t k = 0; k < bp->keys.count; k++) {
+                    ufbx_baked_vec3 key = bp->keys.data[k];
+                    [values addObject:@(key.value.x / 100.0)];
+                    double t = duration > 0.0 ? (key.time - begin) / duration : 0.0;
+                    [times addObject:@(t < 0.0 ? 0.0 : (t > 1.0 ? 1.0 : t))];
+                }
+                anim.values = values;
+                anim.keyTimes = times;
+                anim.calculationMode = kCAAnimationLinear;
+                anim.duration = duration;
+                [channels addObject:anim];
+            }
+        }
     }
     ufbx_free_baked_anim(bake);
 
@@ -394,8 +440,12 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
     // its own materials) and materials are built once per FBX material:
     // rebuilding both per instance made 200 instances of a 20k-triangle mesh
     // take 247 MB and decode the same textures 200 times.
-    NSMutableDictionary<NSString *, NSArray *> *geometryCache = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSDictionary *> *geometryCache = [NSMutableDictionary dictionary];
     NSMapTable<NSValue *, SCNMaterial *> *materialCache = [NSMapTable strongToStrongObjectsMapTable];
+    // blend channel element_id -> [geometry node name, morpher target index]
+    // pairs, one per mesh instance the channel drives; the animation baker uses
+    // it to address `morpher.weights[i]`.
+    NSMutableDictionary<NSNumber *, NSArray<NSArray *> *> *morphTargets = [NSMutableDictionary dictionary];
     for (size_t ni = 0; ni < scene->nodes.count; ni++) {
         ufbx_node *node = scene->nodes.data[ni];
         if (node == NULL || node->mesh == NULL) continue;
@@ -411,12 +461,59 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
         const bool uvNeedsMirrorCompensation = MirrorsChirality(&node->geometry_to_world);
 
         const size_t groupCount = mesh->materials.count > 0 ? mesh->materials.count : 1;
-        NSString *meshKey = [NSString stringWithFormat:@"%p-%d", (void *)mesh, (int)uvNeedsMirrorCompensation];
-        // @[geometry, material group index per element], or @[] for a mesh
-        // with nothing to draw.
-        NSArray *cached = geometryCache[meshKey];
+        // A skinned mesh bakes its node's `geometry_to_world` into the
+        // vertices (see below), so instances can't share one buffer.
+        const bool meshIsSkinned = mesh->skin_deformers.count > 0;
+        NSString *meshKey = [NSString stringWithFormat:@"%p-%d-%p", (void *)mesh, (int)uvNeedsMirrorCompensation,
+                             meshIsSkinned ? (void *)node : NULL];
+        // Everything built once per mesh and shared by its instances: the
+        // geometry, the material group of each element and, if the mesh is
+        // skinned / morphed, the skin sources and morph target geometries.
+        // Empty for a mesh with nothing to draw.
+        NSDictionary *cached = geometryCache[meshKey];
         if (cached == nil) {
             std::vector<GroupBuffers> groups(groupCount);
+
+            // Skin: the first deformer, if every cluster has a bone to follow.
+            // A mesh with a broken skin falls back to its bind pose.
+            const ufbx_skin_deformer *skin = NULL;
+            if (mesh->skin_deformers.count > 0) {
+                const ufbx_skin_deformer *candidate = mesh->skin_deformers.data[0];
+                bool usable = candidate->clusters.count > 0 && candidate->clusters.count <= 0xFFFF;
+                for (size_t ci = 0; usable && ci < candidate->clusters.count; ci++) {
+                    if (candidate->clusters.data[ci]->bone_node == NULL) usable = false;
+                }
+                if (usable) skin = candidate;
+            }
+            // A skinned mesh carries its vertices in WORLD bind space (and the
+            // inverse bind matrices below absorb the difference): the skinner
+            // evaluates in the skinned node's frame, and keeping that node at
+            // the scene root with an identity transform makes the bounds and
+            // camera fit see the real bind-pose extent.
+            const bool bakeWorld = skin != NULL;
+            const ufbx_matrix geometryToWorld = node->geometry_to_world;
+            const ufbx_matrix normalsToWorld = ufbx_matrix_for_normals(&geometryToWorld);
+            auto unit = [](ufbx_vec3 v) {
+                const double len = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+                return len > 0.0 ? ufbx_vec3{ v.x / len, v.y / len, v.z / len } : v;
+            };
+            // Blend shapes: one morph target per channel (its final shape;
+            // in-between shapes are not modelled).
+            std::vector<const ufbx_blend_channel *> morphChannels;
+            for (size_t di = 0; di < mesh->blend_deformers.count; di++) {
+                const ufbx_blend_deformer *blend = mesh->blend_deformers.data[di];
+                for (size_t ci = 0; ci < blend->channels.count; ci++) {
+                    if (blend->channels.data[ci]->target_shape != NULL) morphChannels.push_back(blend->channels.data[ci]);
+                }
+            }
+            std::vector<bool> morphHasNormals(morphChannels.size());
+            for (size_t ti = 0; ti < morphChannels.size(); ti++) {
+                morphHasNormals[ti] = morphChannels[ti]->target_shape->normal_offsets.count > 0;
+            }
+            for (GroupBuffers &g : groups) {
+                g.morphPositions.resize(morphChannels.size());
+                g.morphNormals.resize(morphChannels.size());
+            }
 
             const bool hasNormals = mesh->vertex_normal.exists;
             const bool hasUV = mesh->vertex_uv.exists;
@@ -439,12 +536,14 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
                 for (uint32_t t = 0; t < numTris * 3; t++) {
                     uint32_t ix = triIndices[t];
                     ufbx_vec3 p = ufbx_get_vertex_vec3(&mesh->vertex_position, ix);
+                    if (bakeWorld) p = ufbx_transform_position(&geometryToWorld, p);
                     g.positions.push_back((float)p.x);
                     g.positions.push_back((float)p.y);
                     g.positions.push_back((float)p.z);
 
                     if (hasNormals) {
                         ufbx_vec3 n = ufbx_get_vertex_vec3(&mesh->vertex_normal, ix);
+                        if (bakeWorld) n = unit(ufbx_transform_direction(&normalsToWorld, n));
                         g.normals.push_back((float)n.x);
                         g.normals.push_back((float)n.y);
                         g.normals.push_back((float)n.z);
@@ -455,6 +554,55 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
                         g.uvs.push_back(uvNeedsMirrorCompensation ? (float)(1.0 - uv.x) : (float)uv.x);
                         g.uvs.push_back((float)(1.0 - uv.y));
                     }
+
+                    // `ix` is a corner; skin weights and blend offsets are
+                    // authored per logical vertex, so map back before reading.
+                    const uint32_t vertex = mesh->vertex_indices.data[ix];
+                    if (skin != NULL) {
+                        float w[kMaxBoneInfluences] = {0, 0, 0, 0};
+                        uint16_t b[kMaxBoneInfluences] = {0, 0, 0, 0};
+                        float total = 0.0f;
+                        if (vertex < skin->vertices.count) {
+                            const ufbx_skin_vertex sv = skin->vertices.data[vertex];
+                            size_t n = 0;
+                            // Weights come sorted heaviest first: keep the top N.
+                            for (uint32_t wi = 0; wi < sv.num_weights && n < kMaxBoneInfluences; wi++) {
+                                const ufbx_skin_weight sw = skin->weights.data[sv.weight_begin + wi];
+                                if (!(sw.weight > 0.0) || sw.cluster_index >= skin->clusters.count) continue;
+                                w[n] = (float)sw.weight;
+                                b[n] = (uint16_t)sw.cluster_index;
+                                total += w[n];
+                                n++;
+                            }
+                        }
+                        if (total > 0.0f) {
+                            for (size_t k = 0; k < kMaxBoneInfluences; k++) w[k] /= total;
+                        } else {
+                            w[0] = 1.0f; // unweighted vertex: follow the first bone
+                        }
+                        for (size_t k = 0; k < kMaxBoneInfluences; k++) {
+                            g.boneWeights.push_back(w[k]);
+                            g.boneIndices.push_back(b[k]);
+                        }
+                    }
+                    for (size_t ti = 0; ti < morphChannels.size(); ti++) {
+                        const ufbx_blend_shape *shape = morphChannels[ti]->target_shape;
+                        const uint32_t oi = ufbx_get_blend_shape_offset_index(shape, vertex);
+                        const bool present = oi != UFBX_NO_INDEX && oi < shape->position_offsets.count;
+                        ufbx_vec3 po = present ? shape->position_offsets.data[oi] : ufbx_vec3{0, 0, 0};
+                        if (bakeWorld) po = ufbx_transform_direction(&geometryToWorld, po);
+                        g.morphPositions[ti].push_back((float)po.x);
+                        g.morphPositions[ti].push_back((float)po.y);
+                        g.morphPositions[ti].push_back((float)po.z);
+                        if (morphHasNormals[ti]) {
+                            ufbx_vec3 no = (present && oi < shape->normal_offsets.count)
+                                ? shape->normal_offsets.data[oi] : ufbx_vec3{0, 0, 0};
+                            if (bakeWorld) no = ufbx_transform_direction(&normalsToWorld, no);
+                            g.morphNormals[ti].push_back((float)no.x);
+                            g.morphNormals[ti].push_back((float)no.y);
+                            g.morphNormals[ti].push_back((float)no.z);
+                        }
+                    }
                 }
             }
 
@@ -463,6 +611,8 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
             // per-corner vertices tripled the vertex count, and a node per
             // group counted one mesh per material.
             GroupBuffers all;
+            all.morphPositions.resize(morphChannels.size());
+            all.morphNormals.resize(morphChannels.size());
             std::vector<std::pair<size_t, size_t>> ranges; // first corner, corner count
             NSMutableArray<NSNumber *> *usedGroups = [NSMutableArray array];
             for (size_t gi = 0; gi < groupCount; gi++) {
@@ -472,11 +622,17 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
                 all.positions.insert(all.positions.end(), g.positions.begin(), g.positions.end());
                 all.normals.insert(all.normals.end(), g.normals.begin(), g.normals.end());
                 all.uvs.insert(all.uvs.end(), g.uvs.begin(), g.uvs.end());
+                all.boneWeights.insert(all.boneWeights.end(), g.boneWeights.begin(), g.boneWeights.end());
+                all.boneIndices.insert(all.boneIndices.end(), g.boneIndices.begin(), g.boneIndices.end());
+                for (size_t ti = 0; ti < morphChannels.size(); ti++) {
+                    all.morphPositions[ti].insert(all.morphPositions[ti].end(), g.morphPositions[ti].begin(), g.morphPositions[ti].end());
+                    all.morphNormals[ti].insert(all.morphNormals[ti].end(), g.morphNormals[ti].begin(), g.morphNormals[ti].end());
+                }
                 [usedGroups addObject:@(gi)];
             }
             const size_t corners = all.positions.size() / 3;
             if (corners == 0) {
-                geometryCache[meshKey] = @[];
+                geometryCache[meshKey] = @{};
                 continue;
             }
 
@@ -484,6 +640,16 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
             std::vector<ufbx_vertex_stream> streams = { { all.positions.data(), corners, 3 * sizeof(float) } };
             if (hasNormals) streams.push_back({ all.normals.data(), corners, 3 * sizeof(float) });
             if (hasUV) streams.push_back({ all.uvs.data(), corners, 2 * sizeof(float) });
+            // Skin and morph data take part in the merge too: two corners
+            // only collapse into one vertex if they also deform identically.
+            if (skin != NULL) {
+                streams.push_back({ all.boneWeights.data(), corners, kMaxBoneInfluences * sizeof(float) });
+                streams.push_back({ all.boneIndices.data(), corners, kMaxBoneInfluences * sizeof(uint16_t) });
+            }
+            for (size_t ti = 0; ti < morphChannels.size(); ti++) {
+                streams.push_back({ all.morphPositions[ti].data(), corners, 3 * sizeof(float) });
+                if (morphHasNormals[ti]) streams.push_back({ all.morphNormals[ti].data(), corners, 3 * sizeof(float) });
+            }
             ufbx_error indexError;
             size_t vertexCount = ufbx_generate_indices(streams.data(), streams.size(), indices.data(), corners, NULL, &indexError);
             if (vertexCount == 0) {
@@ -506,15 +672,81 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
                                                                  primitiveCount:(NSInteger)(range.second / 3)
                                                                   bytesPerIndex:sizeof(uint32_t)]];
             }
-            cached = @[ [SCNGeometry geometryWithSources:sources elements:elements], usedGroups ];
+            NSMutableDictionary *entry = [NSMutableDictionary dictionary];
+            entry[@"geometry"] = [SCNGeometry geometryWithSources:sources elements:elements];
+            entry[@"groups"] = usedGroups;
+
+            if (skin != NULL) {
+                // The skinner's per-vertex data lives on the skinner, not in
+                // the geometry (same split GLTFKit2 makes).
+                NSData *weightData = [NSData dataWithBytes:all.boneWeights.data()
+                                                    length:vertexCount * kMaxBoneInfluences * sizeof(float)];
+                entry[@"boneWeights"] = [SCNGeometrySource geometrySourceWithData:weightData
+                                                                         semantic:SCNGeometrySourceSemanticBoneWeights
+                                                                      vectorCount:(NSInteger)vertexCount
+                                                                  floatComponents:YES
+                                                              componentsPerVector:kMaxBoneInfluences
+                                                                bytesPerComponent:sizeof(float)
+                                                                       dataOffset:0
+                                                                       dataStride:kMaxBoneInfluences * sizeof(float)];
+                NSData *indexData = [NSData dataWithBytes:all.boneIndices.data()
+                                                   length:vertexCount * kMaxBoneInfluences * sizeof(uint16_t)];
+                entry[@"boneIndices"] = [SCNGeometrySource geometrySourceWithData:indexData
+                                                                         semantic:SCNGeometrySourceSemanticBoneIndices
+                                                                      vectorCount:(NSInteger)vertexCount
+                                                                  floatComponents:NO
+                                                              componentsPerVector:kMaxBoneInfluences
+                                                                bytesPerComponent:sizeof(uint16_t)
+                                                                       dataOffset:0
+                                                                       dataStride:kMaxBoneInfluences * sizeof(uint16_t)];
+                // geometry_to_bone maps a bind-pose geometry-space vertex into
+                // its bone's space. The vertices are already in world space, so
+                // undo geometry_to_world first: bone_world * (g2b * w2g) * (g2w * v).
+                const ufbx_matrix worldToGeometry = ufbx_matrix_invert(&geometryToWorld);
+                NSMutableArray<NSValue *> *inverseBind = [NSMutableArray array];
+                NSMutableArray<NSNumber *> *boneIds = [NSMutableArray array];
+                for (size_t ci = 0; ci < skin->clusters.count; ci++) {
+                    const ufbx_skin_cluster *cluster = skin->clusters.data[ci];
+                    const ufbx_matrix inverseBindMatrix = ufbx_matrix_mul(&cluster->geometry_to_bone, &worldToGeometry);
+                    SCNMatrix4 m = SCNMatrixFromUfbx(&inverseBindMatrix);
+                    [inverseBind addObject:[NSValue valueWithSCNMatrix4:m]];
+                    [boneIds addObject:@(cluster->bone_node->typed_id)];
+                }
+                entry[@"inverseBind"] = inverseBind;
+                entry[@"boneIds"] = boneIds;
+            }
+
+            if (!morphChannels.empty()) {
+                NSMutableArray<SCNGeometry *> *targets = [NSMutableArray array];
+                NSMutableArray<NSNumber *> *channelIds = [NSMutableArray array];
+                NSMutableArray<NSNumber *> *initialWeights = [NSMutableArray array];
+                for (size_t ti = 0; ti < morphChannels.size(); ti++) {
+                    // Offsets, not absolute positions: the morpher runs in
+                    // additive mode (base + sum of weight * target).
+                    NSMutableArray<SCNGeometrySource *> *targetSources = [NSMutableArray array];
+                    [targetSources addObject:FloatSource(all.morphPositions[ti], vertexCount, 3, SCNGeometrySourceSemanticVertex)];
+                    if (morphHasNormals[ti]) {
+                        [targetSources addObject:FloatSource(all.morphNormals[ti], vertexCount, 3, SCNGeometrySourceSemanticNormal)];
+                    }
+                    SCNGeometry *target = [SCNGeometry geometryWithSources:targetSources elements:elements];
+                    target.name = NSStringFromUfbx(morphChannels[ti]->name);
+                    [targets addObject:target];
+                    [channelIds addObject:@(morphChannels[ti]->element_id)];
+                    [initialWeights addObject:@(morphChannels[ti]->weight)];
+                }
+                entry[@"morphTargets"] = targets;
+                entry[@"morphChannelIds"] = channelIds;
+                entry[@"morphWeights"] = initialWeights;
+            }
+            cached = entry;
             geometryCache[meshKey] = cached;
         }
         if (cached.count == 0) continue;
 
         // Per-instance materials (each falls back to the mesh's).
-        SCNGeometry *geometry = [cached[0] copy];
+        SCNGeometry *geometry = [cached[@"geometry"] copy];
         NSMutableArray<SCNMaterial *> *materials = [NSMutableArray array];
-        for (NSNumber *group in cached[1]) {
+        for (NSNumber *group in cached[@"groups"]) {
             const size_t gi = group.unsignedIntegerValue;
             ufbx_material *umat = NULL;
             if (gi < node->materials.count) umat = node->materials.data[gi];
@@ -536,15 +768,51 @@ static FBXAnimationClip *ClipFromStack(ufbx_scene *scene, ufbx_anim_stack *stack
         // — it leaves the mesh node free to carry the animated local
         // transform.
         SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
-        geometryNode.transform = SCNMatrixFromUfbx(&node->geometry_to_node);
-        [meshNode addChildNode:geometryNode];
+        // Named so a morph weight channel can address it by key path.
+        geometryNode.name = [meshNode.name stringByAppendingString:@"_geo"];
+
+        if (cached[@"boneIndices"] != nil) {
+            // A skinned mesh is placed by its bones alone (FBX ignores the
+            // mesh node's own transform): the bind matrices map straight into
+            // world space. The geometry therefore sits at the scene root with
+            // an identity transform, so what the skinner produces IS the
+            // world position, whatever frame SceneKit evaluates it in, and
+            // the bounds / camera fit see the real bind-pose extent.
+            NSMutableArray<SCNNode *> *bones = [NSMutableArray array];
+            for (NSNumber *boneId in cached[@"boneIds"]) [bones addObject:nodeForId[boneId.unsignedIntValue]];
+            SCNSkinner *skinner = [SCNSkinner skinnerWithBaseGeometry:geometry
+                                                                bones:bones
+                                            boneInverseBindTransforms:cached[@"inverseBind"]
+                                                          boneWeights:cached[@"boneWeights"]
+                                                          boneIndices:cached[@"boneIndices"]];
+            geometryNode.skinner = skinner;
+            [scnScene.rootNode addChildNode:geometryNode];
+        } else {
+            geometryNode.transform = SCNMatrixFromUfbx(&node->geometry_to_node);
+            [meshNode addChildNode:geometryNode];
+        }
+
+        NSArray<SCNGeometry *> *morphGeometries = cached[@"morphTargets"];
+        if (morphGeometries.count > 0) {
+            SCNMorpher *morpher = [SCNMorpher new];
+            morpher.calculationMode = SCNMorpherCalculationModeAdditive;
+            morpher.targets = morphGeometries;
+            NSArray<NSNumber *> *channelIds = cached[@"morphChannelIds"];
+            NSArray<NSNumber *> *initialWeights = cached[@"morphWeights"];
+            for (NSUInteger ti = 0; ti < morphGeometries.count; ti++) {
+                [morpher setWeight:initialWeights[ti].doubleValue forTargetAtIndex:ti];
+                NSArray *existing = morphTargets[channelIds[ti]] ?: @[];
+                morphTargets[channelIds[ti]] = [existing arrayByAddingObject:@[geometryNode.name, @(ti)]];
+            }
+            geometryNode.morpher = morpher;
+        }
     }
 
     // Bake each anim stack into a playable clip. Stacks that key no node
     // transforms (e.g. property-only animation) yield nil and are skipped.
     NSMutableArray<FBXAnimationClip *> *clips = [NSMutableArray array];
     for (size_t si = 0; si < scene->anim_stacks.count; si++) {
-        FBXAnimationClip *clip = ClipFromStack(scene, scene->anim_stacks.data[si], nodeNames);
+        FBXAnimationClip *clip = ClipFromStack(scene, scene->anim_stacks.data[si], nodeNames, morphTargets);
         if (clip != nil) [clips addObject:clip];
     }
 

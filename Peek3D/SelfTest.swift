@@ -44,6 +44,19 @@ enum SelfTest {
                 }
             }
 
+            // `PEEK3D_SELFTEST_DEFORM=<png base path>`: proves that a skinned /
+            // morphed model really DEFORMS (see `verifyDeformation`). Exits 1
+            // with SELFTEST_FAIL if it doesn't.
+            if let out = ProcessInfo.processInfo.environment["PEEK3D_SELFTEST_DEFORM"] {
+                let failures = verifyDeformation(url: url, baseOutput: URL(fileURLWithPath: out))
+                if !failures.isEmpty {
+                    print("SELFTEST_FAIL: deformation check failed: " + failures.joined(separator: "; "))
+                    fflush(stdout)
+                    exit(1)
+                }
+                print("DEFORM_OK")
+            }
+
             if let out = ProcessInfo.processInfo.environment["PEEK3D_SELFTEST_RENDER"] {
                 let ok = renderOffscreen(scene: model.scene, to: URL(fileURLWithPath: out))
                 print(ok ? "render: OK -> \(out)" : "render: FAILED")
@@ -164,6 +177,188 @@ enum SelfTest {
         print("BINDPOSE: bind=\(String(bindHash, radix: 16)) mid=\(String(midHash, radix: 16)) "
               + "bindBlank=\(isBlank(bindImage)) midBlank=\(isBlank(midImage)) -> "
               + (ok ? "ANIMATES (mid-play differs from bind pose)" : "NO MOTION / BLANK"))
+    }
+
+    // MARK: - Deformation (skinning / blend shapes)
+
+    /// Fraction of pixels whose colour differs between two same-size snapshots.
+    private static func differingPixelFraction(_ a: NSImage, _ b: NSImage) -> Double {
+        guard let ta = a.tiffRepresentation, let ra = NSBitmapImageRep(data: ta), let pa = ra.bitmapData,
+              let tb = b.tiffRepresentation, let rb = NSBitmapImageRep(data: tb), let pb = rb.bitmapData,
+              ra.pixelsWide == rb.pixelsWide, ra.pixelsHigh == rb.pixelsHigh,
+              ra.bitsPerPixel == rb.bitsPerPixel else { return 1 }
+        let bytesPerPixel = ra.bitsPerPixel / 8
+        var differing = 0
+        for y in 0..<ra.pixelsHigh {
+            for x in 0..<ra.pixelsWide {
+                let ia = y * ra.bytesPerRow + x * bytesPerPixel
+                let ib = y * rb.bytesPerRow + x * bytesPerPixel
+                for c in 0..<min(3, bytesPerPixel) where abs(Int(pa[ia + c]) - Int(pb[ib + c])) > 8 {
+                    differing += 1
+                    break
+                }
+            }
+        }
+        return Double(differing) / Double(ra.pixelsWide * ra.pixelsHigh)
+    }
+
+    /// Bind-pose then mid-clip frames, both off ONE renderer in that order (a
+    /// lone mid-clip snapshot on a fresh wall-clock player renders the start
+    /// pose). `prepare` runs on the freshly loaded scene before anything is
+    /// drawn, to strip a deformer or pose the model.
+    private static func bindAndMidFrames(url: URL, size: CGSize = CGSize(width: 320, height: 320),
+                                         prepare: (SCNScene) -> Void = { _ in }) -> (bind: NSImage, mid: NSImage)? {
+        guard let device = MTLCreateSystemDefaultDevice(),
+              let model = try? ModelLoader.loadSync(url: url),
+              let anim = model.animations.first else { return nil }
+        let duration = anim.player.animation.duration
+        guard duration > 0 else { return nil }
+        prepare(model.scene)
+        model.scene.rootNode.addAnimationPlayer(anim.player, forKey: "verify")
+        anim.player.play()
+        let renderer = SCNRenderer(device: device, options: nil)
+        renderer.scene = model.scene
+        renderer.autoenablesDefaultLighting = true
+        let camera = CameraFit.makeFittedCamera(for: model.scene)
+        model.scene.rootNode.addChildNode(camera)
+        renderer.pointOfView = camera
+        let bind = renderer.snapshot(atTime: 0, with: size, antialiasingMode: .multisampling4X)
+        let mid = renderer.snapshot(atTime: duration * 0.5, with: size, antialiasingMode: .multisampling4X)
+        return (bind, mid)
+    }
+
+    /// A model without a clip, rendered once at the bind pose.
+    private static func restFrame(url: URL, size: CGSize = CGSize(width: 320, height: 320),
+                                  prepare: (SCNScene) -> Void) -> NSImage? {
+        guard let device = MTLCreateSystemDefaultDevice(),
+              let model = try? ModelLoader.loadSync(url: url) else { return nil }
+        prepare(model.scene)
+        let renderer = SCNRenderer(device: device, options: nil)
+        renderer.scene = model.scene
+        renderer.autoenablesDefaultLighting = true
+        let camera = CameraFit.makeFittedCamera(for: model.scene)
+        model.scene.rootNode.addChildNode(camera)
+        renderer.pointOfView = camera
+        return renderer.snapshot(atTime: 0, with: size, antialiasingMode: .multisampling4X)
+    }
+
+    /// Proves a skinned or morphed FBX DEFORMS, with rendered pixels:
+    ///
+    /// skin  - (1) the skinned bind pose looks exactly like the same mesh with
+    ///         the skinner removed (the bind matrices are right); (2) mid-clip
+    ///         the skinned mesh differs from the bind pose; (3) and from the
+    ///         same clip played with the skinner removed. Bones render nothing
+    ///         and the fixture's root bone never moves, so only a deformed mesh
+    ///         can account for (2) and (3): a rigid mesh would match (3).
+    /// morph - weight 0 equals the model without its morpher, weight 1 differs
+    ///         from it, and the clip's weight animation moves the mesh mid-clip.
+    ///
+    /// Returns the failures (empty = pass). Writes the frames as PNGs.
+    private static func verifyDeformation(url: URL, baseOutput: URL) -> [String] {
+        let dir = baseOutput.deletingLastPathComponent()
+        let stem = baseOutput.deletingPathExtension().lastPathComponent
+        guard let model = try? ModelLoader.loadSync(url: url) else { return ["load failed"] }
+        var hasSkin = false, hasMorph = false
+        model.scene.rootNode.enumerateHierarchy { node, _ in
+            if node.skinner != nil { hasSkin = true }
+            if node.morpher != nil { hasMorph = true }
+        }
+        var failures: [String] = []
+        func check(_ label: String, _ ok: Bool, _ detail: String) {
+            print("DEFORM[\(label)]: \(detail) -> \(ok ? "OK" : "FAIL")")
+            if !ok { failures.append("\(label) (\(detail))") }
+        }
+        if !hasSkin && !hasMorph { return ["model has neither a skinner nor a morpher"] }
+        let stripSkinners: (SCNScene) -> Void = { scene in
+            scene.rootNode.enumerateHierarchy { node, _ in node.skinner = nil }
+        }
+        let stripMorphers: (SCNScene) -> Void = { scene in
+            scene.rootNode.enumerateHierarchy { node, _ in node.morpher = nil }
+        }
+
+        if hasSkin {
+            guard let frames = bindAndMidFrames(url: url),
+                  let rigidFrames = bindAndMidFrames(url: url, prepare: stripSkinners),
+                  let rest = restFrame(url: url, prepare: stripSkinners) else { return ["render setup failed"] }
+            writePNG(frames.bind, to: dir.appendingPathComponent("\(stem)-skin-bind.png"))
+            writePNG(frames.mid, to: dir.appendingPathComponent("\(stem)-skin-mid.png"))
+            writePNG(rigidFrames.mid, to: dir.appendingPathComponent("\(stem)-skin-mid-rigid-control.png"))
+            let bindVsRest = differingPixelFraction(frames.bind, rest)
+            let midVsBind = differingPixelFraction(frames.mid, frames.bind)
+            let midVsRigid = differingPixelFraction(frames.mid, rigidFrames.mid)
+            check("skin bind==rest", bindVsRest < 0.005, String(format: "%.4f of pixels differ", bindVsRest))
+            check("skin mid!=bind", midVsBind > 0.02 && !isBlank(frames.mid), String(format: "%.4f of pixels differ", midVsBind))
+            check("skin mid!=rigid", midVsRigid > 0.02, String(format: "%.4f of pixels differ", midVsRigid))
+        }
+
+        if hasMorph {
+            guard let frames = bindAndMidFrames(url: url),
+                  let restNoMorph = restFrame(url: url, prepare: stripMorphers),
+                  let weight0 = restFrame(url: url, prepare: { scene in
+                      scene.rootNode.enumerateHierarchy { node, _ in
+                          guard let m = node.morpher else { return }
+                          for i in 0..<m.targets.count { m.setWeight(0, forTargetAt: i) }
+                      }
+                  }),
+                  let weight1 = restFrame(url: url, prepare: { scene in
+                      scene.rootNode.enumerateHierarchy { node, _ in
+                          guard let m = node.morpher else { return }
+                          for i in 0..<m.targets.count { m.setWeight(1, forTargetAt: i) }
+                      }
+                  }) else { return ["render setup failed"] }
+            writePNG(weight0, to: dir.appendingPathComponent("\(stem)-morph-weight0.png"))
+            writePNG(weight1, to: dir.appendingPathComponent("\(stem)-morph-weight1.png"))
+            writePNG(frames.bind, to: dir.appendingPathComponent("\(stem)-morph-clip-start.png"))
+            writePNG(frames.mid, to: dir.appendingPathComponent("\(stem)-morph-clip-mid.png"))
+            let zeroVsRest = differingPixelFraction(weight0, restNoMorph)
+            let oneVsZero = differingPixelFraction(weight1, weight0)
+            let midVsStart = differingPixelFraction(frames.mid, frames.bind)
+            check("morph weight0==rest", zeroVsRest < 0.005, String(format: "%.4f of pixels differ", zeroVsRest))
+            check("morph weight1!=weight0", oneVsZero > 0.02 && !isBlank(weight1), String(format: "%.4f of pixels differ", oneVsZero))
+            check("morph clip mid!=start", midVsStart > 0.02 && !isBlank(frames.mid), String(format: "%.4f of pixels differ", midVsStart))
+        }
+
+        // Wireframe and shading modes swap the geometry's materials; that must
+        // not detach the skinner / morpher. The real `ViewerController` (same
+        // code path as the app) applies the mode to the live scene, then two
+        // offscreen frames (bind pose, mid-clip) must still differ, and the
+        // deformers must still be on their nodes. (A headless SCNView doesn't
+        // advance its wall-clock players, so frames come from an SCNRenderer.)
+        for (mode, wireframe) in [(ShadingMode.standard, true), (ShadingMode.normals, true), (ShadingMode.matcap, false)] {
+            guard let device = MTLCreateSystemDefaultDevice(),
+                  let live = try? ModelLoader.loadSync(url: url), let clip = live.animations.first else {
+                failures.append("live render setup failed"); continue
+            }
+            let controller = ViewerController()
+            let view = SCNView(frame: NSRect(x: 0, y: 0, width: 320, height: 320))
+            controller.attach(scnView: view, scene: live.scene, animations: live.animations)
+            controller.setShadingMode(mode)
+            if wireframe { controller.toggleWireframe() }
+            clip.player.play()
+            let renderer = SCNRenderer(device: device, options: nil)
+            renderer.scene = live.scene
+            renderer.autoenablesDefaultLighting = true
+            let camera = CameraFit.makeFittedCamera(for: live.scene)
+            live.scene.rootNode.addChildNode(camera)
+            renderer.pointOfView = camera
+            let size = CGSize(width: 320, height: 320)
+            let early = renderer.snapshot(atTime: 0, with: size, antialiasingMode: .multisampling4X)
+            let later = renderer.snapshot(atTime: clip.player.animation.duration * 0.5, with: size,
+                                          antialiasingMode: .multisampling4X)
+            var skinners = 0, morphers = 0
+            live.scene.rootNode.enumerateHierarchy { node, _ in
+                if node.skinner != nil { skinners += 1 }
+                if node.morpher != nil { morphers += 1 }
+            }
+            let label = "\(mode.rawValue)\(wireframe ? "+wireframe" : "")"
+            writePNG(early, to: dir.appendingPathComponent("\(stem)-controller-\(label)-start.png"))
+            writePNG(later, to: dir.appendingPathComponent("\(stem)-controller-\(label)-mid.png"))
+            let moved = differingPixelFraction(early, later)
+            check("controller \(label) keeps deforming",
+                  moved > 0.005 && !isBlank(later) && (!hasSkin || skinners > 0) && (!hasMorph || morphers > 0),
+                  String(format: "%.4f of pixels differ, skinners=%d morphers=%d", moved, skinners, morphers))
+        }
+        return failures
     }
 
     /// Reproduces the exact reported bug: wireframe toggled WHILE a clip is

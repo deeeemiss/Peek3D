@@ -39,7 +39,7 @@ Signed with a Developer ID and notarized by Apple. Requires macOS 13 or later.
 | Loader | Formats | Animation |
 |--------|---------|-----------|
 | [GLTFKit2](https://github.com/warrenm/GLTFKit2) (SPM) | `.glb` `.gltf` | Skeletal (skinned) + node-transform |
-| [ufbx](https://github.com/ufbx/ufbx) (vendored) | `.fbx` | Node-transform (rigid/hierarchical) |
+| [ufbx](https://github.com/ufbx/ufbx) (vendored) | `.fbx` | Node-transform + skinning + blend shapes |
 | Apple Model I/O | `.obj` `.stl` `.usd` `.usdz` `.usda` `.usdc` `.dae` `.ply` `.abc` | — |
 
 All three converge into one `SCNScene`, so the viewer, wireframe, shading
@@ -113,9 +113,12 @@ app prompts for folder access and retries automatically if it's missing.
 
 - Draco-compressed geometry and KTX2/BasisU textures are **not** wired up.
   A `.glb` using them surfaces a load error rather than a silent failure.
-- FBX skinned/skeletal **deformation** (`SCNSkinner`) and blend shapes are
-  not supported yet — a skinned FBX loads and shows its bind pose; bones still
-  receive their transform animation, but the mesh doesn't deform.
+- FBX skinning and blend shapes are supported (`SCNSkinner` / `SCNMorpher`,
+  weights animated by the clip), with limits: at most 4 bone influences per
+  vertex (the heaviest 4, renormalised), linear blend skinning only (dual
+  quaternion skinning falls back to linear), blend-shape in-between shapes
+  are ignored (only each channel's final shape is used), and the camera fit
+  uses the bind pose, so a strongly deforming model can leave the frame.
 - Timeline drag-to-seek isn't offered (for either format): both loaders bake
   clips as looping `CAAnimationGroup`s on a wall-clock player, which has no
   API for jumping to an arbitrary time. Play / pause / clip selection work

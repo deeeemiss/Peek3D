@@ -38,10 +38,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// keyframes and returned as `SCNAnimationPlayer`s aligned with the app's other
 /// loaders (glTF/Model I/O), which converge on a single `SCNScene`.
 ///
-/// NOT covered: skinned/skeletal deformation (`SCNSkinner` — vertices bound to
-/// bones), blend shapes/morphs, and property animation (visibility, material
-/// params). A file with a skinned mesh loads and shows its bind pose; the bone
-/// nodes still receive their transform animation, but the mesh is not deformed.
+/// Skinning: a skinned mesh becomes a node with an `SCNSkinner` whose bones are
+/// the real hierarchy nodes (so the baked clip moves them); its vertices are
+/// stored in world bind space at the scene root. Blend shapes become an
+/// additive `SCNMorpher` whose weights the clip animates via
+/// `morpher.weights[i]`. NOT covered: property animation (visibility, material
+/// params), dual-quaternion skinning, blend-shape in-betweens.
 ///
 /// All ufbx pointer handling lives inside the `.mm` implementation; Swift only
 /// ever sees a finished, ARC-managed `SCNScene` + `SCNAnimationPlayer`s.

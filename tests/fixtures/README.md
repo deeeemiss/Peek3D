@@ -26,3 +26,9 @@ and credit (see `../../testmodels/README.md`):
 `Box-nodes-depth10000-crash.glb` nests Box 10 000 nodes deep, past what
 SceneKit can handle. `garbage.glb` (random bytes) and `empty.glb` are made for
 Peek3D and covered by the project's MIT license.
+
+`valid/skinned_bend.fbx` and `valid/morph_cube.fbx`: made for Peek3D by
+`make_fbx_fixtures.py` (run it with Blender in background mode to regenerate),
+CC0 1.0. A skinned tube whose child bones bend it while the root bone stays
+still, and a cube with an animated shape key. `scripts/test.py` renders both
+and checks that the mesh really deforms.
