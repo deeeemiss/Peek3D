@@ -12,6 +12,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - FBX skinning and blend shapes: skeletal meshes now deform with their
   animation instead of staying in the bind pose, and animated blend-shape
   weights play back.
+- glTF files with Draco-compressed geometry (`KHR_draco_mesh_compression`)
+  now open; a damaged Draco stream shows an error instead of crashing.
+- KTX2/BasisU textures (`KHR_texture_basisu`) are covered by the test suite:
+  they were already decoded by GLTFKit2 and now have fixtures that prove it.
+
+### Fixed
+- A `KHR_texture_basisu` texture naming a missing image crashed the app
+  instead of showing an error.
 
 ## 1.1 — 2026-10-02
 

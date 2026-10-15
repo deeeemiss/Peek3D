@@ -16,9 +16,16 @@ enum ModelLoadError: LocalizedError {
     /// won't let us read: nothing can be drawn until the user grants the
     /// folder, so the UI offers that instead of an error.
     case needsFolderAccess([URL])
+    /// A glTF whose Draco-compressed geometry is damaged or can't be decoded.
+    /// `reason` is developer-facing detail for the log; the user sees a
+    /// localized sentence.
+    case dracoDecodeFailed(reason: String)
 
     var errorDescription: String? {
         switch self {
+        case .dracoDecodeFailed:
+            return String(localized: "error.dracoDecode",
+                          defaultValue: "This file's compressed (Draco) geometry is damaged or can't be decoded, so it can't be opened.")
         case .noGeometry:
             return String(localized: "error.noGeometry",
                           defaultValue: "This file can't be read or contains no 3D model to show.")
@@ -69,6 +76,11 @@ enum ModelLoader {
         supportedExtensions.contains(url.pathExtension.lowercased())
     }
 
+    /// Registers the Draco decoder with GLTFKit2 once per process (the hook is
+    /// a global). The glTF path touches this before every load; it is the only
+    /// registration.
+    private static let dracoDecoderRegistered: Void = Peek3DDracoDecompressor.registerWithGLTFKit()
+
     /// Synchronous load. Safe to call off the main thread (scene graph
     /// construction is data work); attach the result to an `SCNView` on main.
     static func loadSync(url: URL) throws -> LoadedModel {
@@ -82,13 +94,23 @@ enum ModelLoader {
         case "glb", "gltf":
             let buffers = missingExternalTextureURLs.filter { $0.pathExtension.lowercased() == "bin" }
             if !buffers.isEmpty { throw ModelLoadError.needsFolderAccess(missingExternalTextureURLs) }
-            // Throwing bridge of +assetWithURL:options:error:. Draco/KTX2
-            // compressed assets need extra plugins (not wired in v1) and will
-            // surface as a thrown error here rather than a silent failure.
+            // Throwing bridge of +assetWithURL:options:error:. KTX2/BasisU
+            // textures are decoded inside GLTFKit2 itself (libktx + the Basis
+            // transcoder in its xcframework) and arrive as Metal textures.
+            // Draco geometry needs the decoder registered below.
             // GLTFKit2 crashes (instead of throwing) on structurally broken
             // files: reject those first with a normal error.
             try GLTFValidator.validate(url: url)
+            _ = Self.dracoDecoderRegistered
+            Peek3DDracoDecompressor.clearFailure()
             let asset = try GLTFAsset(url: url, options: [:])
+            // GLTFKit2 can't be told a Draco primitive failed to decode: it
+            // keeps going with data-less accessors. Bail out here, before the
+            // asset is turned into a SceneKit scene.
+            if let reason = Peek3DDracoDecompressor.takeFailureReason() {
+                NSLog("Peek3D: Draco decode failed for %@: %@", url.lastPathComponent, reason)
+                throw ModelLoadError.dracoDecodeFailed(reason: reason)
+            }
             // The `SCNScene(gltfAsset:)` convenience routes through this same
             // source but keeps only `defaultScene` and drops the animations;
             // go through the source directly so we can pull the players too.

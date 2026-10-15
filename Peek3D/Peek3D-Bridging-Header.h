@@ -4,3 +4,4 @@
 //
 
 #import "FBXSceneBuilder.h"
+#import "Peek3DDracoDecompressor.h"

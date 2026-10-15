@@ -4541,6 +4541,77 @@
         }
       }
     },
+    "error.dracoDecode": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This file's compressed (Draco) geometry is damaged or can't be decoded, so it can't be opened."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La geometria compressa (Draco) di questo file è danneggiata o non può essere decodificata, quindi non può essere aperto."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La geometría comprimida (Draco) de este archivo está dañada o no se puede decodificar, así que no se puede abrir."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La géométrie compressée (Draco) de ce fichier est endommagée ou ne peut pas être décodée : impossible de l’ouvrir."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die komprimierte Geometrie (Draco) dieser Datei ist beschädigt oder lässt sich nicht dekodieren, daher kann sie nicht geöffnet werden."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A geometria comprimida (Draco) deste arquivo está danificada ou não pode ser decodificada, por isso não pode ser aberto."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сжатая геометрия (Draco) в этом файле повреждена или не может быть декодирована, поэтому файл нельзя открыть."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الهندسة المضغوطة (Draco) في هذا الملف تالفة أو لا يمكن فك ترميزها، لذا لا يمكن فتحه."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このファイルの圧縮ジオメトリ（Draco）は破損しているか、デコードできないため、開けません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 파일의 압축된 지오메트리(Draco)가 손상되었거나 디코딩할 수 없어 열 수 없습니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此文件中的压缩几何数据（Draco）已损坏或无法解码，因此无法打开。"
+          }
+        }
+      }
+    },
     "error.gltfInvalid": {
       "extractionState": "manual",
       "localizations": {

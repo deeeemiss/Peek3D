@@ -114,6 +114,9 @@ enum GLTFValidator {
                     for attribute in (primitive["attributes"] as? [String: Any] ?? [:]).values {
                         _ = try ref(attribute, count: accessors.count, "attribute")
                     }
+                    if let draco = (primitive["extensions"] as? [String: Any])?["KHR_draco_mesh_compression"] {
+                        try check(draco: draco, primitive: primitive, mode: mode, views: views, accessors: accessors)
+                    }
                     for target in objects(primitive["targets"]) {
                         for value in target.values { _ = try ref(value, count: accessors.count, "morph target") }
                     }
@@ -125,6 +128,14 @@ enum GLTFValidator {
             }
             for texture in array("textures") {
                 if texture["source"] != nil { _ = try ref(texture["source"], count: array("images").count, "texture source") }
+                // KTX2/BasisU (and WebP/AVIF) textures name their image inside
+                // an extension instead; GLTFKit2 indexes the image list with it
+                // unchecked.
+                for key in ["KHR_texture_basisu", "EXT_texture_webp", "EXT_texture_avif"] {
+                    if let ext = (texture["extensions"] as? [String: Any])?[key] as? [String: Any], ext["source"] != nil {
+                        _ = try ref(ext["source"], count: array("images").count, "\(key) source")
+                    }
+                }
                 if texture["sampler"] != nil { _ = try ref(texture["sampler"], count: array("samplers").count, "texture sampler") }
             }
             for skin in array("skins") {
@@ -271,6 +282,42 @@ enum GLTFValidator {
                     }
                 }
             }
+        }
+
+        // MARK: Draco
+
+        /// What GLTFKit2 relies on around a `KHR_draco_mesh_compression`
+        /// primitive. The compressed stream itself is checked by the decoder.
+        private func check(draco: Any, primitive: [String: Any], mode: Int,
+                           views: [[String: Any]], accessors: [[String: Any]]) throws {
+            guard let draco = draco as? [String: Any] else { throw Invalid(reason: "Draco extension is not an object") }
+            _ = try ref(draco["bufferView"], count: views.count, "Draco bufferView")
+            // Draco encodes triangle lists. GLTFKit2 hands the decoded indices
+            // to SceneKit as the primitive's own type, so any other mode would
+            // be misread, and a missing index accessor would draw the
+            // vertices as an unindexed soup.
+            guard mode == 4 else { throw Invalid(reason: "Draco primitive with mode \(mode)") }
+            guard primitive["indices"] != nil else { throw Invalid(reason: "Draco primitive without indices") }
+
+            guard let compressed = draco["attributes"] as? [String: Any], !compressed.isEmpty else {
+                throw Invalid(reason: "Draco attribute map is missing")
+            }
+            for id in compressed.values {
+                // The values are Draco's own attribute ids, not accessor indices.
+                guard let number = id as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID(),
+                      number.doubleValue.rounded() == number.doubleValue,
+                      (0...Double(UInt32.max)).contains(number.doubleValue)
+                else { throw Invalid(reason: "Draco attribute id \(id)") }
+            }
+            // An attribute the stream doesn't carry would be read from an
+            // accessor with no data behind it.
+            let attributes = primitive["attributes"] as? [String: Any] ?? [:]
+            for name in attributes.keys where compressed[name] == nil {
+                throw Invalid(reason: "attribute \(name) is not in the Draco stream")
+            }
+            // The decoder returns one value per point for every attribute.
+            let counts = Set(try attributes.values.map { try int(accessors[try ref($0, count: accessors.count, "attribute")]["count"]) })
+            guard counts.count <= 1 else { throw Invalid(reason: "Draco attributes disagree on their vertex count") }
         }
 
         // MARK: Helpers

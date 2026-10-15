@@ -1,6 +1,15 @@
 {
-  "originHash" : "39783c210862de041b45a22a36f704a23e2678cbb6d29e5be6fec7a208475440",
+  "originHash" : "fac76f768dbe39a59480a732a88062dfa4cf41d5e4181cd734615f6fd98d288e",
   "pins" : [
+    {
+      "identity" : "dracoswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/warrenm/DracoSwift",
+      "state" : {
+        "revision" : "3f85e64b4e62b070871dfdc1e26c058aaa1de63e",
+        "version" : "1.5.7"
+      }
+    },
     {
       "identity" : "gltfkit2",
       "kind" : "remoteSourceControl",

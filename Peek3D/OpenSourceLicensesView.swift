@@ -3,9 +3,10 @@ import SwiftUI
 /// One open-source dependency whose code ships inside the Peek3D binary,
 /// with the full text of its license.
 ///
-/// This list mirrors what is actually compiled into `GLTFKit2.framework`
-/// (verified with `nm`/`strings` on the built Release binary — see
-/// `LICENSE.md`), not just what Peek3D's own Swift code calls directly.
+/// This list mirrors what is actually compiled into `GLTFKit2.framework` and
+/// the Peek3D executable (Draco; verified with `nm`/`strings` on the built
+/// Release binaries — see `LICENSE.md`), not just what Peek3D's own Swift code
+/// calls directly.
 /// Attribution obligations for permissive licenses (MIT, Apache 2.0,
 /// BSD-3-Clause) are triggered by distribution, not by which code paths
 /// this app happens to exercise at runtime.
@@ -32,6 +33,13 @@ enum OSSLicenses {
             holder: "Johannes Kuhlmann",
             license: "MIT License",
             text: LicenseTexts.mit(copyright: "Copyright (c) 2018-2021 Johannes Kuhlmann")
+        ),
+        OSSLicenseEntry(
+            id: "draco",
+            name: "Draco",
+            holder: "The Draco Authors (Google Inc. and other contributors)",
+            license: "Apache License 2.0",
+            text: LicenseTexts.apache2(copyright: "Copyright 2016 The Draco Authors.")
         ),
         OSSLicenseEntry(
             id: "ufbx",

@@ -38,12 +38,18 @@ Signed with a Developer ID and notarized by Apple. Requires macOS 13 or later.
 
 | Loader | Formats | Animation |
 |--------|---------|-----------|
-| [GLTFKit2](https://github.com/warrenm/GLTFKit2) (SPM) | `.glb` `.gltf` | Skeletal (skinned) + node-transform |
+| [GLTFKit2](https://github.com/warrenm/GLTFKit2) (SPM) | `.glb` `.gltf`, incl. Draco geometry and KTX2/BasisU textures | Skeletal (skinned) + node-transform |
 | [ufbx](https://github.com/ufbx/ufbx) (vendored) | `.fbx` | Node-transform + skinning + blend shapes |
 | Apple Model I/O | `.obj` `.stl` `.usd` `.usdz` `.usda` `.usdc` `.dae` `.ply` `.abc` | — |
 
 All three converge into one `SCNScene`, so the viewer, wireframe, shading
 modes, and stats never need to know where a model came from.
+
+glTF compression: `KHR_draco_mesh_compression` geometry is decoded with
+[Draco](https://github.com/google/draco) (via the
+[DracoSwift](https://github.com/warrenm/DracoSwift) package, wired into
+GLTFKit2 by `Peek3D/Draco/`); `KHR_texture_basisu` textures (KTX2 with BasisLZ
+or UASTC) are transcoded by GLTFKit2's own libktx.
 
 ## Features
 
@@ -111,8 +117,11 @@ app prompts for folder access and retries automatically if it's missing.
 
 ## Known limits
 
-- Draco-compressed geometry and KTX2/BasisU textures are **not** wired up.
-  A `.glb` using them surfaces a load error rather than a silent failure.
+- Draco-compressed geometry is supported for triangle lists only (what the
+  glTF extension is for). A file with a damaged or undecodable Draco stream is
+  refused with an error as a whole, never shown half-loaded. Other glTF
+  compression, such as `EXT_meshopt_compression`, is GLTFKit2's business and
+  untested here.
 - FBX skinning and blend shapes are supported (`SCNSkinner` / `SCNMorpher`,
   weights animated by the clip), with limits: at most 4 bone influences per
   vertex (the heaviest 4, renormalised), linear blend skinning only (dual
@@ -125,4 +134,5 @@ app prompts for folder access and retries automatically if it's missing.
 [MIT](LICENSE.md). Third-party attributions are listed in the same file and
 in the app (Peek3D ▸ Open Source Licenses…). The fox in the screenshot and
 demo is the glTF sample "Fox" (CC BY 4.0, PixelMannen / @tomkranis); test
-model credits are in [testmodels/README.md](testmodels/README.md).
+model credits are in [testmodels/README.md](testmodels/README.md) and
+[tests/fixtures/README.md](tests/fixtures/README.md).
