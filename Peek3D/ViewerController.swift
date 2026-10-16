@@ -613,10 +613,12 @@ final class ViewerController: ObservableObject {
     /// wall-clock player (which loops via GLTFKit2's `repeatDuration = FLT_MAX`).
     private func tick() {
         guard isPlaying, animationDuration > 0 else { return }
-        // Minimized window: skip the SwiftUI update (most of the CPU while
-        // minimized). lastTick stays put, so the next tick catches up.
-        // ponytail: not occlusionState, which also stops the offscreen self-test window.
-        guard scnView?.window?.isMiniaturized != true else { return }
+        // Hidden window (covered, minimized, other Space): skip the SwiftUI
+        // update. `renderOnlyWhenVisible` already turned rendering off on the
+        // occlusion change; polling `occlusionState` here instead would also
+        // stop the offscreen self-test window, which never posts that change.
+        // lastTick stays put, so the next tick catches up.
+        guard scnView?.rendersContinuously != false else { return }
         let now = CACurrentMediaTime()
         let delta = now - lastTick
         lastTick = now

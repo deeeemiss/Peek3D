@@ -8,6 +8,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ### Fixed
 - Animated models are framed on the poses their clips actually reach,
   instead of a fixed margin around the rest pose.
+- The animation timeline stops updating while its window is covered or
+  hidden, not only when minimized.
 
 ## 1.3 — 2026-10-16
 
