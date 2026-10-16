@@ -557,6 +557,10 @@ final class ViewerController: ObservableObject {
         installPlayer(at: animationTime, running: false)
     }
 
+    /// One keyboard / VoiceOver / menu step: 5% of the clip, never below a
+    /// frame at 30 fps.
+    var stepInterval: TimeInterval { max(animationDuration / 20, 1.0 / 30.0) }
+
     func togglePlayback() {
         isPlaying ? pause() : play()
     }

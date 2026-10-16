@@ -88,8 +88,7 @@ struct TimelineControlsView: View {
             : 0
     }
 
-    /// Keyboard / VoiceOver step: 5% of the clip, never below a frame at 30 fps.
-    private var keyStep: TimeInterval { max(controller.animationDuration / 20, 1.0 / 30.0) }
+    private var keyStep: TimeInterval { controller.stepInterval }
 
     private var scrubber: some View {
         GeometryReader { geo in

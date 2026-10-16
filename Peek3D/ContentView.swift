@@ -70,6 +70,7 @@ struct ContentView: View {
         // menu buttons.
         .focusedSceneValue(\.peek3dShadingMode, controller.shadingMode)
         .focusedSceneValue(\.peek3dLightingPreset, controller.lightingPreset)
+        .focusedSceneValue(\.peek3dIsPlaying, controller.hasAnimations ? controller.isPlaying : nil)
         // Allow replacing the model by dropping a new file over the loaded
         // scene — this does NOT open a new document/window, it just swaps
         // this window's content; the document itself keeps pointing at `url`.
@@ -110,6 +111,11 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .peek3dZoom)) { note in
             guard let delta = note.userInfo?["delta"] as? Double else { return }
             guardKeyWindow { controller.zoom(by: Float(delta)) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .peek3dTogglePlayback)) { _ in guardKeyWindow { controller.togglePlayback() } }
+        .onReceive(NotificationCenter.default.publisher(for: .peek3dStepAnimation)) { note in
+            guard let direction = note.userInfo?["direction"] as? Double else { return }
+            guardKeyWindow { controller.seek(to: controller.animationTime + direction * controller.stepInterval) }
         }
         .onReceive(NotificationCenter.default.publisher(for: .peek3dSetLightingPreset)) { note in
             guard let raw = note.userInfo?["preset"] as? String, let preset = LightingPreset(rawValue: raw) else { return }

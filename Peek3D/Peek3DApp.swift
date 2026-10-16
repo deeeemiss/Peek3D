@@ -17,6 +17,9 @@ extension Notification.Name {
     static let peek3dSnapToAxis = Notification.Name("peek3d.snapToAxis")
     /// `userInfo["delta"]` carries the zoom step (`Double`).
     static let peek3dZoom = Notification.Name("peek3d.zoom")
+    static let peek3dTogglePlayback = Notification.Name("peek3d.togglePlayback")
+    /// `userInfo["direction"]` carries -1 (back) or 1 (forward) as `Double`.
+    static let peek3dStepAnimation = Notification.Name("peek3d.stepAnimation")
 }
 
 /// "Window" vs "Panel" (this app's word for a native macOS window tab) is a
@@ -169,6 +172,12 @@ private struct LightingPresetFocusedKey: FocusedValueKey {
     typealias Value = LightingPreset
 }
 
+/// The focused viewer's `isPlaying`; unset when its model has no animation,
+/// which disables the playback items.
+private struct PlaybackFocusedKey: FocusedValueKey {
+    typealias Value = Bool
+}
+
 extension FocusedValues {
     var peek3dViewerFocused: Bool? {
         get { self[ViewerFocusedKey.self] }
@@ -183,6 +192,11 @@ extension FocusedValues {
     var peek3dLightingPreset: LightingPreset? {
         get { self[LightingPresetFocusedKey.self] }
         set { self[LightingPresetFocusedKey.self] = newValue }
+    }
+
+    var peek3dIsPlaying: Bool? {
+        get { self[PlaybackFocusedKey.self] }
+        set { self[PlaybackFocusedKey.self] = newValue }
     }
 }
 
@@ -209,6 +223,7 @@ private struct SceneCommands: View {
     @FocusedValue(\.peek3dViewerFocused) private var isViewerFocused
     @FocusedValue(\.peek3dShadingMode) private var focusedShadingMode
     @FocusedValue(\.peek3dLightingPreset) private var focusedLightingPreset
+    @FocusedValue(\.peek3dIsPlaying) private var focusedIsPlaying
 
     var body: some View {
         Group {
@@ -276,6 +291,28 @@ private struct SceneCommands: View {
             } label: {
                 Label("Lighting", systemImage: (focusedLightingPreset ?? .standard).iconName)
             }
+            Divider()
+            // Space and plain arrows, like a video player: menu shortcuts win
+            // over the viewport, so they work without focusing the timeline.
+            Group {
+                Button { NotificationCenter.default.post(name: .peek3dTogglePlayback, object: nil) } label: {
+                    if focusedIsPlaying == true {
+                        Label("Pause", systemImage: "pause.fill")
+                    } else {
+                        Label("Play", systemImage: "play.fill")
+                    }
+                }
+                .keyboardShortcut(.space, modifiers: [])
+                Button { NotificationCenter.default.post(name: .peek3dStepAnimation, object: nil, userInfo: ["direction": -1.0]) } label: {
+                    Label("Step Backward", systemImage: "backward.frame")
+                }
+                .keyboardShortcut(.leftArrow, modifiers: [])
+                Button { NotificationCenter.default.post(name: .peek3dStepAnimation, object: nil, userInfo: ["direction": 1.0]) } label: {
+                    Label("Step Forward", systemImage: "forward.frame")
+                }
+                .keyboardShortcut(.rightArrow, modifiers: [])
+            }
+            .disabled(focusedIsPlaying == nil)
             Divider()
             Button { NotificationCenter.default.post(name: .peek3dTakeScreenshot, object: nil) } label: {
                 Label("Screenshot", systemImage: "camera")
