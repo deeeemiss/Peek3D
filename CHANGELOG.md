@@ -3,7 +3,7 @@
 All notable changes to Peek3D are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
-## Unreleased
+## 1.2 — 2026-10-16
 
 ### Added
 - Animation timeline: drag (or click) the bar to jump to any instant, for
