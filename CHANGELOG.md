@@ -3,6 +3,12 @@
 All notable changes to Peek3D are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## Unreleased
+
+### Added
+- Scene ▸ Play/Pause (Space) and Step Backward/Forward (← →): control the
+  animation from the keyboard without focusing the timeline.
+
 ## 1.2.1 — 2026-10-16
 
 ### Fixed
