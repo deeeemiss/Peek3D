@@ -3,7 +3,7 @@
 All notable changes to Peek3D are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
-## Unreleased
+## 1.3 — 2026-10-16
 
 ### Added
 - Scene ▸ Play/Pause (Space) and Step Backward/Forward (← →): control the
