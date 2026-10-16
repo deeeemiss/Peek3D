@@ -95,6 +95,7 @@ final class ViewerController: ObservableObject {
         scnView.backgroundColor = (UserDefaults.standard.string(forKey: SettingsKey.background)
             .flatMap(SceneBackground.init) ?? .dark).color
         scnView.rendersContinuously = true
+        scnView.renderOnlyWhenVisible()
 
         modelNodes = scene.rootNode.childNodes
 
@@ -591,7 +592,7 @@ final class ViewerController: ObservableObject {
         lastTick = CACurrentMediaTime()
         // `.common` mode so the readout keeps advancing while the user interacts
         // with menus / other tracking UI.
-        let timer = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
             self?.tick()
         }
         RunLoop.main.add(timer, forMode: .common)
@@ -607,6 +608,10 @@ final class ViewerController: ObservableObject {
     /// wall-clock player (which loops via GLTFKit2's `repeatDuration = FLT_MAX`).
     private func tick() {
         guard isPlaying, animationDuration > 0 else { return }
+        // Minimized window: skip the SwiftUI update (most of the CPU while
+        // minimized). lastTick stays put, so the next tick catches up.
+        // ponytail: not occlusionState, which also stops the offscreen self-test window.
+        guard scnView?.window?.isMiniaturized != true else { return }
         let now = CACurrentMediaTime()
         let delta = now - lastTick
         lastTick = now

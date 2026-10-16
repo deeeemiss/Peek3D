@@ -23,6 +23,10 @@ struct AxisGizmoView: NSViewRepresentable {
         view.scene = GizmoSceneFactory.makeScene()
         view.allowsCameraControl = false
         view.rendersContinuously = true
+        // A 96pt axis widget doesn't need 60 fps: it was costing more CPU
+        // than the model view itself.
+        view.preferredFramesPerSecond = 30
+        view.renderOnlyWhenVisible()
         view.coordinator = context.coordinator
 
         context.coordinator.axesRoot = view.scene?.rootNode.childNode(
@@ -132,5 +136,21 @@ final class GizmoSCNView: SCNView {
             rect: bounds,
             options: [.activeInKeyWindow, .mouseMoved, .mouseEnteredAndExited],
             owner: self, userInfo: nil))
+    }
+}
+
+extension SCNView {
+    /// Stops the continuous redraw while the window is minimized or fully
+    /// covered, and resumes it when the window shows again.
+    func renderOnlyWhenVisible() {
+        let center = NotificationCenter.default
+        center.removeObserver(self, name: NSWindow.didChangeOcclusionStateNotification, object: nil)
+        center.addObserver(self, selector: #selector(windowOcclusionChanged(_:)),
+                           name: NSWindow.didChangeOcclusionStateNotification, object: nil)
+    }
+
+    @objc private func windowOcclusionChanged(_ note: Notification) {
+        guard let window, note.object as? NSWindow === window else { return }
+        rendersContinuously = window.occlusionState.contains(.visible)
     }
 }
