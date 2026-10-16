@@ -10,7 +10,6 @@ own licenses:
 | `Fox.glb` | CC BY 4.0 | Model by PixelMannen, rigged and animated by @tomkranis, glTF conversion by @AsoboStudio and @scurest |
 | `Avocado.glb` | CC0 1.0 | Microsoft |
 | `Box.glb`, `BoxAnimated.glb` | CC BY 4.0 | Cesium |
-| `Duck.glb` | SCEA Shared Source License 1.0 | Sony Computer Entertainment Inc. |
 
 ## Made for Peek3D
 
