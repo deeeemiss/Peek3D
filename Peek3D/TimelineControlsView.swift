@@ -187,8 +187,12 @@ struct TimelineControlsView: View {
                 Text(controller.animationName(at: controller.currentAnimationIndex))
                     .lineLimit(1)
                     .foregroundStyle(.white.opacity(0.85))
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 9, weight: .semibold))
+                // Borderless Menu: VoiceOver reads the NSImage description, not
+                // .accessibilityLabel, so the symbol carries the label itself.
+                Image(nsImage: NSImage(systemSymbolName: "chevron.up.chevron.down",
+                                       accessibilityDescription: String(localized: "Choose animation"))?
+                    .withSymbolConfiguration(.init(pointSize: 9, weight: .semibold)) ?? NSImage())
+                    .renderingMode(.template)
                     .foregroundStyle(.white.opacity(0.6))
             }
             .frame(maxWidth: 120)

@@ -11,19 +11,26 @@ import simd
 struct SceneBounds {
     let min: simd_float3
     let max: simd_float3
+    /// True when a mesh is skinned or has blend shapes: the box is measured on
+    /// the rest pose, and the animation can reach outside it.
+    var deforms = false
 
     var center: simd_float3 { (min + max) * 0.5 }
     var extents: simd_float3 { max - min }
     /// Radius of the bounding sphere that encloses the box.
-    var radius: Float { simd_length(extents) * 0.5 }
+    /// Deforming meshes get 30% headroom so an animated pose stays in frame.
+    // ponytail: fixed headroom, sample the clip's poses if a model still clips.
+    var radius: Float { simd_length(extents) * 0.5 * (deforms ? 1.3 : 1) }
 
     static func compute(for root: SCNNode) -> SceneBounds? {
         var minB = simd_float3(repeating: .greatestFiniteMagnitude)
         var maxB = simd_float3(repeating: -.greatestFiniteMagnitude)
         var found = false
+        var deforms = false
 
         root.enumerateHierarchy { node, _ in
             guard node.geometry != nil else { return }
+            if node.skinner != nil || node.morpher != nil { deforms = true }
             let (lmin, lmax) = node.boundingBox
             let lo = simd_float3(lmin)
             let hi = simd_float3(lmax)
@@ -44,6 +51,6 @@ struct SceneBounds {
         }
 
         guard found else { return nil }
-        return SceneBounds(min: minB, max: maxB)
+        return SceneBounds(min: minB, max: maxB, deforms: deforms)
     }
 }

@@ -207,11 +207,13 @@ enum SelfTest {
                                   prepare: (SCNScene) -> Void) -> NSImage? {
         guard let device = MTLCreateSystemDefaultDevice(),
               let model = try? ModelLoader.loadSync(url: url) else { return nil }
+        // Frame BEFORE prepare: stripping a skinner/morpher drops the framing
+        // headroom for deforming meshes, and the frames must stay comparable.
+        let camera = CameraFit.makeFittedCamera(for: model.scene)
         prepare(model.scene)
         let renderer = SCNRenderer(device: device, options: nil)
         renderer.scene = model.scene
         renderer.autoenablesDefaultLighting = true
-        let camera = CameraFit.makeFittedCamera(for: model.scene)
         model.scene.rootNode.addChildNode(camera)
         renderer.pointOfView = camera
         return renderer.snapshot(atTime: 0, with: size, antialiasingMode: .multisampling4X)
