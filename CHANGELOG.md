@@ -3,6 +3,16 @@
 All notable changes to Peek3D are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## 1.2.1 — 2026-10-16
+
+### Fixed
+- Lower CPU use: the axis gizmo draws at 30 fps, and minimized or hidden
+  windows stop redrawing.
+- Skinned and morphing models are framed with room for their animation
+  instead of touching the window edges.
+- VoiceOver reads the animation menu as "Choose animation" instead of the
+  icon's name.
+
 ## 1.2 — 2026-10-16
 
 ### Added
