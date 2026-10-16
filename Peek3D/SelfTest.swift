@@ -61,6 +61,15 @@ enum SelfTest {
                 print("DEFORM_OK")
             }
 
+            // `PEEK3D_SELFTEST_FRAMING=1`: every clip, played on the camera the
+            // viewer would frame, never touches the frame's edge.
+            if ProcessInfo.processInfo.environment["PEEK3D_SELFTEST_FRAMING"] == "1",
+               !verifyFraming(url: url) {
+                print("SELFTEST_FAIL: framing")
+                fflush(stdout)
+                exit(1)
+            }
+
             if let out = ProcessInfo.processInfo.environment["PEEK3D_SELFTEST_RENDER"] {
                 let ok = renderOffscreen(scene: model.scene, to: URL(fileURLWithPath: out))
                 print(ok ? "render: OK -> \(out)" : "render: FAILED")
@@ -217,6 +226,61 @@ enum SelfTest {
         model.scene.rootNode.addChildNode(camera)
         renderer.pointOfView = camera
         return renderer.snapshot(atTime: 0, with: size, antialiasingMode: .multisampling4X)
+    }
+
+    /// Plays each clip on a camera framed by `SceneBounds.compute(for:clips:)`
+    /// and checks, on rendered pixels, that no sampled frame reaches the image
+    /// border. Prints how much of the frame the model fills at most (FRAMING[…]),
+    /// so a framing that is safe but far too loose shows up too.
+    private static func verifyFraming(url: URL) -> Bool {
+        guard let device = MTLCreateSystemDefaultDevice(),
+              let model = try? ModelLoader.loadSync(url: url) else { return false }
+        let clips = model.animations.map { CAAnimation(scnAnimation: $0.player.animation) }
+        let camera = CameraFit.makeFittedCamera(for: model.scene, clips: clips)
+        model.scene.rootNode.addChildNode(camera)
+        var ok = true
+        for (index, anim) in model.animations.enumerated() {
+            let player = anim.player
+            model.scene.rootNode.addAnimationPlayer(player, forKey: "framing")
+            player.play()
+            let renderer = SCNRenderer(device: device, options: nil)
+            renderer.scene = model.scene
+            renderer.autoenablesDefaultLighting = true
+            renderer.pointOfView = camera
+            let duration = player.animation.duration
+            var fill = 0.0, touches = 0
+            for i in 0...24 {
+                let image = renderer.snapshot(atTime: duration * Double(i) / 24, with: CGSize(width: 200, height: 200),
+                                              antialiasingMode: .none)
+                guard let box = silhouetteBox(image) else { continue }
+                fill = max(fill, Double(max(box.width, box.height)) / 200)
+                if box.minX <= 0 || box.minY <= 0 || box.maxX >= 200 || box.maxY >= 200 { touches += 1 }
+            }
+            model.scene.rootNode.removeAnimation(forKey: "framing")
+            print(String(format: "FRAMING[%d]: fill=%.2f touches=%d", index, fill, touches))
+            if touches > 0 || fill == 0 { ok = false }
+        }
+        return ok
+    }
+
+    /// Pixel rect (in a 1x bitmap) of everything that differs from the corner pixel.
+    private static func silhouetteBox(_ image: NSImage) -> CGRect? {
+        guard let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        let rep = NSBitmapImageRep(cgImage: cg)
+        let bg = rep.colorAt(x: 0, y: 0)?.usingColorSpace(.deviceRGB)
+        var minX = Int.max, minY = Int.max, maxX = -1, maxY = -1
+        for y in 0..<rep.pixelsHigh {
+            for x in 0..<rep.pixelsWide {
+                guard let c = rep.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB), let bg else { continue }
+                let d = abs(c.redComponent - bg.redComponent) + abs(c.greenComponent - bg.greenComponent)
+                    + abs(c.blueComponent - bg.blueComponent) + abs(c.alphaComponent - bg.alphaComponent)
+                if d > 0.05 { minX = min(minX, x); minY = min(minY, y); maxX = max(maxX, x); maxY = max(maxY, y) }
+            }
+        }
+        guard maxX >= 0 else { return nil }
+        let scale = 200 / CGFloat(rep.pixelsWide)
+        return CGRect(x: CGFloat(minX) * scale, y: CGFloat(minY) * scale,
+                      width: CGFloat(maxX - minX + 1) * scale, height: CGFloat(maxY - minY + 1) * scale)
     }
 
     /// Proves a skinned or morphed FBX DEFORMS, with rendered pixels:

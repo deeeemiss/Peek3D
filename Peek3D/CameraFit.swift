@@ -24,7 +24,7 @@ enum CameraFit {
 
     /// Builds a fresh camera node already framed on the scene. `fieldOfView` is
     /// treated as vertical so framing is stable across window aspect ratios.
-    static func makeFittedCamera(for scene: SCNScene, fieldOfViewDegrees: Float = 50)
+    static func makeFittedCamera(for scene: SCNScene, clips: [CAAnimation] = [], fieldOfViewDegrees: Float = 50)
         -> SCNNode
     {
         let node = SCNNode()
@@ -33,7 +33,7 @@ enum CameraFit {
         camera.projectionDirection = .vertical
         node.camera = camera
 
-        if let bounds = SceneBounds.compute(for: scene.rootNode) {
+        if let bounds = SceneBounds.compute(for: scene.rootNode, clips: clips) {
             let s = solve(bounds: bounds, fieldOfViewDegrees: fieldOfViewDegrees)
             camera.zNear = s.zNear
             camera.zFar = s.zFar

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Loader regression tests for Peek3D. Runs the Debug app's self-test hooks.
 
-    scripts/test.py                  build, then fixtures + FBX deformation + Draco/KTX2 + recovery + scrub + 150 fuzz cases per GLB
+    scripts/test.py                  build, then fixtures + FBX deformation + framing + Draco/KTX2 + recovery + scrub + 150 fuzz cases per GLB
     scripts/test.py --fuzz all       every mutation (thousands of runs, minutes)
     scripts/test.py --fuzz 0         no fuzzing
     scripts/test.py --app PATH       test an already built app (e.g. an old commit)
@@ -87,6 +87,18 @@ def check_deformation(app, pool):
             failures.append(f"deformation {f.relative_to(ROOT)}: {got}\n    "
                             + "\n    ".join(l for l in out.splitlines() if "DEFORM" in l or "SELFTEST" in l))
     print(f"deformation: {len(fixtures)} fixtures, {len(failures)} wrong")
+    return failures
+
+
+def check_framing(app, pool):
+    """Animated models, framed as the viewer frames them, never touch the frame
+    edge in any sampled pose of any clip (SelfTest.verifyFraming)."""
+    fixtures = [ROOT / "testmodels" / n for n in ("Fox.glb", "BoxAnimated.glb", "cube_animated.fbx")] + \
+               [FIXTURES / "valid" / n for n in ("skinned_bend.fbx", "morph_cube.fbx", "RiggedSimple-Draco.glb")]
+    results = pool.map(lambda f: run(app, {"PEEK3D_SELFTEST": str(f), "PEEK3D_SELFTEST_FRAMING": "1"}), fixtures)
+    failures = [f"framing {f.relative_to(ROOT)}: {got}\n    " + "\n    ".join(l for l in out.splitlines() if "FRAMING" in l)
+                for f, (got, out) in zip(fixtures, results) if got != "loaded"]
+    print(f"framing: {len(fixtures)} animated models, {len(failures)} wrong")
     return failures
 
 
@@ -341,7 +353,7 @@ def main():
     app = args.app or build()
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
-        failures = (check_fixtures(app, pool) + check_deformation(app, pool) + check_compressed(app, pool)
+        failures = (check_fixtures(app, pool) + check_deformation(app, pool) + check_framing(app, pool) + check_compressed(app, pool)
                     + check_recovery(app, pool))
         failures += check_scrub(app)
         if args.fuzz != "0":

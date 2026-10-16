@@ -112,7 +112,8 @@ final class ViewerController: ObservableObject {
         }
         presetLightsNode = nil
 
-        let bounds = SceneBounds.compute(for: scene.rootNode)
+        // Framed on every pose the clips reach, not just the rest pose.
+        let bounds = SceneBounds.compute(for: scene.rootNode, clips: animations.map { CAAnimation(scnAnimation: $0.player.animation) })
         currentBounds = bounds
 
         setupCamera(in: scene, bounds: bounds)
